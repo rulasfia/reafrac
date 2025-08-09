@@ -12,7 +12,7 @@
 		{/if}
 		<div class="flex items-center gap-x-3 p-2">
 			<a
-				href="/unread"
+				href="/home"
 				class="rounded-md border border-foreground/20 px-2 py-0.5 hover:bg-foreground/10"
 				>Go to My Feeeds</a
 			>

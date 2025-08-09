@@ -1,12 +1,13 @@
-import type { PageServerLoad } from './$types.js';
+import { redirect } from '@sveltejs/kit';
+import type { LayoutServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ cookies }) => {
-	const url = cookies.get('miniflux-url');
+export const load: LayoutServerLoad = async ({ cookies }) => {
+	const minifluxUrl = cookies.get('miniflux-url');
 	const token = cookies.get('miniflux-token');
 	const userStr = cookies.get('miniflux-user');
 
-	if (!url || !token) {
-		return { isAuthenticated: false, user: null };
+	if (!minifluxUrl || !token) {
+		throw redirect(303, '/login');
 	}
 
 	let user = null;
@@ -19,9 +20,9 @@ export const load: PageServerLoad = async ({ cookies }) => {
 			cookies.delete('miniflux-token', { path: '/' });
 			cookies.delete('miniflux-user', { path: '/' });
 
-			return { isAuthenticated: false, user: null };
+			throw redirect(303, '/login');
 		}
 	}
 
-	return { isAuthenticated: true, user };
+	return { user: user as { username: string }, minifluxUrl, token };
 };

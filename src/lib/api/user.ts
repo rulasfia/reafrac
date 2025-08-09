@@ -1,25 +1,5 @@
 import { ofetch } from 'ofetch';
-
-// Miniflux API client
-export interface MinifluxConfig {
-	url: string;
-	token: string;
-}
-
-export interface MinifluxUser {
-	id: number;
-	username: string;
-	email: string;
-	is_admin: boolean;
-	theme: string;
-	language: string;
-	timezone: string;
-	entry_direction: string;
-	entries_per_page: number;
-	displayed_infos: string;
-	nb_unread_entries: number;
-	nb_starred_entries: number;
-}
+import type { MinifluxUser } from './types';
 
 export async function validateMinifluxCredentials(
 	url: string,

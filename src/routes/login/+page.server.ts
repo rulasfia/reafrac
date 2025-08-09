@@ -1,4 +1,4 @@
-import { validateMinifluxCredentials } from '$lib/api';
+import { validateMinifluxCredentials } from '$lib/api/user';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -63,7 +63,7 @@ export const actions: Actions = {
 				maxAge: 60 * 60 * 24 * 30 // 30 days
 			});
 
-			cookies.set('miniflux-user', JSON.stringify(result.user), {
+			cookies.set('miniflux-user', JSON.stringify({ username: result.user.username }), {
 				path: '/',
 				httpOnly: true,
 				secure: import.meta.env.PROD,
@@ -71,7 +71,7 @@ export const actions: Actions = {
 				maxAge: 60 * 60 * 24 * 30 // 30 days
 			});
 
-			throw redirect(303, '/unread');
+			throw redirect(303, '/home');
 		} else {
 			return fail(401, {
 				error: result.error || 'Authentication failed',
