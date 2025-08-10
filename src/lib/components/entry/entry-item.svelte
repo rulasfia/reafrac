@@ -1,10 +1,13 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import type { FeedEntry } from '$lib/api/types';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import { extractTextFromHtml, formatDate } from '$lib/utils';
 	import { sidebarMenuButtonVariants } from '../ui/sidebar/sidebar-menu-button.svelte';
 
 	const { entry, minifluxUrl }: { entry: FeedEntry; minifluxUrl: string } = $props();
+
+	const active = $derived(page.url.searchParams.get('entry') === entry.id.toString());
 </script>
 
 <Sidebar.MenuButton>
@@ -12,8 +15,10 @@
 		<a
 			{...props}
 			href={`?entry=${entry.id}`}
+			data-active={active}
 			class={sidebarMenuButtonVariants({
-				class: 'grid h-fit w-auto grid-cols-1 overflow-auto p-3 text-wrap'
+				class:
+					'grid h-fit w-auto grid-cols-1 overflow-auto border border-transparent p-3 text-wrap data-[active=true]:border-border/50 data-[active=true]:shadow-sm/5'
 			})}
 		>
 			<div class="flex justify-between text-foreground/60">

@@ -1,7 +1,7 @@
 <script lang="ts">
+	import type { EntryMeta, FeedEntry } from '$lib/api/types';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import { page } from '$app/state';
-	import type { EntryMeta, FeedEntry } from '$lib/api/types';
 	import RefreshIcon from '@lucide/svelte/icons/rotate-cw';
 	import EntryItem from './entry/entry-item.svelte';
 	import { Button } from './ui/button';
@@ -32,6 +32,9 @@
 						</Sidebar.MenuItem>
 						<Sidebar.Separator />
 					{/each}
+					<Sidebar.MenuItem>
+						<Sidebar.MenuButton class="justify-center">Load More</Sidebar.MenuButton>
+					</Sidebar.MenuItem>
 				</Sidebar.Menu>
 			</Sidebar.GroupContent>
 		</Sidebar.Group>
