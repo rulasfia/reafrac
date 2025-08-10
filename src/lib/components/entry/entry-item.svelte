@@ -11,7 +11,7 @@
 	{#snippet child({ props })}
 		<a
 			{...props}
-			href={`/entry/${entry.id}`}
+			href={`?entry=${entry.id}`}
 			class={sidebarMenuButtonVariants({
 				class: 'grid h-fit w-auto grid-cols-1 overflow-auto p-3 text-wrap'
 			})}

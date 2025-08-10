@@ -1,5 +1,5 @@
 import type { LayoutLoad } from './$types';
-import { getEntriesRequest, type EntryResponse } from '$lib/api/entry';
+import { getEntriesRequest, type EntriesQueryParams, type EntryResponse } from '$lib/api/entry';
 
 export const load: LayoutLoad = async ({ parent, fetch, url }) => {
 	try {
@@ -9,7 +9,12 @@ export const load: LayoutLoad = async ({ parent, fetch, url }) => {
 		const limit = 20;
 		const offset = (page - 1) * limit;
 
-		const query = { offset, limit } as const;
+		const query = {
+			offset,
+			limit,
+			direction: 'desc',
+			order: 'published_at'
+		} satisfies EntriesQueryParams;
 
 		// TODO: handle fetch error
 		const res = await fetch(getEntriesRequest(data.minifluxUrl, data.token, query));

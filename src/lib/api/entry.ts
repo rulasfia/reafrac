@@ -7,7 +7,7 @@ export interface EntryResponse {
 	entries: FeedEntry[];
 }
 
-type EntriesQueryParams = {
+export type EntriesQueryParams = {
 	status?: 'unread' | 'read' | 'removed';
 	order?: 'id' | 'status' | 'published_at' | 'category_title' | 'category_id';
 	direction?: 'asc' | 'desc';
@@ -18,13 +18,23 @@ type EntriesQueryParams = {
 export function getEntriesRequest(
 	url: string,
 	token: string,
-	query: EntriesQueryParams = { direction: 'desc', order: 'published_at', limit: 20, offset: 0 }
+	query: EntriesQueryParams = { direction: 'asc', order: 'published_at', limit: 20, offset: 0 }
 ) {
 	// Remove trailing slash if present
 	const cleanUrl = url.endsWith('/') ? url.slice(0, -1) : url;
 
 	const queryString = qs.stringify(query);
 	return new Request(`${cleanUrl}/v1/entries?${queryString}`, {
+		method: 'GET',
+		headers: {
+			'X-Auth-Token': token,
+			'Content-Type': 'application/json'
+		}
+	});
+}
+
+export function getEntryRequestById(url: string, token: string, id: string) {
+	return new Request(`${url}/v1/entries/${id}`, {
 		method: 'GET',
 		headers: {
 			'X-Auth-Token': token,
