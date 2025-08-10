@@ -15,7 +15,9 @@
 
 <Sidebar.Provider>
 	<AppSidebar username={data.user.username} {feeds} />
-	<main class="container mx-auto">
-		{@render children?.()}
-	</main>
+	<Sidebar.Inset>
+		<main class="container mx-auto px-4">
+			{@render children?.()}
+		</main>
+	</Sidebar.Inset>
 </Sidebar.Provider>

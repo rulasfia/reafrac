@@ -25,6 +25,7 @@ export interface FeedEntry {
 	feed_id: number;
 	title: string;
 	url: string;
+	enclosures: Record<string, unknown>[] | null;
 	comments_url: string | null;
 	published_at: string;
 	author: string;
@@ -78,4 +79,12 @@ export interface Icon {
 	id: number;
 	mime_type: string;
 	data: string;
+}
+
+export interface EntryMeta {
+	totalItem: number;
+	currentPage: number;
+	totalPages: number;
+	hasNext: boolean;
+	hasPrev: boolean;
 }

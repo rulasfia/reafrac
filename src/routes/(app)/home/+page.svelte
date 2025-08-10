@@ -78,7 +78,7 @@
 
 <div class="container mx-auto py-4">
 	<div class="mb-6 flex items-center justify-between">
-		<h1 class="text-2xl font-bold">Unread Entries</h1>
+		<h1 class="text-2xl font-bold">All Feed</h1>
 		{#if data.data.entries.length > 0}
 			<Button onclick={handleMarkAllAsRead} disabled={loading}>
 				{loading ? 'Marking all as read...' : 'Mark all as read'}
@@ -94,7 +94,7 @@
 
 	{#if data.data.entries.length === 0}
 		<div class="rounded-md bg-gray-50 p-8 text-center">
-			<p class="text-gray-600">No unread entries found.</p>
+			<p class="text-gray-600">No entries found.</p>
 			<p class="mt-2 text-sm text-gray-500">Great job! You're all caught up.</p>
 		</div>
 	{:else}

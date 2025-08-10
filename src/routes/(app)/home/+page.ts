@@ -10,7 +10,7 @@ export const load: PageLoad = async ({ data, url, fetch }) => {
 
 		const query = { offset, limit } as const;
 
-		// TODO: fetch error handler
+		// TODO: handle fetch error
 		const res = await fetch(getEntriesRequest(data.minifluxUrl, data.token, query));
 		const entries = (await res.json()) as EntryResponse;
 
