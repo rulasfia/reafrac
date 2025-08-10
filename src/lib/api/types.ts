@@ -82,7 +82,7 @@ export interface Icon {
 }
 
 export interface EntryMeta {
-	totalItem: number;
+	totalItems: number;
 	currentPage: number;
 	totalPages: number;
 	hasNext: boolean;

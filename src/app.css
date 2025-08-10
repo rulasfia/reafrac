@@ -119,8 +119,34 @@
 @layer base {
 	* {
 		@apply border-border outline-ring/50;
+		text-rendering: optimizeLegibility;
+		scrollbar-width: thin;
+		scrollbar-color: var(--border) transparent;
 	}
+
+	html {
+		font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+		font-variation-settings: normal;
+		scroll-behavior: smooth;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+		-webkit-tap-highlight-color: transparent;
+	}
+
 	body {
 		@apply bg-background text-foreground;
+	}
+
+	::-webkit-scrollbar {
+		width: 4px;
+	}
+
+	::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	::-webkit-scrollbar-thumb {
+		background: var(--border);
+		border-radius: 4px;
 	}
 }
