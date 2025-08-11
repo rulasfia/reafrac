@@ -12,7 +12,7 @@
 >
 	<EntrySidebar data={data.entries.data} pagination={data.entries.pagination} />
 	<Sidebar.Inset
-		class="container m-2 h-[calc(100vh-1rem)] w-[calc(100vw-37rem)] overflow-auto rounded-xl p-4 shadow-md"
+		class="container m-2 h-[calc(100vh-1rem)] w-[calc(100vw-37rem)] overflow-auto rounded-xl border-[0.5px] border-border p-4 shadow-md"
 	>
 		{@render children?.()}
 	</Sidebar.Inset>

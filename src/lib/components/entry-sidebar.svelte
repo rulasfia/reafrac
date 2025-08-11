@@ -30,7 +30,7 @@
 						<Sidebar.MenuItem>
 							<EntryItem {entry} minifluxUrl={page.data.minifluxUrl} />
 						</Sidebar.MenuItem>
-						<Sidebar.Separator />
+						<Sidebar.Separator class="h-[0.5px]" />
 					{/each}
 					<Sidebar.MenuItem>
 						<Sidebar.MenuButton class="justify-center">Load More</Sidebar.MenuButton>

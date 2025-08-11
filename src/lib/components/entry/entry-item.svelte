@@ -7,7 +7,8 @@
 
 	const { entry, minifluxUrl }: { entry: FeedEntry; minifluxUrl: string } = $props();
 
-	const active = $derived(page.url.searchParams.get('entry') === entry.id.toString());
+	const isActive = $derived(page.url.searchParams.get('entry') === entry.id.toString());
+	const isRead = $derived(entry.status);
 </script>
 
 <Sidebar.MenuButton>
@@ -15,10 +16,11 @@
 		<a
 			{...props}
 			href={`?entry=${entry.id}`}
-			data-active={active}
+			data-status={isRead}
+			data-active={isActive}
 			class={sidebarMenuButtonVariants({
 				class:
-					'grid h-fit w-auto grid-cols-1 overflow-auto border border-transparent p-3 text-wrap data-[active=true]:border-border/50 data-[active=true]:shadow-sm/5'
+					'grid h-fit w-auto grid-cols-1 overflow-auto border-[0.5px] border-transparent p-3 text-wrap transition-all duration-75 ease-out data-[active=true]:border-border/75 data-[active=true]:shadow-sm/5 data-[status=read]:opacity-50'
 			})}
 		>
 			<div class="flex justify-between text-foreground/60">
@@ -31,7 +33,11 @@
 						class="size-7 rounded-full border border-border/20 shadow-sm"
 					/>
 					<div class="flex flex-col">
-						<span class="text-xs font-medium text-foreground">{entry.feed.title}</span>
+						<span
+							data-status={isRead}
+							class="text-xs font-medium text-foreground data-[status=read]:text-foreground/70"
+							>{entry.feed.title}
+						</span>
 						<span class="text-xs">{entry.author}</span>
 					</div>
 				</div>
