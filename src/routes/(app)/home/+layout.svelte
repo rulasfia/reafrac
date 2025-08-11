@@ -4,13 +4,19 @@
 	import type { LayoutProps } from './$types';
 
 	let { children, data }: LayoutProps = $props();
+
+	// Make entries reactive so the child component can update them
+	let entries = $state({
+		data: data.entries.data,
+		pagination: data.entries.pagination
+	});
 </script>
 
 <div
 	style="--sidebar-width: 24rem; --sidebar-width-mobile: 20rem;"
 	class="flex w-full flex-row justify-between bg-sidebar"
 >
-	<EntrySidebar data={data.entries.data} pagination={data.entries.pagination} />
+	<EntrySidebar bind:data={entries.data} bind:pagination={entries.pagination} />
 	<Sidebar.Inset
 		class="container m-2 h-[calc(100vh-1rem)] w-[calc(100vw-37rem)] overflow-auto rounded-xl border-[0.5px] border-border p-4 shadow-md"
 	>
