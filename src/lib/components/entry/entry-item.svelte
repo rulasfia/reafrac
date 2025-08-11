@@ -4,11 +4,24 @@
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import { extractTextFromHtml, formatDate } from '$lib/utils';
 	import { sidebarMenuButtonVariants } from '../ui/sidebar/sidebar-menu-button.svelte';
+	import { markEntryAsRead } from '$lib/api/entry';
 
 	const { entry, minifluxUrl }: { entry: FeedEntry; minifluxUrl: string } = $props();
 
 	const isActive = $derived(page.url.searchParams.get('entry') === entry.id.toString());
 	const isRead = $derived(entry.status);
+
+	async function markAsRead() {
+		if (entry.status !== 'read') {
+			try {
+				await markEntryAsRead(minifluxUrl, page.data.token, entry.id);
+				// Update the entry status locally
+				entry.status = 'read';
+			} catch (error) {
+				console.error('Failed to mark entry as read:', error);
+			}
+		}
+	}
 </script>
 
 <Sidebar.MenuButton>
@@ -18,6 +31,7 @@
 			href={`?entry=${entry.id}`}
 			data-status={isRead}
 			data-active={isActive}
+			onclick={markAsRead}
 			class={sidebarMenuButtonVariants({
 				class:
 					'grid h-fit w-auto grid-cols-1 overflow-auto border-[0.5px] border-transparent p-3 text-wrap transition-all duration-75 ease-out data-[active=true]:border-border/75 data-[active=true]:shadow-sm/5 data-[status=read]:opacity-50'

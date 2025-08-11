@@ -73,7 +73,7 @@ export async function markEntryAsRead(url: string, token: string, entryId: numbe
 		// Remove trailing slash if present
 		const cleanUrl = url.endsWith('/') ? url.slice(0, -1) : url;
 
-		await ofetch(`/v1/entries/${entryId}`, {
+		await ofetch(`/v1/entries`, {
 			baseURL: cleanUrl,
 			method: 'PUT',
 			timeout: 5000,
@@ -82,6 +82,7 @@ export async function markEntryAsRead(url: string, token: string, entryId: numbe
 				'Content-Type': 'application/json'
 			},
 			body: {
+				entry_ids: [entryId],
 				status: 'read'
 			}
 		});
