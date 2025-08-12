@@ -1,5 +1,6 @@
 @import './lib/assets/typeface.css';
 @import 'tailwindcss';
+@plugin "@tailwindcss/typography";
 
 @import 'tw-animate-css';
 
@@ -135,6 +136,10 @@
 
 	body {
 		@apply bg-background text-foreground;
+	}
+
+	iframe {
+		@apply aspect-video w-full rounded-md border border-border shadow-sm;
 	}
 
 	::-webkit-scrollbar {

@@ -1,5 +1,7 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
 
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
@@ -12,14 +14,9 @@ export type WithoutChildren<T> = T extends { children?: any } ? Omit<T, 'childre
 export type WithoutChildrenOrChild<T> = WithoutChildren<WithoutChild<T>>;
 export type WithElementRef<T, U extends HTMLElement = HTMLElement> = T & { ref?: U | null };
 
-export function formatDate(dateString: string) {
-	return new Date(dateString).toLocaleDateString(undefined, {
-		year: 'numeric',
-		month: 'short',
-		day: 'numeric',
-		hour: '2-digit',
-		minute: '2-digit'
-	});
+export function formatRelativeDate(dateString: string) {
+	dayjs.extend(relativeTime);
+	return dayjs(dateString).fromNow();
 }
 
 export const extractTextFromHtml = (html: string, limit?: number) => {

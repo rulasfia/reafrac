@@ -2,7 +2,7 @@
 	import { page } from '$app/state';
 	import type { FeedEntry } from '$lib/api/types';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
-	import { extractTextFromHtml, formatDate } from '$lib/utils';
+	import { extractTextFromHtml, formatRelativeDate } from '$lib/utils';
 	import { sidebarMenuButtonVariants } from '../ui/sidebar/sidebar-menu-button.svelte';
 	import { markEntryAsRead } from '$lib/api/entry';
 
@@ -56,7 +56,7 @@
 					</div>
 				</div>
 				<span class="py-0.5 text-xs">
-					{formatDate(entry.published_at)}
+					{formatRelativeDate(entry.published_at)}
 				</span>
 			</div>
 			<p class="line-clamp-2 text-base font-semibold">{entry.title}</p>
