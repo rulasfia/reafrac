@@ -115,6 +115,7 @@
 
 @theme {
 	--font-inter: 'Inter', var(--font-sans);
+	--font-ny: 'New York', var(--font-serif);
 }
 
 @layer base {

@@ -5,13 +5,15 @@
 	import { Button } from './ui/button';
 	import xss from 'xss';
 	import dayjs from 'dayjs';
+	import { getEntryRequestById } from '$lib/api/entry';
 
 	const url = $derived(page.url.pathname);
-	const data = $derived.by<null | FeedEntry>(() => {
+	let data = $derived.by<null | FeedEntry>(() => {
 		const entry = page.url.searchParams.get('entry');
 		if (!entry) return null;
 
-		return page.data.entries.data.find((e: FeedEntry) => e.id.toString() === entry);
+		let result = page.data.entries.data.find((e: FeedEntry) => e.id.toString() === entry);
+		return result;
 	});
 
 	const { getDefaultWhiteList } = xss;
@@ -19,14 +21,16 @@
 
 	// const params = $derived(page.url.searchParams.get('entry'));
 	// let data = $state<null | FeedEntry>(null);
-	// $effect(() => {
-	// 	if (!params) return;
-	// 	fetch(getEntryRequestById(page.data.minifluxUrl, page.data.token, params)).then((res) =>
-	// 		res.json().then((json) => {
-	// 			data = json;
-	// 		})
-	// 	);
-	// });
+	$effect(() => {
+		const entry = page.url.searchParams.get('entry');
+		if (!entry || !!data) return;
+		console.log('not found on existing entries. fetching...');
+		fetch(getEntryRequestById(page.data.minifluxUrl, page.data.token, entry)).then((res) =>
+			res.json().then((json) => {
+				data = json;
+			})
+		);
+	});
 </script>
 
 <header>
@@ -34,7 +38,13 @@
 		<XIcon size="16" class="text-foreground/80" />
 	</Button>
 </header>
-{#if !data}{:else}
+{#if !data}
+	<div class="flex flex-col items-center gap-y-1 py-4">
+		<div class="flex justify-center gap-x-2 text-sm text-foreground/60">
+			<span>Fetching entry...</span>
+		</div>
+	</div>
+{:else}
 	<div class="flex flex-col items-center gap-y-1 py-4">
 		<div class="flex justify-center gap-x-2 text-sm text-foreground/60">
 			<span>{data.feed.title}</span>

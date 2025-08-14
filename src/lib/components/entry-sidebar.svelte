@@ -14,7 +14,7 @@
 	let error = $state<string | null>(null);
 
 	// Create a derived array of unique entries for deduplication
-	let uniqueEntries = $derived(() => {
+	let uniqueEntries = $derived.by(() => {
 		const entryMap = new SvelteMap<number, FeedEntry>();
 
 		// Add entries in reverse order to prioritize newer entries when duplicates exist
@@ -103,9 +103,9 @@
 		<Sidebar.Group>
 			<Sidebar.GroupContent>
 				<Sidebar.Menu>
-					{#each uniqueEntries() as entry (entry.id)}
+					{#each uniqueEntries as entry (entry.id)}
 						<Sidebar.MenuItem>
-							<EntryItem {entry} minifluxUrl={page.data.minifluxUrl} />
+							<EntryItem {entry} bind:mutableEntries={data} minifluxUrl={page.data.minifluxUrl} />
 						</Sidebar.MenuItem>
 						<Sidebar.Separator class="h-[0.5px]" />
 					{/each}

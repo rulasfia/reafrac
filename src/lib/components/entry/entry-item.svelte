@@ -6,7 +6,11 @@
 	import { sidebarMenuButtonVariants } from '../ui/sidebar/sidebar-menu-button.svelte';
 	import { markEntryAsRead } from '$lib/api/entry';
 
-	const { entry, minifluxUrl }: { entry: FeedEntry; minifluxUrl: string } = $props();
+	const {
+		entry,
+		mutableEntries = $bindable(),
+		minifluxUrl
+	}: { entry: FeedEntry; mutableEntries: FeedEntry[]; minifluxUrl: string } = $props();
 
 	const isActive = $derived(page.url.searchParams.get('entry') === entry.id.toString());
 	const isRead = $derived(entry.status);
@@ -16,7 +20,12 @@
 			try {
 				await markEntryAsRead(minifluxUrl, page.data.token, entry.id);
 				// Update the entry status locally
-				entry.status = 'read';
+				for (const mutableEntry of mutableEntries) {
+					if (mutableEntry.id === entry.id) {
+						mutableEntry.status = 'read';
+						break;
+					}
+				}
 			} catch (error) {
 				console.error('Failed to mark entry as read:', error);
 			}
