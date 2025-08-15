@@ -43,7 +43,7 @@
 			onclick={markAsRead}
 			class={sidebarMenuButtonVariants({
 				class:
-					'grid h-fit w-auto grid-cols-1 overflow-auto border-[0.5px] border-transparent p-3 text-wrap transition-all duration-75 ease-out data-[active=true]:border-border/75 data-[active=true]:shadow-sm/5 data-[status=read]:opacity-50'
+					'grid h-fit w-auto grid-cols-1 overflow-auto border-[0.5px] border-transparent p-3 text-wrap transition-all duration-[50ms] ease-out data-[active=true]:border-border/75 data-[active=true]:shadow-sm/5 data-[status=read]:opacity-50'
 			})}
 		>
 			<div class="flex justify-between text-foreground/60">

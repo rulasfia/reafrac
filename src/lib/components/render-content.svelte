@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { browser } from '$app/environment';
 	import XIcon from '@lucide/svelte/icons/x';
 	import type { FeedEntry } from '$lib/api/types';
 	import { Button } from './ui/button';
@@ -8,32 +9,38 @@
 	import { getEntryRequestById } from '$lib/api/entry';
 
 	const url = $derived(page.url.pathname);
+	let headerElement = $state<HTMLElement | null>(null);
+
 	let data = $derived.by<null | FeedEntry>(() => {
 		const entry = page.url.searchParams.get('entry');
 		if (!entry) return null;
 
 		let result = page.data.entries.data.find((e: FeedEntry) => e.id.toString() === entry);
+		if (result && browser && headerElement) {
+			headerElement.scrollIntoView();
+		}
 		return result;
 	});
 
 	const { getDefaultWhiteList } = xss;
 	const wl = getDefaultWhiteList();
 
-	// const params = $derived(page.url.searchParams.get('entry'));
-	// let data = $state<null | FeedEntry>(null);
 	$effect(() => {
 		const entry = page.url.searchParams.get('entry');
 		if (!entry || !!data) return;
-		console.log('not found on existing entries. fetching...');
+
 		fetch(getEntryRequestById(page.data.minifluxUrl, page.data.token, entry)).then((res) =>
 			res.json().then((json) => {
 				data = json;
+				if (browser && headerElement) {
+					headerElement.scrollIntoView();
+				}
 			})
 		);
 	});
 </script>
 
-<header>
+<header bind:this={headerElement}>
 	<Button href={url} class="size-7 cursor-pointer" size="icon" variant="ghost">
 		<XIcon size="16" class="text-foreground/80" />
 	</Button>
