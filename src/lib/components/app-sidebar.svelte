@@ -6,6 +6,12 @@
 	import HouseIcon from '@lucide/svelte/icons/house';
 	import LogOutIcon from '@lucide/svelte/icons/log-out';
 	import type { ComponentProps } from 'svelte';
+	import { useQueryState } from 'nuqs-svelte';
+	import { goto, invalidateAll } from '$app/navigation';
+	import { page } from '$app/state';
+	import { createQuery } from '@tanstack/svelte-query';
+	import { ofetch } from 'ofetch';
+	import { getFeedsRequest } from '$lib/api/feed';
 
 	const items = [
 		{
@@ -36,6 +42,10 @@
 		ref = $bindable(null),
 		...restProps
 	}: ComponentProps<typeof Sidebar.Root> & Props = $props();
+
+	async function changeFeedHandler(id: string) {
+		goto(`/feed/${id}${page.url.search}`);
+	}
 </script>
 
 <Sidebar.Root bind:ref {...restProps}>
@@ -84,7 +94,7 @@
 						<Sidebar.MenuItem>
 							<Sidebar.MenuButton>
 								{#snippet child({ props })}
-									<a href={`/feed/${feed.id}`} {...props}>
+									<button {...props} onclick={() => changeFeedHandler(feed.id.toString())}>
 										<img
 											width={18}
 											height={18}
@@ -93,7 +103,7 @@
 											class="size-[18px] rounded-xs border border-border"
 										/>
 										<span>{feed.title}</span>
-									</a>
+									</button>
 								{/snippet}
 							</Sidebar.MenuButton>
 						</Sidebar.MenuItem>

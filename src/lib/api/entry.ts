@@ -43,6 +43,23 @@ export function getEntryRequestById(url: string, token: string, id: string) {
 	});
 }
 
+export function getEntriesByFeedRequest(
+	url: string,
+	token: string,
+	params: { feedId: number } & EntriesQueryParams
+) {
+	const cleanUrl = url.endsWith('/') ? url.slice(0, -1) : url;
+	const { feedId, ...rest } = params;
+	const queryString = qs.stringify(rest);
+	return new Request(`${cleanUrl}/v1/feeds/${feedId}/entries?${queryString}`, {
+		method: 'GET',
+		headers: {
+			'X-Auth-Token': token,
+			'Content-Type': 'application/json'
+		}
+	});
+}
+
 export async function getEntries(
 	url: string,
 	token: string,

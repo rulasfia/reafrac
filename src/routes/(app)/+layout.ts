@@ -12,7 +12,7 @@ export const load: LayoutLoad = async ({ data, fetch }) => {
 		console.error('Failed:', error);
 		return {
 			...data,
-			feeds: [],
+			feeds: [] as Feed[],
 			error: error instanceof Error ? error.message : 'Failed to fetch'
 		};
 	}

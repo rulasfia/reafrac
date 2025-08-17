@@ -6,10 +6,12 @@
 	import EntryItem from './entry/entry-item.svelte';
 	import { Button } from './ui/button';
 	import { SvelteMap } from 'svelte/reactivity';
+	import { getEntriesByFeedRequest, getEntriesRequest } from '$lib/api/entry';
 
 	type Props = { data: FeedEntry[]; pagination: EntryMeta };
 	let { data = $bindable(), pagination = $bindable() }: Props = $props();
 
+	const feedId = $derived(page.params.id);
 	let loading = $state(false);
 	let error = $state<string | null>(null);
 
@@ -45,18 +47,16 @@
 				limit,
 				direction: 'desc',
 				order: 'published_at'
-			};
+			} as const;
 
-			const res = await fetch(
-				`${page.data.minifluxUrl}/v1/entries?${new URLSearchParams(query as any)}`,
-				{
-					method: 'GET',
-					headers: {
-						'X-Auth-Token': page.data.token,
-						'Content-Type': 'application/json'
-					}
-				}
-			);
+			const request = feedId
+				? getEntriesByFeedRequest(page.data.minifluxUrl, page.data.token, {
+						feedId: parseInt(feedId, 10),
+						...query
+					})
+				: getEntriesRequest(page.data.minifluxUrl, page.data.token, query);
+
+			const res = await fetch(request);
 
 			if (!res.ok) {
 				throw new Error('Failed to load more entries');
