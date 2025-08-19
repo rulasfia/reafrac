@@ -13,5 +13,11 @@
 	},
 	"vars": {
 		"VARIABLE": ""
-	}
+	},
+	"routes": [
+		{
+			"pattern": "reafrac.com",
+			"custom_domain": true
+		}
+	]
 }
