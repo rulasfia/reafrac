@@ -86,16 +86,6 @@
 						Learn more about Miniflux
 					</a>
 				</p>
-				<p class="text-sm text-foreground/60">
-					<a
-						href="https://miniflux.app"
-						target="_blank"
-						rel="noopener"
-						class="underline hover:text-foreground"
-					>
-						Learn more about Miniflux
-					</a>
-				</p>
 			</section>
 		{/if}
 	</main>
