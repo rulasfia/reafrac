@@ -40,7 +40,7 @@
 	});
 </script>
 
-<header bind:this={headerElement}>
+<header bind:this={headerElement} class="sticky top-0">
 	<Button href={url} class="size-7 cursor-pointer" size="icon" variant="ghost">
 		<XIcon size="16" class="text-foreground/80" />
 	</Button>

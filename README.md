@@ -1,6 +1,6 @@
 # Reafrac
 
-A modern RSS reader client built with SvelteKit, designed to work seamlessly with Miniflux servers. Future standalone mode support planned.
+A modern opensource RSS reader client built with SvelteKit, designed to work seamlessly with Miniflux servers. Future standalone mode support planned.
 
 ## Development
 
