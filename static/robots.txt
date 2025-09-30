@@ -1,6 +1,0 @@
-# allow only landing page crawling
-User-agent: *
-Disallow: /api/
-Disallow: /login/
-Disallow: /home/
-Disallow: /*?*
