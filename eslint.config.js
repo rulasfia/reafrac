@@ -6,6 +6,7 @@ import globals from 'globals';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript-eslint';
 import pluginRouter from '@tanstack/eslint-plugin-router';
+import pluginReactHooks from 'eslint-plugin-react-hooks';
 
 const gitignorePath = fileURLToPath(new URL('./.gitignore', import.meta.url));
 
@@ -15,6 +16,7 @@ export default defineConfig(
 	...ts.configs.recommended,
 	prettier,
 	...pluginRouter.configs['flat/recommended'],
+	...pluginReactHooks.configs['flat/recommended'],
 	{
 		languageOptions: {
 			globals: { ...globals.browser, ...globals.node }

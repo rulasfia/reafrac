@@ -9,13 +9,28 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as SignUpRouteImport } from './routes/sign-up'
+import { Route as ReaderRouteImport } from './routes/reader'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ReaderIndexRouteImport } from './routes/reader/index'
+import { Route as ReaderDashboardRouteImport } from './routes/reader/dashboard'
 import { Route as ApiDemoNamesRouteImport } from './routes/api.demo-names'
+import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const SignUpRoute = SignUpRouteImport.update({
+  id: '/sign-up',
+  path: '/sign-up',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReaderRoute = ReaderRouteImport.update({
+  id: '/reader',
+  path: '/reader',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -23,49 +38,119 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReaderIndexRoute = ReaderIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ReaderRoute,
+} as any)
+const ReaderDashboardRoute = ReaderDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => ReaderRoute,
+} as any)
 const ApiDemoNamesRoute = ApiDemoNamesRouteImport.update({
   id: '/api/demo-names',
   path: '/api/demo-names',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
+  id: '/api/auth/$',
+  path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
+  '/login': typeof LoginRoute
+  '/reader': typeof ReaderRouteWithChildren
+  '/sign-up': typeof SignUpRoute
   '/api/demo-names': typeof ApiDemoNamesRoute
+  '/reader/dashboard': typeof ReaderDashboardRoute
+  '/reader/': typeof ReaderIndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
+  '/login': typeof LoginRoute
+  '/sign-up': typeof SignUpRoute
   '/api/demo-names': typeof ApiDemoNamesRoute
+  '/reader/dashboard': typeof ReaderDashboardRoute
+  '/reader': typeof ReaderIndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
+  '/login': typeof LoginRoute
+  '/reader': typeof ReaderRouteWithChildren
+  '/sign-up': typeof SignUpRoute
   '/api/demo-names': typeof ApiDemoNamesRoute
+  '/reader/dashboard': typeof ReaderDashboardRoute
+  '/reader/': typeof ReaderIndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/api/demo-names'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/reader'
+    | '/sign-up'
+    | '/api/demo-names'
+    | '/reader/dashboard'
+    | '/reader/'
+    | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/api/demo-names'
-  id: '__root__' | '/' | '/dashboard' | '/api/demo-names'
+  to:
+    | '/'
+    | '/login'
+    | '/sign-up'
+    | '/api/demo-names'
+    | '/reader/dashboard'
+    | '/reader'
+    | '/api/auth/$'
+  id:
+    | '__root__'
+    | '/'
+    | '/login'
+    | '/reader'
+    | '/sign-up'
+    | '/api/demo-names'
+    | '/reader/dashboard'
+    | '/reader/'
+    | '/api/auth/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  DashboardRoute: typeof DashboardRoute
+  LoginRoute: typeof LoginRoute
+  ReaderRoute: typeof ReaderRouteWithChildren
+  SignUpRoute: typeof SignUpRoute
   ApiDemoNamesRoute: typeof ApiDemoNamesRoute
+  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
+    '/sign-up': {
+      id: '/sign-up'
+      path: '/sign-up'
+      fullPath: '/sign-up'
+      preLoaderRoute: typeof SignUpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reader': {
+      id: '/reader'
+      path: '/reader'
+      fullPath: '/reader'
+      preLoaderRoute: typeof ReaderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -75,6 +160,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reader/': {
+      id: '/reader/'
+      path: '/'
+      fullPath: '/reader/'
+      preLoaderRoute: typeof ReaderIndexRouteImport
+      parentRoute: typeof ReaderRoute
+    }
+    '/reader/dashboard': {
+      id: '/reader/dashboard'
+      path: '/dashboard'
+      fullPath: '/reader/dashboard'
+      preLoaderRoute: typeof ReaderDashboardRouteImport
+      parentRoute: typeof ReaderRoute
+    }
     '/api/demo-names': {
       id: '/api/demo-names'
       path: '/api/demo-names'
@@ -82,13 +181,36 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiDemoNamesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/auth/$': {
+      id: '/api/auth/$'
+      path: '/api/auth/$'
+      fullPath: '/api/auth/$'
+      preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
+interface ReaderRouteChildren {
+  ReaderDashboardRoute: typeof ReaderDashboardRoute
+  ReaderIndexRoute: typeof ReaderIndexRoute
+}
+
+const ReaderRouteChildren: ReaderRouteChildren = {
+  ReaderDashboardRoute: ReaderDashboardRoute,
+  ReaderIndexRoute: ReaderIndexRoute,
+}
+
+const ReaderRouteWithChildren =
+  ReaderRoute._addFileChildren(ReaderRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  DashboardRoute: DashboardRoute,
+  LoginRoute: LoginRoute,
+  ReaderRoute: ReaderRouteWithChildren,
+  SignUpRoute: SignUpRoute,
   ApiDemoNamesRoute: ApiDemoNamesRoute,
+  ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
