@@ -1,9 +1,9 @@
-import * as React from 'react';
 import {
 	IconBookmarkFill,
 	IconCalendar2Fill,
 	IconChevronsY,
 	IconDashboardFill,
+	IconGear,
 	IconLogout
 } from '@intentui/icons';
 import { Avatar } from '@/components/ui/avatar';
@@ -111,7 +111,11 @@ function MenuSidebar() {
 							</MenuHeader>
 						</MenuSection>
 
-						<MenuItem onClick={logoutHandler}>
+						<MenuItem href="/reader/settings">
+							<IconGear />
+							Settings
+						</MenuItem>
+						<MenuItem isDanger onClick={logoutHandler}>
 							<IconLogout />
 							Log out
 						</MenuItem>

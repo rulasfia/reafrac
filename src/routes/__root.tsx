@@ -13,6 +13,7 @@ import { requestLoggerMiddleware } from '@/lib/middleware/logger-middleware';
 import { Toast } from '@/components/ui/toast';
 import { ThemeProvider } from '@/components/theme-provider';
 import { QueryProvider } from '@/components/query-provider';
+import { RouteProviders } from '@/components/route-provider';
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
 	server: {
@@ -38,15 +39,17 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 					<HeadContent />
 				</head>
 				<body>
-					<QueryProvider>
-						<Toast />
-						{children}
-						{/*<TanstackDevtools
+					<RouteProviders>
+						<QueryProvider>
+							<Toast />
+							{children}
+							{/*<TanstackDevtools
 							config={{ position: 'bottom-left' }}
 							plugins={[{ name: 'Tanstack Router', render: <TanStackRouterDevtoolsPanel /> }]}
 						/>*/}
-						<Scripts />
-					</QueryProvider>
+							<Scripts />
+						</QueryProvider>
+					</RouteProviders>
 				</body>
 			</html>
 		</ThemeProvider>
