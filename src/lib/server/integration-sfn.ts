@@ -1,6 +1,6 @@
 import { createServerFn } from '@tanstack/react-start';
 import { ofetch } from 'ofetch';
-import { MinifluxUser } from 'src-legacy/lib/api/types';
+import { type MinifluxUser } from './types';
 import * as z from 'zod/mini';
 import { db } from '../db-connection';
 import { fluxConnections } from '../db-schema';
@@ -49,12 +49,12 @@ export const fluxIntegrationServerFn = createServerFn({ method: 'POST' })
 
 export const getExistingIntegrationServerFn = createServerFn({ method: 'GET' })
 	.middleware([authFnMiddleware])
-	.inputValidator(z.object({ id: z.string().check(z.minLength(1)) }))
+	.inputValidator(z.object({ userId: z.string().check(z.minLength(1)) }))
 	.handler(async ({ data }) => {
 		const res = await db
 			.select()
 			.from(fluxConnections)
-			.where(eq(fluxConnections.userId, data.id))
+			.where(eq(fluxConnections.userId, data.userId))
 			.limit(1);
 
 		if (!res || res.length === 0) {

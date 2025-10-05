@@ -7,7 +7,7 @@ export const Route = createFileRoute('/')({
 function App() {
 	return (
 		<div className="text-center">
-			<h1>Welcome to React Router</h1>
+			<h1>Welcome to Reafrac</h1>
 		</div>
 	);
 }

@@ -30,7 +30,7 @@ function RouteComponent() {
 				onRequest: () => setIsLoading(true),
 				onSuccess: () => {
 					setIsLoading(false);
-					return navigate({ to: '/reader', replace: true });
+					return navigate({ to: '/reader', replace: true, search: { page: 'dashboard' } });
 				},
 				onError: ({ error }) => {
 					setIsLoading(false);

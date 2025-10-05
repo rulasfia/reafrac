@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query';
 import {
 	IconBookmarkFill,
 	IconCalendar2Fill,
@@ -15,7 +16,8 @@ import {
 	SidebarItem,
 	SidebarLabel,
 	SidebarSection,
-	SidebarSectionGroup
+	SidebarSectionGroup,
+	SidebarSeparator
 } from '@/components/ui/sidebar';
 import {
 	Menu,
@@ -28,6 +30,8 @@ import {
 import { ContentSidebar } from './content-sidebar';
 import { useLoaderData, useLocation, useNavigate } from '@tanstack/react-router';
 import { authClient } from '@/lib/auth-client';
+import { ofetch } from 'ofetch';
+import type { Feed } from '@/lib/server/types';
 
 export function AppSidebar() {
 	return (
@@ -41,15 +45,29 @@ export function AppSidebar() {
 }
 
 const MENU_ITEMS = [
-	{ label: 'Dashboard', icon: <IconDashboardFill />, href: '/reader/dashboard' },
-	{ label: 'Today', icon: <IconCalendar2Fill />, href: '/reader/today' },
-	{ label: 'Saved', icon: <IconBookmarkFill />, href: '/reader/saved' }
-];
+	{ label: 'Dashboard', icon: <IconDashboardFill />, href: '/reader', page: 'dashboard' },
+	{ label: 'Today', icon: <IconCalendar2Fill />, href: '/reader', page: 'today' },
+	{ label: 'Saved', icon: <IconBookmarkFill />, href: '/reader', page: 'saved' }
+] as const;
 
 function MenuSidebar() {
-	const { pathname } = useLocation();
-	const { user } = useLoaderData({ from: '/reader' });
+	const { pathname, search } = useLocation();
+	const { user, integration } = useLoaderData({ from: '/reader' });
 	const navigate = useNavigate();
+
+	const { data: feeds } = useQuery({
+		enabled: !!integration,
+		queryKey: [['feeds', integration?.id]],
+		queryFn: async () => {
+			if (!integration) return [];
+			const res = await ofetch<Feed[]>(`/v1/feeds`, {
+				baseURL: integration.serverUrl,
+				timeout: 5000,
+				headers: { 'X-Auth-Token': integration.apiKey, 'Content-Type': 'application/json' }
+			});
+			return res;
+		}
+	});
 
 	async function logoutHandler() {
 		await authClient.signOut({
@@ -60,23 +78,42 @@ function MenuSidebar() {
 			}
 		});
 	}
+
 	return (
 		<div className="mr col-span-2 flex h-full flex-col overflow-y-auto border-r">
 			<SidebarHeader>
-				<span>Reafrac</span>
+				<span className="text-lg font-bold">Reafrac</span>
 			</SidebarHeader>
-			<SidebarContent>
+			<SidebarContent className="overflow-x-clip">
 				<SidebarSectionGroup>
 					<SidebarSection>
 						{MENU_ITEMS.map((item) => (
 							<SidebarItem
 								key={item.label}
 								tooltip={item.label}
-								isCurrent={pathname === item.href}
-								href={item.href}
+								isCurrent={search.page === item.page}
+								href={`${item.href}?page=${item.page}`}
 							>
 								{item.icon}
 								<SidebarLabel>{item.label}</SidebarLabel>
+							</SidebarItem>
+						))}
+					</SidebarSection>
+				</SidebarSectionGroup>
+				<SidebarSeparator />
+
+				<SidebarSectionGroup>
+					<SidebarSection>
+						{feeds?.map((item) => (
+							<SidebarItem key={item.id} tooltip={item.title}>
+								<img
+									width={18}
+									height={18}
+									src={`${integration?.serverUrl}/feed/icon/${item.icon?.external_icon_id}`}
+									alt={item.title}
+									className="mr-2 size-[18px] rounded-xs border border-border"
+								/>
+								<SidebarLabel>{item.title}</SidebarLabel>
 							</SidebarItem>
 						))}
 					</SidebarSection>

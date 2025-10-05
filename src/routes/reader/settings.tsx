@@ -40,7 +40,7 @@ function MinifluxIntegrationForm() {
 
 	const { data, refetch } = useQuery({
 		queryKey: ['miniflux-integration', user.id],
-		queryFn: () => getExistingIntegration({ data: { id: user.id } })
+		queryFn: () => getExistingIntegration({ data: { userId: user.id } })
 	});
 
 	const submitHandler = async (event: React.FormEvent<HTMLFormElement>) => {

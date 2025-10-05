@@ -3,7 +3,7 @@ import { Loader } from '@/components/ui/loader';
 import { TextField } from '@/components/ui/text-field';
 import { authClient } from '@/lib/auth-client';
 import { kickAuthedUserServerFn } from '@/lib/server/auth-sfn';
-import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -38,7 +38,7 @@ function RouteComponent() {
 				onRequest: () => setIsLoading(true),
 				onSuccess: () => {
 					setIsLoading(false);
-					return navigate({ to: '/reader', replace: true });
+					return navigate({ to: '/reader', replace: true, search: { page: 'dashboard' } });
 				},
 				onError: ({ error }) => {
 					setIsLoading(false);
