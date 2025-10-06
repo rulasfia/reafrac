@@ -51,7 +51,7 @@ const MENU_ITEMS = [
 ] as const;
 
 function MenuSidebar() {
-	const { pathname, search } = useLocation();
+	const { search } = useLocation();
 	const { user, integration } = useLoaderData({ from: '/reader' });
 	const navigate = useNavigate();
 
