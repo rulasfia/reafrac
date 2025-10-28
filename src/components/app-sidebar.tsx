@@ -1,3 +1,4 @@
+import qs from 'query-string';
 import { useQuery } from '@tanstack/react-query';
 import {
 	IconBookmarkFill,
@@ -30,8 +31,8 @@ import {
 import { ContentSidebar } from './content-sidebar';
 import { useLoaderData, useLocation, useNavigate } from '@tanstack/react-router';
 import { authClient } from '@/lib/auth-client';
-import { ofetch } from 'ofetch';
-import type { Feed } from '@/lib/server/types';
+import { useServerFn } from '@tanstack/react-start';
+import { getFeedsServerFn } from '@/lib/server/feed-sfn';
 
 export function AppSidebar() {
 	return (
@@ -54,19 +55,12 @@ function MenuSidebar() {
 	const { search } = useLocation();
 	const { user, integration } = useLoaderData({ from: '/reader' });
 	const navigate = useNavigate();
+	const getFeeds = useServerFn(getFeedsServerFn);
 
 	const { data: feeds } = useQuery({
 		enabled: !!integration,
 		queryKey: ['feeds', integration?.id],
-		queryFn: async () => {
-			if (!integration) return [];
-			const res = await ofetch<Feed[]>(`/v1/feeds`, {
-				baseURL: integration.serverUrl,
-				timeout: 5000,
-				headers: { 'X-Auth-Token': integration.apiKey, 'Content-Type': 'application/json' }
-			});
-			return res;
-		}
+		queryFn: async () => getFeeds()
 	});
 
 	async function logoutHandler() {
@@ -79,8 +73,16 @@ function MenuSidebar() {
 		});
 	}
 
+	const getPageUrl = (page: string) => {
+		return qs.stringify({
+			...search,
+			entry: search.entry ? search.entry.toString() : undefined,
+			page: typeof page === 'number' ? `_${page}` : page
+		});
+	};
+
 	return (
-		<div className="mr col-span-2 flex h-full flex-col overflow-y-auto border-r">
+		<div className="mr col-span-2 flex h-full flex-col overflow-y-auto border-r bg-muted dark:bg-accent">
 			<SidebarHeader>
 				<span className="text-lg font-bold">Reafrac</span>
 			</SidebarHeader>
@@ -93,7 +95,7 @@ function MenuSidebar() {
 								tooltip={item.label}
 								isCurrent={search.page === item.page}
 								// @ts-expect-error - can't get the query param typesafety to work
-								href={`${item.href}?page=${item.page}`}
+								href={`${item.href}?${getPageUrl(item.page)}`}
 							>
 								{item.icon}
 								<SidebarLabel>{item.label}</SidebarLabel>
@@ -106,7 +108,13 @@ function MenuSidebar() {
 				<SidebarSectionGroup>
 					<SidebarSection>
 						{feeds?.map((item) => (
-							<SidebarItem key={item.id} tooltip={item.title}>
+							<SidebarItem
+								key={item.id}
+								tooltip={item.title}
+								isCurrent={search.page?.split('_')[1] === item.id.toString()}
+								// @ts-expect-error - can't get the query param typesafety to work
+								href={`/reader?${getPageUrl(item.id)}`}
+							>
 								<img
 									width={18}
 									height={18}
@@ -121,9 +129,12 @@ function MenuSidebar() {
 				</SidebarSectionGroup>
 			</SidebarContent>
 
-			<SidebarFooter className="flex flex-row justify-between gap-4 group-data-[state=collapsed]:flex-col">
+			<SidebarFooter className="flex flex-row justify-between gap-4 group-data-[state=collapsed]:flex-col in-data-[intent=inset]:px-4">
 				<Menu>
-					<MenuTrigger className="flex w-full items-center justify-between" aria-label="Profile">
+					<MenuTrigger
+						className="flex w-full items-center justify-between rounded-lg p-px hover:bg-background"
+						aria-label="Profile"
+					>
 						<div className="flex items-center gap-x-2">
 							<Avatar
 								className="size-8 *:size-8 group-data-[state=collapsed]:size-6 group-data-[state=collapsed]:*:size-6"
@@ -132,8 +143,8 @@ function MenuSidebar() {
 							/>
 
 							<div className="text-sm in-data-[collapsible=dock]:hidden">
-								<SidebarLabel>{user.name}</SidebarLabel>
-								<span className="-mt-0.5 block text-muted-fg">{user.email}</span>
+								<SidebarLabel className="text-sm">{user.name}</SidebarLabel>
+								<span className="-mt-0.5 block text-xs text-muted-fg">{user.email}</span>
 							</div>
 						</div>
 						<IconChevronsY data-slot="chevron" />

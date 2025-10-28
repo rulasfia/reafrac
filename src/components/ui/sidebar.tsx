@@ -142,7 +142,7 @@ const SidebarProvider = ({
 				className={twMerge(
 					'@container **:data-[slot=icon]:shrink-0',
 					'flex min-h-svh w-full text-sidebar-fg',
-					'group/sidebar-root peer/sidebar-root has-data-[intent=inset]:bg-sidebar dark:has-data-[intent=inset]:bg-bg',
+					'group/sidebar-root peer/sidebar-root dark:has-data-[intent=inset]:bg-bg has-data-[intent=inset]:bg-sidebar',
 					className
 				)}
 				ref={ref}
@@ -247,7 +247,7 @@ const Sidebar = ({
 					intent === 'float' &&
 						'bg-bg p-2 group-data-[collapsible=dock]:w-[calc(--spacing(4)+2px)]',
 					intent === 'inset' &&
-						'bg-sidebar group-data-[collapsible=dock]:w-[calc(var(--sidebar-width-dock)+--spacing(2)+2px)] dark:bg-bg',
+						'dark:bg-bg bg-sidebar group-data-[collapsible=dock]:w-[calc(var(--sidebar-width-dock)+--spacing(2)+2px)]',
 					intent === 'default' && [
 						'group-data-[collapsible=dock]:w-(--sidebar-width-dock)',
 						'group-data-[side=left]:border-r group-data-[side=left]:border-sidebar-border group-data-[side=right]:border-l group-data-[side=right]:border-sidebar-border'
@@ -261,7 +261,7 @@ const Sidebar = ({
 					data-slot="sidebar-inner"
 					className={twJoin(
 						'flex h-full w-full flex-col text-sidebar-fg',
-						'group-data-[intent=inset]:bg-sidebar dark:group-data-[intent=inset]:bg-bg',
+						'dark:group-data-[intent=inset]:bg-bg group-data-[intent=inset]:bg-sidebar',
 						'group-data-[intent=float]:rounded-lg group-data-[intent=float]:border group-data-[intent=float]:border-sidebar-border group-data-[intent=float]:bg-sidebar group-data-[intent=float]:shadow-xs'
 					)}
 				>
@@ -410,10 +410,10 @@ const SidebarItem = ({
 						'has-[a]:p-0',
 						'[--sidebar-current-bg:var(--color-sidebar-primary)] [--sidebar-current-fg:var(--color-sidebar-primary-fg)]',
 						isCurrent &&
-							'bg-(--sidebar-current-bg)/90 font-medium text-(--sidebar-current-fg) hover:bg-(--sidebar-current-bg) hover:text-(--sidebar-current-fg) **:data-[slot=icon]:text-(--sidebar-current-fg) hover:**:data-[slot=icon]:text-(--sidebar-current-fg) [&_.text-muted-fg]:text-sidebar-primary-fg/80',
+							'bg-(--sidebar-current-bg)/90 font-medium text-(--sidebar-current-fg) hover:bg-(--sidebar-current-bg) hover:text-(--sidebar-current-fg) **:data-[slot=icon]:text-(--sidebar-current-fg) hover:**:data-[slot=icon]:text-(--sidebar-current-fg) dark:hover:bg-(--sidebar-current-bg) [&_.text-muted-fg]:text-sidebar-primary-fg/80',
 						isFocusVisible && 'inset-ring inset-ring-sidebar-ring outline-hidden',
 						(isPressed || isHovered) &&
-							'**:data-[slot=icon]:text-text-sidebar-accent-fg bg-sidebar-accent text-sidebar-accent-fg',
+							'**:data-[slot=icon]:text-text-sidebar-accent-fg bg-sidebar-accent text-sidebar-accent-fg dark:bg-sidebar',
 						isDisabled && 'opacity-50',
 						className
 					])
@@ -428,7 +428,7 @@ const SidebarItem = ({
 						(state !== 'collapsed' ? (
 							<span
 								data-slot="sidebar-badge"
-								className="absolute inset-y-1/2 right-1.5 h-5.5 w-auto -translate-y-1/2 rounded-full bg-fg/5 px-2 text-[10px]/5.5 inset-ring-1 inset-ring-sidebar-border transition-colors group-hover/sidebar-item:inset-ring-muted-fg/30 group-data-current:inset-ring-transparent"
+								className="bg-fg/5 absolute inset-y-1/2 right-1.5 h-5.5 w-auto -translate-y-1/2 rounded-full px-2 text-[10px]/5.5 inset-ring-1 inset-ring-sidebar-border transition-colors group-hover/sidebar-item:inset-ring-muted-fg/30 group-data-current:inset-ring-transparent"
 							>
 								{badge}
 							</span>
@@ -485,7 +485,7 @@ const SidebarInset = ({ className, ref, ...props }: React.ComponentProps<'main'>
 		<main
 			ref={ref}
 			className={twMerge(
-				'relative flex w-full flex-1 flex-col bg-bg lg:min-w-0',
+				'bg-bg relative flex w-full flex-1 flex-col lg:min-w-0',
 				'peer-data-[intent=inset]:border peer-data-[intent=inset]:border-sidebar-border md:peer-data-[intent=inset]:m-2 md:peer-data-[intent=inset]:ml-0 md:peer-data-[intent=inset]:rounded-2xl md:peer-data-[intent=inset]:peer-data-[state=collapsed]:ml-2',
 				'peer-data-[intent=inset]:bg-bg dark:peer-data-[intent=inset]:bg-sidebar',
 				className

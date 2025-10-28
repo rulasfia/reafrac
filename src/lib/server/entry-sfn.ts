@@ -3,6 +3,7 @@ import * as z from 'zod/mini';
 import { authFnMiddleware } from '../middleware/auth-middleware';
 import { getExistingIntegrationServerFn } from './integration-sfn';
 import { ofetch } from 'ofetch';
+import type { FeedEntry } from './types';
 
 export const updateEntryStatusServerFn = createServerFn({ method: 'POST' })
 	.middleware([authFnMiddleware])
@@ -28,4 +29,58 @@ export const updateEntryStatusServerFn = createServerFn({ method: 'POST' })
 		});
 
 		return true;
+	});
+
+export const getEntriesServerFn = createServerFn({ method: 'GET' })
+	.middleware([authFnMiddleware])
+	.inputValidator(z.object({ feedId: z.optional(z.string()), offset: z.number() }))
+	.handler(async ({ data, context }) => {
+		// get user integration
+		const integration = await getExistingIntegrationServerFn({ data: { userId: context.user.id } });
+		if (!integration) throw new Error('Integration not found');
+
+		const PAGE_SIZE = 20;
+		// set endpoint based on existence of feedId
+		const endpoint = data.feedId ? `/v1/feeds/${data.feedId}/entries` : `/v1/entries`;
+
+		// get entries
+		const entries = await ofetch<{ entries: FeedEntry[]; total: number }>(endpoint, {
+			baseURL: integration.serverUrl,
+			timeout: 5000,
+			method: 'GET',
+			query: {
+				direction: 'desc',
+				order: 'published_at',
+				limit: PAGE_SIZE,
+				offset: data.offset
+			},
+			headers: {
+				'X-Auth-Token': integration?.apiKey,
+				'Content-Type': 'application/json'
+			}
+		});
+
+		return entries;
+	});
+
+export const getEntryServerFn = createServerFn({ method: 'GET' })
+	.middleware([authFnMiddleware])
+	.inputValidator(z.object({ entryId: z.number() }))
+	.handler(async ({ data, context }) => {
+		// get user integration
+		const integration = await getExistingIntegrationServerFn({ data: { userId: context.user.id } });
+		if (!integration) throw new Error('Integration not found');
+
+		// get entry
+		const entry = await ofetch<FeedEntry>(`/v1/entries/${data.entryId}`, {
+			baseURL: integration?.serverUrl,
+			timeout: 5000,
+			method: 'GET',
+			headers: {
+				'X-Auth-Token': integration?.apiKey,
+				'Content-Type': 'application/json'
+			}
+		});
+
+		return entry;
 	});

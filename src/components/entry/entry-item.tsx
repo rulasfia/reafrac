@@ -22,10 +22,9 @@ export function EntryItem({ entry }: { entry: FeedEntry }) {
 		<Link
 			to="/reader"
 			search={{ ...search, entry: entry.id }}
-			key={entry.id}
 			onClick={() => mutate(entry.id)}
 			className={cn(
-				'mx-2 my-1 rounded-sm border-[0.5px] border-transparent p-2 text-sm text-foreground',
+				'mx-2 my-0.5 rounded-sm border-[0.5px] border-transparent p-2 text-sm text-foreground',
 				search.entry === entry.id ? 'bg-primary/10 dark:bg-neutral-800' : 'hover:bg-foreground/5',
 				entry.status === 'read' ? 'text-foreground/50' : ''
 			)}
