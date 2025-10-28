@@ -32,9 +32,16 @@ export const updateEntryStatusServerFn = createServerFn({ method: 'POST' })
 		return true;
 	});
 
+const EntryQuerySchema = z.object({
+	feedId: z.optional(z.string()),
+	offset: z.number(),
+	after: z.optional(z.number()),
+	starred: z.optional(z.boolean())
+});
+
 export const getEntriesServerFn = createServerFn({ method: 'GET' })
 	.middleware([authFnMiddleware])
-	.inputValidator(z.object({ feedId: z.optional(z.string()), offset: z.number() }))
+	.inputValidator(EntryQuerySchema)
 	.handler(async ({ data, context }) => {
 		// get user integration
 		const integration = await getExistingIntegrationServerFn({ data: { userId: context.user.id } });
@@ -53,7 +60,9 @@ export const getEntriesServerFn = createServerFn({ method: 'GET' })
 				direction: 'desc',
 				order: 'published_at',
 				limit: PAGE_SIZE,
-				offset: data.offset
+				offset: data.offset,
+				after: data.after,
+				starred: data.starred
 			},
 			headers: {
 				'X-Auth-Token': integration?.apiKey,

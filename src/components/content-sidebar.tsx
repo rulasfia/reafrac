@@ -20,10 +20,18 @@ export function ContentSidebar() {
 
 	const { data, status, fetchNextPage, hasNextPage, isFetchingNextPage, error } = useInfiniteQuery({
 		enabled: !!integration,
-		queryKey: ['entries', integration?.id, feedId],
+		queryKey: ['entries', integration?.id, search.page],
 		queryFn: async ({ pageParam = 0 }) => {
 			if (!integration) return { entries: [], total: 0 };
-			return getEntries({ data: { feedId, offset: pageParam } });
+
+			const starred = search.page === 'saved';
+			// today at 12am in unix timestamp
+			const after =
+				search.page === 'today'
+					? new Date(new Date().setHours(0, 0, 0, 0)).getTime() / 1000
+					: undefined;
+
+			return getEntries({ data: { feedId, offset: pageParam, after, starred } });
 		},
 		getNextPageParam: (lastPage, allPages) => {
 			const currentOffset = allPages.length * PAGE_SIZE;
@@ -53,11 +61,11 @@ export function ContentSidebar() {
 
 	return (
 		<div className="col-span-3 flex h-full flex-col overflow-y-auto">
-			<SidebarHeader>
-				<span className="flex items-center gap-x-3 text-lg font-bold capitalize">
+			<SidebarHeader className="flex w-full flex-row items-center justify-between">
+				<span className="min-h-7 gap-x-3 text-lg font-bold capitalize">
 					{feedId ? (feed.data?.title ?? ' ') : search.page}
-					{integration && status === 'pending' ? <Loader size="xs" /> : null}
 				</span>
+				{integration && status === 'pending' ? <Loader size="xs" /> : null}
 			</SidebarHeader>
 			<SidebarContent className="overflow-y-scroll">
 				{!integration ? (
