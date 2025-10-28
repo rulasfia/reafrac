@@ -3,6 +3,7 @@ import * as z from 'zod/mini';
 import { authFnMiddleware } from '../middleware/auth-middleware';
 import { getExistingIntegrationServerFn } from './integration-sfn';
 import { ofetch } from 'ofetch';
+import sanitizeHtml from 'sanitize-html';
 import type { FeedEntry } from './types';
 
 export const updateEntryStatusServerFn = createServerFn({ method: 'POST' })
@@ -82,5 +83,10 @@ export const getEntryServerFn = createServerFn({ method: 'GET' })
 			}
 		});
 
-		return entry;
+		//  sanitize HTML in the entry.content
+		const sanitizedContent = sanitizeHtml(entry.content, {
+			allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img'])
+		});
+
+		return { ...entry, content: sanitizedContent };
 	});

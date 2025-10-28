@@ -22,7 +22,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 		meta: [
 			{ charSet: 'utf-8' },
 			{ name: 'viewport', content: 'width=device-width, initial-scale=1' },
-			{ title: 'TanStack Start Starter' }
+			{ title: 'Reafrac' },
+			{
+				name: 'description',
+				content: 'A modern RSS reader client, designed to work seamlessly with Miniflux servers.'
+			}
 		],
 		links: [{ rel: 'stylesheet', href: appCss }]
 	}),
