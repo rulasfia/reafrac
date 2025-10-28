@@ -6,7 +6,7 @@ import { createFileRoute, Outlet } from '@tanstack/react-router';
 import { z } from 'zod/mini';
 
 const readerSearchSchema = z.object({
-	page: z.optional(z.enum(['dashboard', 'today', 'saved'])),
+	page: z.optional(z.string()),
 	entry: z.optional(z.number())
 });
 

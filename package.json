@@ -15,6 +15,7 @@
 	},
 	"dependencies": {
 		"@cloudflare/vite-plugin": "^1.13.7",
+		"@fontsource/fira-sans": "^5.2.7",
 		"@intentui/icons": "^1.11.0",
 		"@tailwindcss/vite": "^4.1.16",
 		"@tanstack/react-devtools": "^0.7.8",
@@ -32,6 +33,7 @@
 		"lucide-react": "^0.548.0",
 		"ofetch": "^1.4.1",
 		"postgres": "^3.4.7",
+		"query-string": "^9.3.1",
 		"react": "^19.0.0",
 		"react-aria-components": "^1.13.0",
 		"react-dom": "^19.0.0",
@@ -45,6 +47,7 @@
 		"zod": "^4.1.12"
 	},
 	"devDependencies": {
+		"@tailwindcss/typography": "^0.5.19",
 		"@tanstack/eslint-plugin-router": "^1.133.19",
 		"@testing-library/dom": "^10.4.0",
 		"@testing-library/react": "^16.2.0",
