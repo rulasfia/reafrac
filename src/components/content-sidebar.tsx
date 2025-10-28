@@ -1,16 +1,16 @@
 import { SidebarContent, SidebarHeader } from '@/components/ui/sidebar';
-import { Link, useLoaderData, useLocation } from '@tanstack/react-router';
+import { useLoaderData } from '@tanstack/react-router';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { ofetch } from 'ofetch';
 import type { FeedEntry } from '@/lib/server/types';
 import { Loader } from './ui/loader';
 import { IconTriangleExclamation } from '@intentui/icons';
 import { cn } from '@/lib/utils';
+import { EntryItem } from './entry/entry-item';
 
 const PAGE_SIZE = 20;
 
 export function ContentSidebar() {
-	const { search } = useLocation();
 	const { integration } = useLoaderData({ from: '/reader' });
 
 	const { data, status, fetchNextPage, hasNextPage, isFetchingNextPage, error } = useInfiniteQuery({
@@ -22,7 +22,7 @@ export function ContentSidebar() {
 				baseURL: integration.serverUrl,
 				timeout: 5000,
 				headers: { 'X-Auth-Token': integration.apiKey, 'Content-Type': 'application/json' },
-				query: { direction: 'asc', order: 'published_at', limit: PAGE_SIZE, offset: pageParam }
+				query: { direction: 'desc', order: 'published_at', limit: PAGE_SIZE, offset: pageParam }
 			});
 			return res;
 		},
@@ -56,23 +56,7 @@ export function ContentSidebar() {
 				) : null}
 				{integration && status === 'pending' ? <Loader className="mx-auto my-4" /> : null}
 				{integration && status === 'success'
-					? data?.pages
-							.flatMap((page) => page.entries)
-							.map((entry) => (
-								<Link
-									to="/reader"
-									search={{ ...search, entry: entry.id }}
-									key={entry.id}
-									className={cn(
-										'mx-2 my-1 rounded-sm border-[0.5px] border-transparent p-2 text-sm text-foreground',
-										search.entry === entry.id
-											? 'bg-primary/10 dark:bg-neutral-800'
-											: 'hover:bg-foreground/5'
-									)}
-								>
-									{entry.title}
-								</Link>
-							))
+					? data?.pages.flatMap((page) => page.entries).map((entry) => <EntryItem entry={entry} />)
 					: null}
 				<div className="mx-2 my-2">
 					{error && (

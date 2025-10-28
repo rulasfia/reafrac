@@ -5,8 +5,6 @@ import {
 	createRootRouteWithContext
 } from '@tanstack/react-router';
 import { QueryClient } from '@tanstack/react-query';
-// import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
-// import { TanstackDevtools } from '@tanstack/react-devtools'
 
 import appCss from '../styles.css?url';
 import { requestLoggerMiddleware } from '@/lib/middleware/logger-middleware';
@@ -14,6 +12,7 @@ import { Toast } from '@/components/ui/toast';
 import { ThemeProvider } from '@/components/theme-provider';
 import { QueryProvider } from '@/components/query-provider';
 import { RouteProviders } from '@/components/route-provider';
+import { DevTools } from '@/components/devtools';
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
 	server: {
@@ -43,10 +42,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 						<QueryProvider>
 							<Toast />
 							{children}
-							{/*<TanstackDevtools
-							config={{ position: 'bottom-left' }}
-							plugins={[{ name: 'Tanstack Router', render: <TanStackRouterDevtoolsPanel /> }]}
-						/>*/}
+							<DevTools />
 							<Scripts />
 						</QueryProvider>
 					</RouteProviders>

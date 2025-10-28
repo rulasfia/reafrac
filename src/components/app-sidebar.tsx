@@ -57,7 +57,7 @@ function MenuSidebar() {
 
 	const { data: feeds } = useQuery({
 		enabled: !!integration,
-		queryKey: [['feeds', integration?.id]],
+		queryKey: ['feeds', integration?.id],
 		queryFn: async () => {
 			if (!integration) return [];
 			const res = await ofetch<Feed[]>(`/v1/feeds`, {
@@ -92,6 +92,7 @@ function MenuSidebar() {
 								key={item.label}
 								tooltip={item.label}
 								isCurrent={search.page === item.page}
+								// @ts-expect-error - can't get the query param typesafety to work
 								href={`${item.href}?page=${item.page}`}
 							>
 								{item.icon}
