@@ -1,27 +1,42 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { useServerFn } from '@tanstack/react-start';
 import { getEntryServerFn } from '@/lib/server/entry-sfn';
 import { Loader } from '@/components/ui/loader';
+import { Button } from '@/components/ui/button';
+import { IconX } from '@intentui/icons';
 
 export const Route = createFileRoute('/reader/')({
 	component: RouteComponent
 });
 
 function RouteComponent() {
-	const { entry } = Route.useSearch();
+	const search = Route.useSearch();
 	const getEntry = useServerFn(getEntryServerFn);
+	const navigate = useNavigate({ from: Route.fullPath });
 
 	const res = useQuery({
-		enabled: !!entry,
-		queryKey: ['entry', entry],
-		queryFn: async () => getEntry({ data: { entryId: entry ?? 0 } })
+		enabled: !!search.entry,
+		queryKey: ['entry', search.entry],
+		queryFn: async () => getEntry({ data: { entryId: search.entry ?? 0 } })
 	});
 
-	if (!entry) return null;
+	if (!search.entry) return null;
+
+	const onCloseReader = () => {
+		navigate({ search: (prev) => ({ ...prev, entry: undefined }) });
+	};
 
 	return (
 		<div className="grid grid-cols-1 justify-center gap-y-1">
+			<Button
+				size="sq-sm"
+				intent="outline"
+				className="absolute top-1.5 right-1.5 cursor-pointer rounded-sm"
+				onClick={onCloseReader}
+			>
+				<IconX />
+			</Button>
 			{res.status === 'pending' && <Loader className="mx-auto my-4" />}
 			{res.status === 'error' && 'Error'}
 			{res.status === 'success' && (
