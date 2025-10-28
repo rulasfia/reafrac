@@ -13,11 +13,14 @@ const readerSearchSchema = z.object({
 export const Route = createFileRoute('/reader')({
 	component: RouteComponent,
 	validateSearch: readerSearchSchema,
-	loader: async () => {
+	beforeLoad: async () => {
 		const user = await getUserInfoServerFn();
-		const integration = await getExistingIntegrationServerFn({ data: { userId: user.id } });
+		return { user };
+	},
+	loader: async ({ context }) => {
+		const integration = await getExistingIntegrationServerFn({ data: { userId: context.user.id } });
 
-		return { user, integration };
+		return { user: context.user, integration };
 	}
 });
 

@@ -3,7 +3,7 @@ import { Loader } from '@/components/ui/loader';
 import { TextField } from '@/components/ui/text-field';
 import { authClient } from '@/lib/auth-client';
 import { kickAuthedUserServerFn } from '@/lib/server/auth-sfn';
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -27,7 +27,7 @@ function RouteComponent() {
 		const repeatPassword = formData.get('repeat-password') as string;
 
 		if (password !== repeatPassword) {
-			toast('Invalid password');
+			toast('Invalid password', { dismissible: true, icon: '❌' });
 			return;
 		}
 
@@ -42,7 +42,7 @@ function RouteComponent() {
 				},
 				onError: ({ error }) => {
 					setIsLoading(false);
-					toast(error.message);
+					toast(error.message, { dismissible: true, icon: '❌' });
 				}
 			}
 		);
@@ -80,6 +80,10 @@ function RouteComponent() {
 						{isLoading ? <Loader /> : 'Register'}
 					</Button>
 				</div>
+				<hr className="my-2" />
+				<p className="text-sm">
+					Already have an account? <Link to="/login">Login here</Link>
+				</p>
 			</form>
 		</div>
 	);

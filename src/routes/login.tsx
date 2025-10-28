@@ -3,7 +3,7 @@ import { Loader } from '@/components/ui/loader';
 import { TextField } from '@/components/ui/text-field';
 import { authClient } from '@/lib/auth-client';
 import { kickAuthedUserServerFn } from '@/lib/server/auth-sfn';
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -34,7 +34,7 @@ function RouteComponent() {
 				},
 				onError: ({ error }) => {
 					setIsLoading(false);
-					toast(error.message);
+					toast(error.message, { dismissible: true, icon: '❌' });
 				}
 			}
 		);
@@ -48,9 +48,13 @@ function RouteComponent() {
 			>
 				<TextField name="email" label="Email" placeholder="example@email.com" type="email" />
 				<TextField name="password" label="Password" placeholder="Your Password" type="password" />
-				<Button type="submit" className="mt-3 w-fit">
+				<Button isPending={isLoading} type="submit" className="mt-3 w-fit">
 					{isLoading ? <Loader /> : 'Let me in!'}
 				</Button>
+				<hr className="my-2" />
+				<p className="text-sm">
+					Don't have an account? <Link to="/sign-up">Register here</Link>
+				</p>
 			</form>
 		</div>
 	);
