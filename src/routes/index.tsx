@@ -13,15 +13,6 @@ function App() {
 			<Link className={buttonStyles({ intent: 'outline', className: 'min-w-28' })} to="/login">
 				Login
 			</Link>
-			<button
-				type="button"
-				onClick={() => {
-					throw new Error('Sentry Test Error');
-				}}
-			>
-				Break the world
-			</button>
-			;
 		</div>
 	);
 }
