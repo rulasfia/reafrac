@@ -14,7 +14,6 @@
 		"db:migrate": "drizzle-kit migrate"
 	},
 	"dependencies": {
-		"@cloudflare/vite-plugin": "^1.13.7",
 		"@extractus/article-extractor": "^8.0.20",
 		"@fontsource/fira-sans": "^5.2.7",
 		"@intentui/icons": "^1.11.0",
@@ -32,7 +31,6 @@
 		"dayjs": "^1.11.18",
 		"dotenv": "^17.2.3",
 		"drizzle-orm": "^0.44.5",
-		"lucide-react": "^0.548.0",
 		"ofetch": "^1.4.1",
 		"postgres": "^3.4.7",
 		"query-string": "^9.3.1",

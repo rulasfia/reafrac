@@ -26,7 +26,7 @@ export function EntryItem({ entry }: { entry: FeedEntry }) {
 			className={cn(
 				'mx-2 my-0.5 rounded-sm border-[0.5px] border-transparent p-2 text-sm text-foreground',
 				search.entry === entry.id
-					? 'border-border/20 bg-primary/10 shadow-sm shadow-accent/50 dark:bg-neutral-800'
+					? 'border-border/20 bg-primary/7.5 shadow-xs shadow-accent/20 dark:bg-neutral-800'
 					: 'hover:bg-foreground/5',
 				entry.status === 'read' ? 'text-foreground/50' : ''
 			)}

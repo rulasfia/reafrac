@@ -71,7 +71,7 @@ function RouteComponent() {
 							target="_blank"
 							className="inline-flex items-center gap-x-1 text-primary hover:underline"
 						>
-							External Link <IconOpenLink />
+							Source Link <IconOpenLink />
 						</a>
 					</div>
 					<h1 className="mx-auto my-4 w-full text-3xl leading-[105%] font-bold text-pretty">

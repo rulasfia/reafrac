@@ -37,7 +37,8 @@ const EntryQuerySchema = z.object({
 	feedId: z.optional(z.string()),
 	offset: z.number(),
 	after: z.optional(z.number()),
-	starred: z.optional(z.boolean())
+	starred: z.optional(z.boolean()),
+	status: z.optional(z.enum(['read', 'unread', 'removed']))
 });
 
 export const getEntriesServerFn = createServerFn({ method: 'GET' })
@@ -63,7 +64,8 @@ export const getEntriesServerFn = createServerFn({ method: 'GET' })
 				limit: PAGE_SIZE,
 				offset: data.offset,
 				after: data.after,
-				starred: data.starred
+				starred: data.starred,
+				status: data.status
 			},
 			headers: {
 				'X-Auth-Token': integration?.apiKey,
