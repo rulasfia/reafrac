@@ -53,7 +53,10 @@ function RouteComponent() {
 				</Button>
 				<hr className="my-2" />
 				<p className="text-sm">
-					Don't have an account? <Link to="/sign-up">Register here</Link>
+					Don't have an account?{' '}
+					<Link to="/sign-up" className="text-primary hover:underline">
+						Register here
+					</Link>
 				</p>
 			</form>
 		</div>

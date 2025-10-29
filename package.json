@@ -17,6 +17,7 @@
 		"@extractus/article-extractor": "^8.0.20",
 		"@fontsource/fira-sans": "^5.2.7",
 		"@intentui/icons": "^1.11.0",
+		"@sentry/tanstackstart-react": "^10.22.0",
 		"@tailwindcss/vite": "^4.1.16",
 		"@tanstack/react-devtools": "^0.7.8",
 		"@tanstack/react-query-devtools": "^5.90.2",

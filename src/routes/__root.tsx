@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import {
 	HeadContent,
 	NotFoundRouteProps,
@@ -5,16 +6,19 @@ import {
 	createRootRouteWithContext
 } from '@tanstack/react-router';
 import { QueryClient } from '@tanstack/react-query';
-
-import appCss from '../styles.css?url';
+import { wrapCreateRootRouteWithSentry } from '@sentry/tanstackstart-react';
+import * as Sentry from '@sentry/tanstackstart-react';
 import { requestLoggerMiddleware } from '@/lib/middleware/logger-middleware';
 import { Toast } from '@/components/ui/toast';
 import { ThemeProvider } from '@/components/theme-provider';
 import { QueryProvider } from '@/components/query-provider';
 import { RouteProviders } from '@/components/route-provider';
 import { DevTools } from '@/components/devtools';
+import appCss from '../styles.css?url';
 
-export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+export const Route = wrapCreateRootRouteWithSentry(createRootRouteWithContext)<{
+	queryClient: QueryClient;
+}>()({
 	server: {
 		middleware: [requestLoggerMiddleware]
 	},
@@ -31,7 +35,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 		links: [{ rel: 'stylesheet', href: appCss }]
 	}),
 	shellComponent: RootDocument,
-	notFoundComponent: NotFoundComponent
+	notFoundComponent: NotFoundComponent,
+	errorComponent: function ErrorComponent({ error }) {
+		useEffect(() => {
+			Sentry.captureException(error);
+		}, [error]);
+
+		return 'Something went wrong!';
+	}
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {

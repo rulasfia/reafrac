@@ -82,7 +82,10 @@ function RouteComponent() {
 				</div>
 				<hr className="my-2" />
 				<p className="text-sm">
-					Already have an account? <Link to="/login">Login here</Link>
+					Already have an account?{' '}
+					<Link to="/login" className="text-primary hover:underline">
+						Login here
+					</Link>
 				</p>
 			</form>
 		</div>

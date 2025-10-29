@@ -6,9 +6,10 @@ import { getExistingIntegrationServerFn } from './integration-sfn';
 import { ofetch } from 'ofetch';
 import sanitizeHtml from 'sanitize-html';
 import type { FeedEntry } from './types';
+import { sentryMiddleware } from '../middleware/sentry-middleware';
 
 export const updateEntryStatusServerFn = createServerFn({ method: 'POST' })
-	.middleware([authFnMiddleware])
+	.middleware([sentryMiddleware, authFnMiddleware])
 	.inputValidator(z.object({ entryId: z.number() }))
 	.handler(async ({ data, context }) => {
 		// get user integration
@@ -42,7 +43,7 @@ const EntryQuerySchema = z.object({
 });
 
 export const getEntriesServerFn = createServerFn({ method: 'GET' })
-	.middleware([authFnMiddleware])
+	.middleware([sentryMiddleware, authFnMiddleware])
 	.inputValidator(EntryQuerySchema)
 	.handler(async ({ data, context }) => {
 		// get user integration
@@ -77,7 +78,7 @@ export const getEntriesServerFn = createServerFn({ method: 'GET' })
 	});
 
 export const getEntryServerFn = createServerFn({ method: 'GET' })
-	.middleware([authFnMiddleware])
+	.middleware([sentryMiddleware, authFnMiddleware])
 	.inputValidator(z.object({ entryId: z.number() }))
 	.handler(async ({ data, context }) => {
 		// get user integration
@@ -104,7 +105,7 @@ export const getEntryServerFn = createServerFn({ method: 'GET' })
 	});
 
 export const getEntryContentServerFn = createServerFn({ method: 'GET' })
-	.middleware([authFnMiddleware])
+	.middleware([sentryMiddleware, authFnMiddleware])
 	.inputValidator(z.object({ entryUrl: z.url() }))
 	.handler(async ({ data }) => {
 		const res = await extract(data.entryUrl);
