@@ -103,7 +103,8 @@ function MenuSidebar() {
 						))}
 					</SidebarSection>
 				</SidebarSectionGroup>
-				<SidebarSeparator />
+
+				<hr className="border-border dark:border-sidebar" />
 
 				<SidebarSectionGroup>
 					<SidebarSection>

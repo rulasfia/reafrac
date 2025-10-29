@@ -1,6 +1,6 @@
 # Multistage Dockerfile for Bun + TanStack Start application
 # Stage 1: Build stage
-FROM oven/bun:1.2.23-alpine AS builder
+FROM oven/bun:1.3-alpine AS builder
 
 # Set working directory
 WORKDIR /app
@@ -15,10 +15,11 @@ RUN bun install --frozen-lockfile
 COPY . .
 
 # Build the application
+ENV NODE_ENV=production
 RUN bun run build
 
 # Stage 2: Production stage
-FROM oven/bun:1.2.23-alpine AS runner
+FROM oven/bun:1.3-alpine AS runner
 
 # Set environment to production
 ENV NODE_ENV=production
@@ -34,6 +35,7 @@ COPY --from=builder /app/bun.lock ./
 
 # Install only production dependencies
 RUN bun install --frozen-lockfile --production
+RUN apk add --no-cache curl
 
 # Switch to non-root user (bun user already exists in the image)
 USER bun

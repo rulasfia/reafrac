@@ -631,7 +631,7 @@ const SidebarSeparator = ({ className, ...props }: SidebarSeparatorProps) => {
 			data-slot="sidebar-separator"
 			orientation="horizontal"
 			className={twMerge(
-				'mx-auto h-px w-[calc(var(--sidebar-width)---spacing(10))] border-0 bg-sidebar-border forced-colors:bg-[ButtonBorder]',
+				'mx-auto h-px w-[calc(var(--sidebar-width)---spacing(10))] border-0 bg-sidebar-border dark:bg-sidebar forced-colors:bg-[ButtonBorder]',
 				className
 			)}
 			{...props}
