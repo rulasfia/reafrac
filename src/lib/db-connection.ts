@@ -11,6 +11,5 @@ console.info('DB_URL', DB_URL);
 const queryClient = postgres(DB_URL);
 export const db = drizzle<typeof schema>({
 	client: queryClient,
-	casing: 'snake_case',
-	logger: process.env.NODE_ENV?.toLowerCase() !== 'production'
+	casing: 'snake_case'
 });

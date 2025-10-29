@@ -14,9 +14,13 @@ const readerSearchSchema = z.object({
 export const Route = createFileRoute('/reader')({
 	component: RouteComponent,
 	validateSearch: readerSearchSchema,
-	beforeLoad: async ({ search }) => {
+	beforeLoad: async ({ search, context }) => {
 		if (!search.page) throw redirect({ to: '/reader', search: { page: 'all-posts' } });
-		const user = await getUserInfoServerFn();
+		const user = await context.queryClient.ensureQueryData({
+			queryKey: ['user'],
+			queryFn: async () => getUserInfoServerFn(),
+			staleTime: 1000 * 60 * 15 // 15 minutes
+		});
 		return { user };
 	},
 	loader: async ({ context }) => {

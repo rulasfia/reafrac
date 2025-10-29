@@ -43,7 +43,8 @@ export const kickAuthedUserServerFn = createServerFn()
 	.middleware([sentryMiddleware])
 	.handler(async () => {
 		const session = await auth.api.getSession({
-			headers: getRequest().headers
+			headers: getRequest().headers,
+			query: { disableCookieCache: true }
 		});
 
 		if (session) {
