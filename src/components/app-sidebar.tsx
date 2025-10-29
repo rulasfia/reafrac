@@ -1,11 +1,13 @@
 import qs from 'query-string';
 import { useQuery } from '@tanstack/react-query';
 import {
+	IconAlignmentJustify,
 	IconBookmarkFill,
 	IconCalendar2Fill,
 	IconChevronsY,
 	IconDashboardFill,
 	IconGear,
+	IconInbox2Fill,
 	IconLogout
 } from '@intentui/icons';
 import { Avatar } from '@/components/ui/avatar';
@@ -17,8 +19,7 @@ import {
 	SidebarItem,
 	SidebarLabel,
 	SidebarSection,
-	SidebarSectionGroup,
-	SidebarSeparator
+	SidebarSectionGroup
 } from '@/components/ui/sidebar';
 import {
 	Menu,
@@ -46,7 +47,8 @@ export function AppSidebar() {
 }
 
 const MENU_ITEMS = [
-	{ label: 'Dashboard', icon: <IconDashboardFill />, href: '/reader', page: 'dashboard' },
+	{ label: 'All Posts', icon: <IconAlignmentJustify />, href: '/reader', page: 'all-posts' },
+	{ label: 'Unread', icon: <IconInbox2Fill />, href: '/reader', page: 'unread' },
 	{ label: 'Today', icon: <IconCalendar2Fill />, href: '/reader', page: 'today' },
 	{ label: 'Saved', icon: <IconBookmarkFill />, href: '/reader', page: 'saved' }
 ] as const;

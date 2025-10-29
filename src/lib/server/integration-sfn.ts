@@ -6,6 +6,7 @@ import { db } from '../db-connection';
 import { fluxConnections } from '../db-schema';
 import { eq } from 'drizzle-orm';
 import { authFnMiddleware } from '../middleware/auth-middleware';
+import { sentryMiddleware } from '../middleware/sentry-middleware';
 
 const FluxIntegrationSchema = z.object({
 	server_url: z.string().check(z.minLength(1)),
@@ -13,7 +14,7 @@ const FluxIntegrationSchema = z.object({
 });
 
 export const fluxIntegrationServerFn = createServerFn({ method: 'POST' })
-	.middleware([authFnMiddleware])
+	.middleware([sentryMiddleware, authFnMiddleware])
 	.inputValidator(FluxIntegrationSchema)
 	.handler(async ({ data, context }) => {
 		try {
@@ -48,7 +49,7 @@ export const fluxIntegrationServerFn = createServerFn({ method: 'POST' })
 	});
 
 export const getExistingIntegrationServerFn = createServerFn({ method: 'GET' })
-	.middleware([authFnMiddleware])
+	.middleware([sentryMiddleware, authFnMiddleware])
 	.inputValidator(z.object({ userId: z.string().check(z.minLength(1)) }))
 	.handler(async ({ data }) => {
 		const res = await db

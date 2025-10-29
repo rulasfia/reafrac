@@ -4,9 +4,10 @@ import { authFnMiddleware } from '../middleware/auth-middleware';
 import { getExistingIntegrationServerFn } from './integration-sfn';
 import { ofetch } from 'ofetch';
 import type { Feed } from './types';
+import { sentryMiddleware } from '../middleware/sentry-middleware';
 
 export const getFeedsServerFn = createServerFn({ method: 'GET' })
-	.middleware([authFnMiddleware])
+	.middleware([sentryMiddleware, authFnMiddleware])
 	.handler(async ({ context }) => {
 		// get user integration
 		const integration = await getExistingIntegrationServerFn({ data: { userId: context.user.id } });
@@ -27,7 +28,7 @@ export const getFeedsServerFn = createServerFn({ method: 'GET' })
 	});
 
 export const getFeedServerFn = createServerFn({ method: 'GET' })
-	.middleware([authFnMiddleware])
+	.middleware([sentryMiddleware, authFnMiddleware])
 	.inputValidator(z.object({ feedId: z.string() }))
 	.handler(async ({ data, context }) => {
 		// get user integration

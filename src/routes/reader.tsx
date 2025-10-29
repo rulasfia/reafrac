@@ -2,18 +2,20 @@ import { AppSidebar } from '@/components/app-sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { getExistingIntegrationServerFn } from '@/lib/server/integration-sfn';
 import { getUserInfoServerFn } from '@/lib/server/user-sfn';
-import { createFileRoute, Outlet } from '@tanstack/react-router';
+import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
 import { z } from 'zod/mini';
 
 const readerSearchSchema = z.object({
 	page: z.optional(z.string()),
-	entry: z.optional(z.number())
+	entry: z.optional(z.number()),
+	view: z.optional(z.enum(['summary', 'expanded']))
 });
 
 export const Route = createFileRoute('/reader')({
 	component: RouteComponent,
 	validateSearch: readerSearchSchema,
-	beforeLoad: async () => {
+	beforeLoad: async ({ search }) => {
+		if (!search.page) throw redirect({ to: '/reader', search: { page: 'all-posts' } });
 		const user = await getUserInfoServerFn();
 		return { user };
 	},

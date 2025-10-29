@@ -24,6 +24,7 @@ export function ContentSidebar() {
 		queryFn: async ({ pageParam = 0 }) => {
 			if (!integration) return { entries: [], total: 0 };
 
+			const status = search.page === 'unread' ? 'unread' : undefined;
 			const starred = search.page === 'saved';
 			// today at 12am in unix timestamp
 			const after =
@@ -31,7 +32,7 @@ export function ContentSidebar() {
 					? new Date(new Date().setHours(0, 0, 0, 0)).getTime() / 1000
 					: undefined;
 
-			return getEntries({ data: { feedId, offset: pageParam, after, starred } });
+			return getEntries({ data: { feedId, offset: pageParam, after, starred, status } });
 		},
 		getNextPageParam: (lastPage, allPages) => {
 			const currentOffset = allPages.length * PAGE_SIZE;
@@ -63,7 +64,7 @@ export function ContentSidebar() {
 		<div className="col-span-3 flex h-full flex-col overflow-y-auto">
 			<SidebarHeader className="flex w-full flex-row items-center justify-between">
 				<span className="min-h-7 gap-x-3 text-lg font-bold capitalize">
-					{feedId ? (feed.data?.title ?? ' ') : search.page}
+					{feedId ? (feed.data?.title ?? ' ') : search.page?.replaceAll('-', ' ')}
 				</span>
 				{integration && status === 'pending' ? <Loader size="xs" /> : null}
 			</SidebarHeader>

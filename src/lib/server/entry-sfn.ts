@@ -1,3 +1,4 @@
+import { extract } from '@extractus/article-extractor';
 import { createServerFn } from '@tanstack/react-start';
 import * as z from 'zod/mini';
 import { authFnMiddleware } from '../middleware/auth-middleware';
@@ -5,9 +6,10 @@ import { getExistingIntegrationServerFn } from './integration-sfn';
 import { ofetch } from 'ofetch';
 import sanitizeHtml from 'sanitize-html';
 import type { FeedEntry } from './types';
+import { sentryMiddleware } from '../middleware/sentry-middleware';
 
 export const updateEntryStatusServerFn = createServerFn({ method: 'POST' })
-	.middleware([authFnMiddleware])
+	.middleware([sentryMiddleware, authFnMiddleware])
 	.inputValidator(z.object({ entryId: z.number() }))
 	.handler(async ({ data, context }) => {
 		// get user integration
@@ -36,11 +38,12 @@ const EntryQuerySchema = z.object({
 	feedId: z.optional(z.string()),
 	offset: z.number(),
 	after: z.optional(z.number()),
-	starred: z.optional(z.boolean())
+	starred: z.optional(z.boolean()),
+	status: z.optional(z.enum(['read', 'unread', 'removed']))
 });
 
 export const getEntriesServerFn = createServerFn({ method: 'GET' })
-	.middleware([authFnMiddleware])
+	.middleware([sentryMiddleware, authFnMiddleware])
 	.inputValidator(EntryQuerySchema)
 	.handler(async ({ data, context }) => {
 		// get user integration
@@ -62,7 +65,8 @@ export const getEntriesServerFn = createServerFn({ method: 'GET' })
 				limit: PAGE_SIZE,
 				offset: data.offset,
 				after: data.after,
-				starred: data.starred
+				starred: data.starred,
+				status: data.status
 			},
 			headers: {
 				'X-Auth-Token': integration?.apiKey,
@@ -74,7 +78,7 @@ export const getEntriesServerFn = createServerFn({ method: 'GET' })
 	});
 
 export const getEntryServerFn = createServerFn({ method: 'GET' })
-	.middleware([authFnMiddleware])
+	.middleware([sentryMiddleware, authFnMiddleware])
 	.inputValidator(z.object({ entryId: z.number() }))
 	.handler(async ({ data, context }) => {
 		// get user integration
@@ -98,4 +102,14 @@ export const getEntryServerFn = createServerFn({ method: 'GET' })
 		});
 
 		return { ...entry, content: sanitizedContent };
+	});
+
+export const getEntryContentServerFn = createServerFn({ method: 'GET' })
+	.middleware([sentryMiddleware, authFnMiddleware])
+	.inputValidator(z.object({ entryUrl: z.url() }))
+	.handler(async ({ data }) => {
+		const res = await extract(data.entryUrl);
+		if (!res) throw new Error('Failed to extract entry content');
+
+		return res;
 	});
