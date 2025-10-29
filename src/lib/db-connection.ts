@@ -7,6 +7,7 @@ if (!DB_URL) {
 	throw new Error('DATABASE_URL is not defined');
 }
 
+console.info('DB_URL', DB_URL);
 const queryClient = postgres(DB_URL);
 export const db = drizzle<typeof schema>({
 	client: queryClient,
