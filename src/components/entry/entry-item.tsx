@@ -21,7 +21,7 @@ export function EntryItem({ entry }: { entry: FeedEntry }) {
 	return (
 		<Link
 			to="/reader"
-			search={{ ...search, entry: entry.id }}
+			search={{ ...search, entry: entry.id, view: undefined }}
 			onClick={() => mutate(entry.id)}
 			className={cn(
 				'mx-2 my-0.5 rounded-sm border-[0.5px] border-transparent p-2 text-sm text-foreground',

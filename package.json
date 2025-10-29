@@ -15,6 +15,7 @@
 	},
 	"dependencies": {
 		"@cloudflare/vite-plugin": "^1.13.7",
+		"@extractus/article-extractor": "^8.0.20",
 		"@fontsource/fira-sans": "^5.2.7",
 		"@intentui/icons": "^1.11.0",
 		"@tailwindcss/vite": "^4.1.16",

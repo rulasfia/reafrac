@@ -1,3 +1,4 @@
+import { extract } from '@extractus/article-extractor';
 import { createServerFn } from '@tanstack/react-start';
 import * as z from 'zod/mini';
 import { authFnMiddleware } from '../middleware/auth-middleware';
@@ -98,4 +99,14 @@ export const getEntryServerFn = createServerFn({ method: 'GET' })
 		});
 
 		return { ...entry, content: sanitizedContent };
+	});
+
+export const getEntryContentServerFn = createServerFn({ method: 'GET' })
+	.middleware([authFnMiddleware])
+	.inputValidator(z.object({ entryUrl: z.url() }))
+	.handler(async ({ data }) => {
+		const res = await extract(data.entryUrl);
+		if (!res) throw new Error('Failed to extract entry content');
+
+		return res;
 	});
