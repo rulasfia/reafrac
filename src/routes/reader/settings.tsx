@@ -78,7 +78,7 @@ function MinifluxIntegrationForm() {
 				name="api-key"
 				type="password"
 				label="Miniflux API Key"
-				placeholder={data?.apiKey}
+				placeholder="****************"
 				isDisabled={!!data}
 			/>
 			<div className="mt-2">

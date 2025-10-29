@@ -16,7 +16,6 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ReaderIndexRouteImport } from './routes/reader/index'
 import { Route as ReaderSettingsRouteImport } from './routes/reader/settings'
 import { Route as ReaderDashboardRouteImport } from './routes/reader/dashboard'
-import { Route as ApiDemoNamesRouteImport } from './routes/api.demo-names'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
 const SignUpRoute = SignUpRouteImport.update({
@@ -54,11 +53,6 @@ const ReaderDashboardRoute = ReaderDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => ReaderRoute,
 } as any)
-const ApiDemoNamesRoute = ApiDemoNamesRouteImport.update({
-  id: '/api/demo-names',
-  path: '/api/demo-names',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -70,7 +64,6 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/reader': typeof ReaderRouteWithChildren
   '/sign-up': typeof SignUpRoute
-  '/api/demo-names': typeof ApiDemoNamesRoute
   '/reader/dashboard': typeof ReaderDashboardRoute
   '/reader/settings': typeof ReaderSettingsRoute
   '/reader/': typeof ReaderIndexRoute
@@ -80,7 +73,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/sign-up': typeof SignUpRoute
-  '/api/demo-names': typeof ApiDemoNamesRoute
   '/reader/dashboard': typeof ReaderDashboardRoute
   '/reader/settings': typeof ReaderSettingsRoute
   '/reader': typeof ReaderIndexRoute
@@ -92,7 +84,6 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/reader': typeof ReaderRouteWithChildren
   '/sign-up': typeof SignUpRoute
-  '/api/demo-names': typeof ApiDemoNamesRoute
   '/reader/dashboard': typeof ReaderDashboardRoute
   '/reader/settings': typeof ReaderSettingsRoute
   '/reader/': typeof ReaderIndexRoute
@@ -105,7 +96,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/reader'
     | '/sign-up'
-    | '/api/demo-names'
     | '/reader/dashboard'
     | '/reader/settings'
     | '/reader/'
@@ -115,7 +105,6 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/sign-up'
-    | '/api/demo-names'
     | '/reader/dashboard'
     | '/reader/settings'
     | '/reader'
@@ -126,7 +115,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/reader'
     | '/sign-up'
-    | '/api/demo-names'
     | '/reader/dashboard'
     | '/reader/settings'
     | '/reader/'
@@ -138,7 +126,6 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ReaderRoute: typeof ReaderRouteWithChildren
   SignUpRoute: typeof SignUpRoute
-  ApiDemoNamesRoute: typeof ApiDemoNamesRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
@@ -193,13 +180,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReaderDashboardRouteImport
       parentRoute: typeof ReaderRoute
     }
-    '/api/demo-names': {
-      id: '/api/demo-names'
-      path: '/api/demo-names'
-      fullPath: '/api/demo-names'
-      preLoaderRoute: typeof ApiDemoNamesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -230,7 +210,6 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ReaderRoute: ReaderRouteWithChildren,
   SignUpRoute: SignUpRoute,
-  ApiDemoNamesRoute: ApiDemoNamesRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport

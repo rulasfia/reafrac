@@ -6,18 +6,21 @@ import { createFileRoute, Outlet } from '@tanstack/react-router';
 import { z } from 'zod/mini';
 
 const readerSearchSchema = z.object({
-	page: z.optional(z.enum(['dashboard', 'today', 'saved'])),
+	page: z.optional(z.string()),
 	entry: z.optional(z.number())
 });
 
 export const Route = createFileRoute('/reader')({
 	component: RouteComponent,
 	validateSearch: readerSearchSchema,
-	loader: async () => {
+	beforeLoad: async () => {
 		const user = await getUserInfoServerFn();
-		const integration = await getExistingIntegrationServerFn({ data: { userId: user.id } });
+		return { user };
+	},
+	loader: async ({ context }) => {
+		const integration = await getExistingIntegrationServerFn({ data: { userId: context.user.id } });
 
-		return { user, integration };
+		return { user: context.user, integration };
 	}
 });
 
