@@ -1,6 +1,7 @@
 'use client';
 
-import { IconSidebarFill } from '@intentui/icons';
+import { IconChevronRight, IconSidebarFill } from '@intentui/icons';
+import { type ToOptions } from '@tanstack/react-router';
 import { createContext, use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
 	type ButtonProps,
@@ -338,6 +339,7 @@ const SidebarSectionGroup = ({ className, ...props }: React.ComponentProps<'sect
 
 interface SidebarSectionProps extends React.ComponentProps<'div'> {
 	label?: string;
+	href?: ToOptions['to'];
 }
 
 const SidebarSection = ({ className, ...props }: SidebarSectionProps) => {
@@ -347,14 +349,20 @@ const SidebarSection = ({ className, ...props }: SidebarSectionProps) => {
 			data-slot="sidebar-section"
 			className={twMerge(
 				'col-span-full flex min-w-0 flex-col gap-y-0.5 **:data-[slot=sidebar-section]:**:gap-y-0',
-				state === 'collapsed' ? 'p-2' : 'p-4',
+				state === 'collapsed' ? 'p-2' : 'py-4 pr-4 pl-4',
+				state !== 'collapsed' && 'label' in props && 'href' in props ? 'pr-0' : '',
 				className
 			)}
 			{...props}
 		>
 			{state !== 'collapsed' && 'label' in props && (
-				<Header className="mb-1 flex shrink-0 items-center rounded-md px-2.5 text-xs/6 font-medium text-sidebar-fg/70 ring-sidebar-ring transition-[margin,opa] duration-200 ease-linear outline-none group-data-[collapsible=dock]:-mt-8 group-data-[collapsible=dock]:opacity-0 *:data-[slot=icon]:size-4 *:data-[slot=icon]:shrink-0">
+				<Header className="mb-1 flex shrink-0 items-center justify-between rounded-md px-2.5 text-xs/6 font-medium text-sidebar-fg/70 ring-sidebar-ring transition-[margin,opa] duration-200 ease-linear outline-none group-data-[collapsible=dock]:-mt-8 group-data-[collapsible=dock]:opacity-0 *:data-[slot=icon]:size-4 *:data-[slot=icon]:shrink-0">
 					{props.label}
+					{'href' in props && (
+						<Link href={props.href} className="rounded-sm p-1 hover:bg-background">
+							<IconChevronRight className="text-sidebar-fg/50" />
+						</Link>
+					)}
 				</Header>
 			)}
 			<div data-slot="sidebar-section-inner" className="grid grid-cols-[auto_1fr] gap-y-0.5">

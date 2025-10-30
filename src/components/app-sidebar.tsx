@@ -108,7 +108,7 @@ function MenuSidebar() {
 				<hr className="border-border dark:border-sidebar" />
 
 				<SidebarSectionGroup>
-					<SidebarSection>
+					<SidebarSection label="Feeds" href={`/reader/settings?${qs.stringify(search)}`}>
 						{feeds?.map((item) => (
 							<SidebarItem
 								key={item.id}
