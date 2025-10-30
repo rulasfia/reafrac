@@ -11,8 +11,8 @@ let queryClient: pg.Pool;
 console.info('DB_URL', DB_URL);
 
 if (process.env.DATABASE_MODE === 'native') {
-	const { native } = pg;
-	const { Pool } = native;
+	const Pool = (pg.native as { Pool?: typeof pg.Pool }).Pool;
+	if (!Pool) throw new Error('pg-native not available');
 
 	queryClient = new Pool({
 		connectionString: DB_URL
