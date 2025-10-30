@@ -26,6 +26,17 @@ COPY . .
 ENV NODE_ENV=production
 RUN bun run build
 
+FROM base AS dependencies
+
+RUN apk add --no-cache python3 make g++ postgresql-dev curl
+RUN ln -sf python3 /usr/bin/python
+
+WORKDIR /app
+
+COPY package.json bun.lock* ./
+
+RUN bun install --frozen-lockfile --production
+
 # Stage 2: Production stage
 FROM base AS runner
 
@@ -43,8 +54,8 @@ COPY --from=builder /app/server.ts ./
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/bun.lock ./
 
-# Install only production dependencies
-RUN bun install --frozen-lockfile --production
+# Copy node_modules from dependencies stage
+COPY --from=dependencies /app/node_modules ./node_modules
 
 # Switch to non-root user (bun user already exists in the image)
 USER bun
