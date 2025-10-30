@@ -4,7 +4,7 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev --port 3000",
-		"start": "node .output/server/index.mjs",
+		"start": "bun run server.ts",
 		"build": "vite build",
 		"serve": "vite preview",
 		"test": "vitest run",
@@ -49,6 +49,7 @@
 		"zod": "^4.1.12"
 	},
 	"devDependencies": {
+		"@prettier/plugin-oxc": "^0.0.4",
 		"@tailwindcss/typography": "^0.5.19",
 		"@tanstack/eslint-plugin-router": "^1.133.19",
 		"@testing-library/dom": "^10.4.0",
