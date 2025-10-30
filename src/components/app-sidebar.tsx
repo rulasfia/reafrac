@@ -5,7 +5,6 @@ import {
 	IconBookmarkFill,
 	IconCalendar2Fill,
 	IconChevronsY,
-	IconDashboardFill,
 	IconGear,
 	IconInbox2Fill,
 	IconLogout
@@ -163,7 +162,7 @@ function MenuSidebar() {
 							</MenuHeader>
 						</MenuSection>
 
-						<MenuItem href="/reader/settings">
+						<MenuItem href={`/reader/settings?${qs.stringify(search)}`}>
 							<IconGear />
 							Settings
 						</MenuItem>

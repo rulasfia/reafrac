@@ -23,14 +23,18 @@ export const getRouter = () => {
 		queryClient
 	});
 
-	Sentry.init({
-		dsn: import.meta.env.VITE_SENTRY_DSN,
-		// Adds request headers and IP for users, for more info visit:
-		// https://docs.sentry.io/platforms/javascript/guides/tanstackstart-react/configuration/options/#sendDefaultPii
-		sendDefaultPii: true,
-		environment:
-			import.meta.env.NODE_ENV?.toLowerCase() === 'production' ? 'production' : 'development'
-	});
+	if (!router.isServer) {
+		Sentry.init({
+			dsn: import.meta.env.VITE_SENTRY_DSN,
+			// Adds request headers and IP for users, for more info visit:
+			// https://docs.sentry.io/platforms/javascript/guides/tanstackstart-react/configuration/options/#sendDefaultPii
+			sendDefaultPii: true,
+			environment:
+				import.meta.env.NODE_ENV?.toLowerCase() === 'production' ? 'production' : 'development',
+			integrations: [Sentry.tanstackRouterBrowserTracingIntegration(router)],
+			tracesSampleRate: parseFloat(import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE ?? '1.0')
+		});
+	}
 
 	return router;
 };
