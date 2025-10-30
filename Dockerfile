@@ -40,7 +40,7 @@ RUN bun install --frozen-lockfile --production
 # Stage 2: Production stage
 FROM base AS runner
 
-RUN apk add --no-cache libpq libstdc++
+RUN apk add --no-cache libpq libstdc++ libcrypto3 libssl3
 
 # Set environment to production
 ENV NODE_ENV=production
