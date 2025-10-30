@@ -65,7 +65,7 @@ export function MinifluxIntegrationForm() {
 				<Button isPending={isLoading} isDisabled={!!data} type="submit">
 					{isLoading ? <Loader /> : 'Connect to Server'}
 				</Button>
-				{!data ? <span className="ml-2 text-success">Integration connected</span> : null}
+				{data ? <span className="ml-2 text-success">Integration connected!</span> : null}
 			</div>
 		</form>
 	);
