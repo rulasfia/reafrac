@@ -1,6 +1,14 @@
+FROM oven/bun:1.3-alpine AS base
+
+# 1. Install Python 3 and the tools node-gyp needs
+RUN apk add --no-cache python3 make g++ postgresql-dev curl
+
+# 2. (Optional but recommended) create the canonical “python” symlink
+RUN ln -sf python3 /usr/bin/python
+
 # Multistage Dockerfile for Bun + TanStack Start application
 # Stage 1: Build stage
-FROM oven/bun:1.3-alpine AS builder
+FROM base AS builder
 
 # Set working directory
 WORKDIR /app
@@ -19,7 +27,7 @@ ENV NODE_ENV=production
 RUN bun run build
 
 # Stage 2: Production stage
-FROM oven/bun:1.3-alpine AS runner
+FROM base AS runner
 
 # Set environment to production
 ENV NODE_ENV=production
@@ -35,7 +43,6 @@ COPY --from=builder /app/bun.lock ./
 
 # Install only production dependencies
 RUN bun install --frozen-lockfile --production
-RUN apk add --no-cache curl
 
 # Switch to non-root user (bun user already exists in the image)
 USER bun
