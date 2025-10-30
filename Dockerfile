@@ -51,4 +51,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 ENV PORT=3000
 
 # Run the server
-CMD ["bun", "run", "server.ts"]
+CMD ["bun", "run", "start"]

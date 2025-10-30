@@ -34,6 +34,13 @@ export const Route = wrapCreateRootRouteWithSentry(createRootRouteWithContext)<{
 		],
 		links: [{ rel: 'stylesheet', href: appCss }]
 	}),
+	scripts: () => [
+		{
+			defer: true,
+			src: 'https://static.cloudflareinsights.com/beacon.min.js',
+			'data-cf-beacon': '{"token": "318f2e2b66644f7489d82f25531ac742"}'
+		}
+	],
 	shellComponent: RootDocument,
 	notFoundComponent: NotFoundComponent,
 	errorComponent: function ErrorComponent({ error }) {
@@ -62,11 +69,6 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 						</QueryProvider>
 					</RouteProviders>
 					{/*<!-- Cloudflare Web Analytics -->*/}
-					<script
-						defer
-						src="https://static.cloudflareinsights.com/beacon.min.js"
-						data-cf-beacon='{"token": "318f2e2b66644f7489d82f25531ac742"}'
-					></script>
 				</body>
 			</html>
 		</ThemeProvider>

@@ -5,7 +5,6 @@ import {
 	IconBookmarkFill,
 	IconCalendar2Fill,
 	IconChevronsY,
-	IconDashboardFill,
 	IconGear,
 	IconInbox2Fill,
 	IconLogout
@@ -109,7 +108,7 @@ function MenuSidebar() {
 				<hr className="border-border dark:border-sidebar" />
 
 				<SidebarSectionGroup>
-					<SidebarSection>
+					<SidebarSection label="Feeds" href={`/reader/settings?${qs.stringify(search)}`}>
 						{feeds?.map((item) => (
 							<SidebarItem
 								key={item.id}
@@ -163,7 +162,7 @@ function MenuSidebar() {
 							</MenuHeader>
 						</MenuSection>
 
-						<MenuItem href="/reader/settings">
+						<MenuItem href={`/reader/settings?${qs.stringify(search)}`}>
 							<IconGear />
 							Settings
 						</MenuItem>
