@@ -82,7 +82,7 @@ export function ContentSidebar() {
 					{error && (
 						<div className="mb-2 flex items-center gap-2 rounded-md border border-red-200 bg-red-50 p-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300">
 							<IconTriangleExclamation className="h-4 w-4" />
-							<span>{error.message || 'Failed to load more entries'}</span>
+							<span>{'Failed to load entries'}</span>
 						</div>
 					)}
 					{integration && status === 'success' && hasNextPage && (

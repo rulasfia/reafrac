@@ -29,7 +29,7 @@ export const updateEntryStatusServerFn = createServerFn({ method: 'POST' })
 				// update status
 				await ofetch(`/v1/entries`, {
 					baseURL: integration?.serverUrl,
-					timeout: 5000,
+					timeout: 3000,
 					method: 'PUT',
 					body: {
 						entry_ids: [data.entryId],
@@ -92,7 +92,7 @@ export const getEntriesServerFn = createServerFn({ method: 'GET' })
 				// get entries
 				const entries = await ofetch<{ entries: FeedEntry[]; total: number }>(endpoint, {
 					baseURL: integration.serverUrl,
-					timeout: 5000,
+					timeout: 3000,
 					method: 'GET',
 					query: {
 						direction: 'desc',
@@ -148,7 +148,7 @@ export const getEntryServerFn = createServerFn({ method: 'GET' })
 				// get entry
 				const entry = await ofetch<FeedEntry>(`/v1/entries/${data.entryId}`, {
 					baseURL: integration?.serverUrl,
-					timeout: 5000,
+					timeout: 3000,
 					method: 'GET',
 					headers: {
 						'X-Auth-Token': integration?.apiKey,

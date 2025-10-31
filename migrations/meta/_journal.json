@@ -15,6 +15,13 @@
       "when": 1759476280375,
       "tag": "0001_parallel_nemesis",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1761895648036,
+      "tag": "0002_faulty_nemesis",
+      "breakpoints": true
     }
   ]
 }

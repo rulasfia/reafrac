@@ -1,4 +1,5 @@
-import { pgTable, text, timestamp, boolean, uuid } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, boolean, uuid, serial } from 'drizzle-orm/pg-core';
+import { nanoid } from 'nanoid';
 
 export const users = pgTable('users', {
 	id: uuid('id').defaultRandom().primaryKey(),
@@ -75,10 +76,73 @@ export const fluxConnections = pgTable('flux_connections', {
 		.notNull()
 });
 
+export const categories = pgTable('categories', {
+	// we use nanoid here for short, url frendly id
+	id: text('id')
+		.primaryKey()
+		.$defaultFn(() => nanoid(12)),
+	userId: uuid('user_id')
+		.notNull()
+		.references(() => users.id, { onDelete: 'cascade' }),
+	name: text('name').notNull(),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at')
+		.$onUpdate(() => /* @__PURE__ */ new Date())
+		.notNull()
+});
+
+export const feeds = pgTable('feeds', {
+	// we use nanoid here for short, url frendly id
+	id: text('id')
+		.primaryKey()
+		.$defaultFn(() => nanoid(12)),
+	userId: uuid('user_id')
+		.notNull()
+		.references(() => users.id, { onDelete: 'cascade' }),
+	categoryId: text('category_id').references(() => categories.id, { onDelete: 'cascade' }),
+	title: text('title').notNull(),
+	link: text('link').notNull(),
+	icon: text('icon').notNull(),
+	description: text('description').notNull(),
+	language: text('language').notNull(),
+	generator: text('generator').notNull(),
+	publishedAt: timestamp('published_at').notNull(),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at')
+		.$onUpdate(() => /* @__PURE__ */ new Date())
+		.notNull()
+});
+
+export const entries = pgTable('entries', {
+	// we use auto increment int here for even smaller size
+	id: serial().primaryKey(),
+	userId: uuid('user_id')
+		.notNull()
+		.references(() => users.id, { onDelete: 'cascade' }),
+	feedId: text('feed_id')
+		.notNull()
+		.references(() => feeds.id, { onDelete: 'cascade' }),
+	title: text('title').notNull(),
+	link: text('link').notNull(),
+	description: text('description').notNull(),
+	author: text('author').notNull(),
+	content: text('content'),
+	status: text('status', { enum: ['unread', 'read'] }).default('unread'),
+	starred: boolean('starred').default(false),
+	publishedAt: timestamp('published_at').notNull(),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at')
+		.$onUpdate(() => /* @__PURE__ */ new Date())
+		.notNull()
+});
+
 export type Schema = {
 	User: typeof users.$inferSelect;
 	Session: typeof sessions.$inferSelect;
 	Account: typeof accounts.$inferSelect;
 	Verification: typeof verifications.$inferSelect;
 	FluxConnection: typeof fluxConnections.$inferSelect;
+	Category: typeof categories.$inferSelect;
+	Feed: typeof feeds.$inferSelect;
+	Entry: typeof entries.$inferSelect;
 };

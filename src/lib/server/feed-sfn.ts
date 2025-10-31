@@ -25,7 +25,7 @@ export const getFeedsServerFn = createServerFn({ method: 'GET' })
 				// get feeds
 				const res = await ofetch<Feed[]>(`/v1/feeds`, {
 					baseURL: integration?.serverUrl,
-					timeout: 5000,
+					timeout: 3000,
 					method: 'GET',
 					headers: {
 						'X-Auth-Token': integration?.apiKey,
@@ -70,7 +70,7 @@ export const getFeedServerFn = createServerFn({ method: 'GET' })
 				// get feed
 				const feed = await ofetch<Feed>(`/v1/feeds/${data.feedId}`, {
 					baseURL: integration?.serverUrl,
-					timeout: 5000,
+					timeout: 3000,
 					method: 'GET',
 					headers: {
 						'X-Auth-Token': integration?.apiKey,

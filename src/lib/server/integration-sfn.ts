@@ -33,7 +33,7 @@ export const fluxIntegrationServerFn = createServerFn({ method: 'POST' })
 
 				const res = await ofetch<MinifluxUser>(`/v1/me`, {
 					baseURL: cleanUrl,
-					timeout: 5000,
+					timeout: 3000,
 					headers: {
 						'X-Auth-Token': data.token,
 						'Content-Type': 'application/json'
