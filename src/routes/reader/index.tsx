@@ -29,11 +29,17 @@ function RouteComponent() {
 		queryFn: async () => getEntryContent({ data: { entryUrl: entry.data?.url ?? '' } })
 	});
 
-	if (!search.entry) return null;
-
 	const onCloseReader = () => {
 		navigate({ search: (prev) => ({ ...prev, entry: undefined }) });
 	};
+
+	if (!search.entry) {
+		return (
+			<div className="mx-auto grid max-w-2xl grid-cols-1 items-center justify-center gap-y-1">
+				<p className="text-center font-medium opacity-75">No Entry Selected</p>
+			</div>
+		);
+	}
 
 	return (
 		<div className="mx-auto grid max-w-2xl grid-cols-1 justify-center gap-y-1">

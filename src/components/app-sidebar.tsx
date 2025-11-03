@@ -7,7 +7,8 @@ import {
 	IconChevronsY,
 	IconGear,
 	IconInbox2Fill,
-	IconLogout
+	IconLogout,
+	IconPlus
 } from '@intentui/icons';
 import { Avatar } from '@/components/ui/avatar';
 import {
@@ -29,10 +30,11 @@ import {
 	MenuTrigger
 } from '@/components/ui/menu';
 import { ContentSidebar } from './content-sidebar';
-import { useLoaderData, useLocation, useNavigate } from '@tanstack/react-router';
+import { Link, useLoaderData, useLocation, useNavigate } from '@tanstack/react-router';
 import { authClient } from '@/lib/auth-client';
 import { useServerFn } from '@tanstack/react-start';
 import { getFeedsServerFn } from '@/lib/server/feed-sfn';
+import { buttonStyles } from './ui/button';
 
 export function AppSidebar() {
 	return (
@@ -59,8 +61,7 @@ function MenuSidebar() {
 	const getFeeds = useServerFn(getFeedsServerFn);
 
 	const { data: feeds } = useQuery({
-		enabled: !!integration,
-		queryKey: ['feeds', integration?.id],
+		queryKey: ['feeds', user.id, integration?.id],
 		queryFn: async () => getFeeds()
 	});
 
@@ -109,6 +110,18 @@ function MenuSidebar() {
 
 				<SidebarSectionGroup>
 					<SidebarSection label="Feeds" href={`/reader/settings?${qs.stringify(search)}`}>
+						{feeds?.length === 0 ? (
+							<div className="col-span-2 flex w-[calc(100%-16px)] flex-col items-center justify-center gap-y-2 rounded-md border border-dashed border-sidebar-border bg-background p-4">
+								<span className="text-sm opacity-75">Personalize your feed.</span>
+								<Link
+									className={buttonStyles({ size: 'xs' })}
+									to="/reader/settings"
+									search={search}
+								>
+									<IconPlus className="size-6" /> Add Feed
+								</Link>
+							</div>
+						) : null}
 						{feeds?.map((item) => (
 							<SidebarItem
 								key={item.id}
@@ -120,7 +133,7 @@ function MenuSidebar() {
 								<img
 									width={18}
 									height={18}
-									src={`${integration?.serverUrl}/feed/icon/${item.icon?.external_icon_id}`}
+									src={`${integration?.serverUrl}/feed/icon/${item.icon}`}
 									alt={item.title}
 									className="mr-2 size-[18px] rounded-xs border border-border"
 								/>

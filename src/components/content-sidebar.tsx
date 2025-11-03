@@ -2,7 +2,7 @@ import { SidebarContent, SidebarHeader } from '@/components/ui/sidebar';
 import { useLoaderData, useLocation } from '@tanstack/react-router';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { Loader } from './ui/loader';
-import { IconTriangleExclamation } from '@intentui/icons';
+import { IconTriangleExclamation, IconCircleExclamation } from '@intentui/icons';
 import { EntryItem } from './entry/entry-item';
 import { Button } from './ui/button';
 import { useServerFn } from '@tanstack/react-start';
@@ -70,9 +70,9 @@ export function ContentSidebar() {
 			</SidebarHeader>
 			<SidebarContent className="overflow-y-scroll">
 				{!integration ? (
-					<div className="bg-bg mx-2 flex flex-col items-center rounded-md border border-border p-4">
-						<IconTriangleExclamation className="h-6 w-6 opacity-75" />
-						<span className="text-sm font-medium opacity-75">No content</span>
+					<div className="bg-bg mx-2 flex flex-col items-center gap-y-2 rounded-md p-4">
+						<IconCircleExclamation className="h-6 w-6 opacity-75" />
+						<span className="text-sm opacity-75">Your feed content will appear here.</span>
 					</div>
 				) : null}
 				{integration && status === 'success'
