@@ -33,7 +33,7 @@ export const fluxIntegrationServerFn = createServerFn({ method: 'POST' })
 
 				const res = await ofetch<MinifluxUser>(`/v1/me`, {
 					baseURL: cleanUrl,
-					timeout: 5000,
+					timeout: 3000,
 					headers: {
 						'X-Auth-Token': data.token,
 						'Content-Type': 'application/json'
@@ -94,6 +94,43 @@ export const getExistingIntegrationServerFn = createServerFn({ method: 'GET' })
 						tags: { function: 'getExistingIntegration' },
 						extra: {
 							userId: data.userId,
+							errorMessage: error instanceof Error ? error.message : 'Unknown error'
+						}
+					});
+					throw error;
+				}
+			}
+		);
+	});
+
+export const removeExistingIntegrationServerFn = createServerFn({ method: 'POST' })
+	.middleware([sentryMiddleware, authFnMiddleware])
+	.handler(async ({ context }) => {
+		return Sentry.startSpan(
+			{ op: 'server_function', name: 'removeExistingIntegration' },
+			async (span) => {
+				try {
+					span.setAttribute('user_id', context.user.id);
+
+					const deleteResult = await db
+						.delete(fluxConnections)
+						.where(eq(fluxConnections.userId, context.user.id))
+						.returning({ deletedId: fluxConnections.id });
+
+					if (!deleteResult || deleteResult.length === 0) {
+						span.setAttribute('status', 'not_found');
+						return { success: false, message: 'No integration found for this user' };
+					}
+
+					span.setAttribute('status', 'success');
+					span.setAttribute('integration_removed', true);
+					return { success: true, message: 'Integration removed successfully' };
+				} catch (error) {
+					span.setAttribute('status', 'error');
+					Sentry.captureException(error, {
+						tags: { function: 'removeExistingIntegration' },
+						extra: {
+							userId: context.user.id,
 							errorMessage: error instanceof Error ? error.message : 'Unknown error'
 						}
 					});

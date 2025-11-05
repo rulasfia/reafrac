@@ -7,19 +7,14 @@ if (!DB_URL) {
 	throw new Error('DATABASE_URL is not defined');
 }
 
-let queryClient: pg.Pool;
 console.info('DB_URL', DB_URL);
 
-if (process.env.DATABASE_MODE === 'native') {
-	const Pool = (pg.native as { Pool?: typeof pg.Pool }).Pool;
-	if (!Pool) throw new Error('pg-native not available');
+let queryClient: pg.Pool | null = null;
 
-	queryClient = new Pool({
-		connectionString: DB_URL
-	});
-} else {
+if (!queryClient) {
 	queryClient = new pg.Pool({
-		connectionString: DB_URL
+		connectionString: DB_URL,
+		max: 10
 	});
 }
 

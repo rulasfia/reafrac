@@ -1,19 +1,102 @@
-import type { Feed } from '@/lib/server/types';
-import { IconCircleMinus } from '@intentui/icons';
-import { useLoaderData } from '@tanstack/react-router';
+import { IconCircleMinus, IconPencilBox } from '@intentui/icons';
 import { Button } from '../ui/button';
+import type { Schema } from '@/lib/db-schema';
+import { useState } from 'react';
+import { Loader } from '../ui/loader';
+import { useLocation, useNavigate } from '@tanstack/react-router';
+import { toast } from 'sonner';
 
-export function FeedItem({ item }: { item: Feed }) {
-	const { integration } = useLoaderData({ from: '/reader' });
+interface FeedItemProps {
+	item: Schema['Feed'];
+	onRemove?: (feedId: string) => Promise<void>;
+	onUpdate?: (data: { feedId: string; title?: string; url?: string }) => Promise<void>;
+}
+
+export function FeedItem({ item, onRemove, onUpdate }: FeedItemProps) {
+	const { search } = useLocation();
+	const navigate = useNavigate();
+	const [isRemoving, setIsRemoving] = useState(false);
+	const [isEditing, setIsEditing] = useState(false);
+
+	const handleRemove = async () => {
+		if (onRemove && confirm(`Are you sure you want to remove "${item.title}"?`)) {
+			setIsRemoving(true);
+			try {
+				await onRemove(item.id);
+				if (search.page === item.id) {
+					navigate({ to: '/reader/settings', search: { ...search, page: undefined } });
+				}
+				toast.success('Feed removed successfully');
+			} catch (error) {
+				console.error('Failed to remove feed:', error);
+			} finally {
+				setIsRemoving(false);
+			}
+		}
+	};
+
+	const handleEdit = async () => {
+		setIsEditing(true);
+		try {
+			// Prompt for new title
+			const newTitle = prompt('Enter new title:', item.title);
+			if (newTitle === null) {
+				// User cancelled
+				return;
+			}
+
+			// Validate that at least one field was changed
+			if (newTitle.trim() === item.title) {
+				toast.info('No changes made');
+				return;
+			}
+
+			// Prepare update data
+			const updateData: { feedId: string; title?: string; url?: string } = {
+				feedId: item.id
+			};
+
+			if (newTitle.trim() !== item.title) {
+				updateData.title = newTitle.trim();
+			}
+
+			// Call onUpdate callback if provided
+			if (onUpdate) {
+				await onUpdate(updateData);
+				toast.success('Feed updated successfully');
+			}
+		} catch (error) {
+			console.error('Failed to update feed:', error);
+			toast.error('Failed to update feed');
+		} finally {
+			setIsEditing(false);
+		}
+	};
+
 	return (
 		<div className="flex flex-row items-center gap-x-2">
-			<Button size="sq-sm" intent="plain" className="hover:bg-background" isDisabled>
-				<IconCircleMinus className="mr-2 text-danger!" />
+			<Button
+				size="sq-sm"
+				intent="plain"
+				className="hover:bg-danger/10"
+				onPress={handleRemove}
+				isDisabled={isRemoving || !onRemove}
+			>
+				{isRemoving ? <Loader /> : <IconCircleMinus className="text-danger!" />}
+			</Button>
+			<Button
+				size="sq-sm"
+				intent="plain"
+				className="hover:bg-primary/10"
+				onPress={handleEdit}
+				isDisabled={isEditing}
+			>
+				{isEditing ? <Loader /> : <IconPencilBox className="text-primary" />}
 			</Button>
 			<img
 				width={18}
 				height={18}
-				src={`${integration?.serverUrl}/feed/icon/${item.icon?.external_icon_id}`}
+				src={item.icon === '' ? '/favicon.ico' : item.icon}
 				alt={item.title}
 				className="size-5 rounded-xs border border-border"
 			/>

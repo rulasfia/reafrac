@@ -4,17 +4,19 @@ import { Button } from '@/components/ui/button';
 import { useServerFn } from '@tanstack/react-start';
 import {
 	fluxIntegrationServerFn,
-	getExistingIntegrationServerFn
+	getExistingIntegrationServerFn,
+	removeExistingIntegrationServerFn
 } from '@/lib/server/integration-sfn';
 import { toast } from 'sonner';
 import { useState } from 'react';
 import { Loader } from '@/components/ui/loader';
 import { useLoaderData } from '@tanstack/react-router';
 
-export function MinifluxIntegrationForm() {
+export function MinifluxIntegrationSetting() {
 	const { user } = useLoaderData({ from: '/reader' });
 	const getExistingIntegration = useServerFn(getExistingIntegrationServerFn);
 	const postFluxIntegration = useServerFn(fluxIntegrationServerFn);
+	const removeExistingIntegration = useServerFn(removeExistingIntegrationServerFn);
 
 	const [isLoading, setIsLoading] = useState(false);
 
@@ -31,6 +33,11 @@ export function MinifluxIntegrationForm() {
 			const server_url = formData.get('server-url') as string;
 			const token = formData.get('api-key') as string;
 
+			if (!server_url || !token) {
+				toast('Please fill in all fields', { closeButton: true });
+				return;
+			}
+
 			const res = await postFluxIntegration({ data: { server_url, token } });
 
 			if (res) {
@@ -45,28 +52,67 @@ export function MinifluxIntegrationForm() {
 		}
 	};
 
+	const removeIntegrationHandler = async () => {
+		setIsLoading(true);
+		try {
+			const res = await removeExistingIntegration();
+			if (res) {
+				toast('MiniFlux integration removed successfully!');
+				await refetch();
+			}
+		} catch (error) {
+			console.error(error);
+			toast('Failed to remove MiniFlux integration');
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
 	return (
-		<form onSubmit={submitHandler} className="flex max-w-md flex-col gap-y-2">
-			<TextField
-				name="server-url"
-				type="url"
-				label="Miniflux Server URL"
-				placeholder={data?.serverUrl}
-				isDisabled={!!data}
-			/>
-			<TextField
-				name="api-key"
-				type="password"
-				label="Miniflux API Key"
-				placeholder="****************"
-				isDisabled={!!data}
-			/>
-			<div className="mt-2">
-				<Button isPending={isLoading} isDisabled={!!data} type="submit">
-					{isLoading ? <Loader /> : 'Connect to Server'}
-				</Button>
-				{data ? <span className="ml-2 text-success">Integration connected!</span> : null}
-			</div>
-		</form>
+		<div>
+			<h3 className="text-lg font-medium">Miniflux Integration</h3>
+			<p className="mb-3 text-sm text-foreground/70">
+				Configure your Miniflux integration settings here.
+			</p>
+
+			<form onSubmit={submitHandler} className="flex max-w-md flex-col gap-y-2">
+				<TextField
+					name="server-url"
+					type="url"
+					label="Miniflux Server URL"
+					placeholder={data ? data?.serverUrl : 'https://miniflux.example.com'}
+					isDisabled={!!data}
+				/>
+				<TextField
+					name="api-key"
+					type="password"
+					label="Miniflux API Key"
+					placeholder="****************"
+					isDisabled={!!data}
+				/>
+				<div className="mt-2">
+					{data ? (
+						<Button
+							isPending={isLoading}
+							isDisabled={!data}
+							onClick={removeIntegrationHandler}
+							type="button"
+						>
+							{isLoading ? <Loader /> : 'Remove Integration'}
+						</Button>
+					) : (
+						<Button
+							isPending={isLoading}
+							// isDisabled={!!data}
+							isDisabled={true}
+							type="submit"
+						>
+							{isLoading ? <Loader /> : 'Connect to Server'}
+						</Button>
+					)}
+					{data ? <span className="ml-2 text-success">Integration connected!</span> : null}
+				</div>
+			</form>
+		</div>
 	);
 }

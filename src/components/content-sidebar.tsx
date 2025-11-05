@@ -2,28 +2,27 @@ import { SidebarContent, SidebarHeader } from '@/components/ui/sidebar';
 import { useLoaderData, useLocation } from '@tanstack/react-router';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { Loader } from './ui/loader';
-import { IconTriangleExclamation } from '@intentui/icons';
+import { IconTriangleExclamation, IconCircleExclamation, IconRotateLeft } from '@intentui/icons';
 import { EntryItem } from './entry/entry-item';
 import { Button } from './ui/button';
 import { useServerFn } from '@tanstack/react-start';
 import { getEntriesServerFn } from '@/lib/server/entry-sfn';
-import { getFeedServerFn } from '@/lib/server/feed-sfn';
+import { getFeedServerFn, getFeedsServerFn } from '@/lib/server/feed-sfn';
+import { MENU_ITEMS } from './app-sidebar';
 
 const PAGE_SIZE = 20;
 
 export function ContentSidebar() {
 	const { search } = useLocation();
-	const { integration } = useLoaderData({ from: '/reader' });
-	const feedId = search.page?.split('_')[1];
+	const { user, integration } = useLoaderData({ from: '/reader' });
 	const getEntries = useServerFn(getEntriesServerFn);
 	const getFeed = useServerFn(getFeedServerFn);
+	const getFeeds = useServerFn(getFeedsServerFn);
+	const feedId = MENU_ITEMS.find((x) => x.page === search.page) ? undefined : search.page;
 
-	const { data, status, fetchNextPage, hasNextPage, isFetchingNextPage, error } = useInfiniteQuery({
-		enabled: !!integration,
+	const entries = useInfiniteQuery({
 		queryKey: ['entries', integration?.id, search.page],
 		queryFn: async ({ pageParam = 0 }) => {
-			if (!integration) return { entries: [], total: 0 };
-
 			const status = search.page === 'unread' ? 'unread' : undefined;
 			const starred = search.page === 'saved';
 			// today at 12am in unix timestamp
@@ -38,15 +37,18 @@ export function ContentSidebar() {
 			const currentOffset = allPages.length * PAGE_SIZE;
 			const hasMore =
 				lastPage.entries.length === PAGE_SIZE &&
-				currentOffset + lastPage.entries.length < lastPage.total;
+				currentOffset + lastPage.entries.length < lastPage.meta.totalItems;
 			return hasMore ? currentOffset : undefined;
 		},
 		initialPageParam: 0,
 		select: (res) => {
-			return res.pages
-				.flatMap((page) => page.entries)
-				.sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime());
+			return res.pages.flatMap((page) => page.entries);
 		}
+	});
+
+	const feeds = useQuery({
+		queryKey: ['feeds', user.id, integration?.id],
+		queryFn: async () => getFeeds()
 	});
 
 	const feed = useQuery({
@@ -56,43 +58,45 @@ export function ContentSidebar() {
 	});
 
 	const loadMore = async () => {
-		if (!hasNextPage || isFetchingNextPage) return;
-		await fetchNextPage();
+		if (!entries.hasNextPage || entries.isFetchingNextPage) return;
+		await entries.fetchNextPage();
 	};
 
 	return (
 		<div className="col-span-3 flex h-full flex-col overflow-y-auto">
-			<SidebarHeader className="flex w-full flex-row items-center justify-between">
-				<span className="min-h-7 gap-x-3 text-lg font-bold capitalize">
+			<SidebarHeader className="flex w-full flex-row items-start justify-between">
+				<span className="line-clamp-2 min-h-7 w-fit gap-x-3 text-lg font-bold capitalize">
 					{feedId ? (feed.data?.title ?? ' ') : search.page?.replaceAll('-', ' ')}
 				</span>
-				{integration && status === 'pending' ? <Loader size="xs" /> : null}
+				<Button size="sq-sm" intent="plain" onClick={() => entries.refetch()}>
+					{entries.isFetching ? <Loader size="xs" /> : <IconRotateLeft />}
+				</Button>
 			</SidebarHeader>
 			<SidebarContent className="overflow-y-scroll">
-				{!integration ? (
-					<div className="bg-bg mx-2 flex flex-col items-center rounded-md border border-border p-4">
-						<IconTriangleExclamation className="h-6 w-6 opacity-75" />
-						<span className="text-sm font-medium opacity-75">No content</span>
+				{feeds.data && feeds.data.length < 1 ? (
+					<div className="bg-bg mx-2 flex flex-col items-center gap-y-2 rounded-md p-4">
+						<IconCircleExclamation className="h-6 w-6 opacity-75" />
+						<span className="text-sm opacity-75">Your feed content will appear here.</span>
 					</div>
 				) : null}
-				{integration && status === 'success'
-					? data?.map((entry) => <EntryItem key={entry.id} entry={entry} />)
+				{entries.status === 'success'
+					? entries.data?.map((entry) => <EntryItem key={entry.id} entry={entry} />)
 					: null}
 				<div className="mx-2 mt-2 mb-4">
-					{error && (
+					{entries.error && (
 						<div className="mb-2 flex items-center gap-2 rounded-md border border-red-200 bg-red-50 p-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300">
 							<IconTriangleExclamation className="h-4 w-4" />
-							<span>{error.message || 'Failed to load more entries'}</span>
+							<span>{'Failed to load entries'}</span>
 						</div>
 					)}
-					{integration && status === 'success' && hasNextPage && (
+					{entries.status === 'success' && entries.hasNextPage && (
 						<Button
 							onClick={loadMore}
-							isDisabled={isFetchingNextPage}
+							isDisabled={entries.isFetchingNextPage}
 							className="w-full"
 							intent="outline"
 						>
-							{isFetchingNextPage ? (
+							{entries.isFetchingNextPage ? (
 								<div className="flex items-center justify-center gap-2">
 									<Loader className="h-4 w-4" />
 									<span>Loading more...</span>
