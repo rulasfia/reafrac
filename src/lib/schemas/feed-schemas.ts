@@ -8,7 +8,7 @@ export const parsedFeedSchema = z.object({
 	]),
 	link: z.url(),
 	published: z.string(),
-	icon: z.string().default(''),
+	icon: z.url().default(''),
 	generator: z.string().default(''),
 	language: z.string().default(''),
 	entries: z.array(

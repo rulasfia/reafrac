@@ -30,19 +30,17 @@ export async function extractFeed(url: string) {
 						} else if ('icon' in feed) {
 							const parsedImg = parsedFeedIconSchema.parse(feed.icon);
 							icon = parsedImg;
-						} else {
-							// alternative icon parsing. go to the website and search for icon
-							const faviconUrl = `${new URL(url).origin}/favicon.ico`;
-							icon = faviconUrl;
 						}
+
+						console.log({ icon });
 
 						return { icon };
 					},
 					getExtraEntryFields: (feedEntry) => {
 						// parse entry author
 						let author = '';
-						if ('dc:creator' in feedEntry && typeof feedEntry['dc:creator'] === 'string') {
-							author = feedEntry['dc:creator'];
+						if ('dc:creator' in feedEntry) {
+							author = parsedFeedAuthorSchema.parse(feedEntry['dc:creator']);
 						}
 
 						if ('author' in feedEntry) {
@@ -55,8 +53,6 @@ export async function extractFeed(url: string) {
 						} else if ('content:encoded' in feedEntry) {
 							content = parsedFeedContentSchema.parse(feedEntry['content:encoded']);
 						}
-
-						console.log(feedEntry);
 
 						return { author, content };
 					}

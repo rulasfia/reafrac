@@ -470,9 +470,13 @@ export const getEntryServerFn = createServerFn({ method: 'GET' })
 				}
 
 				//  sanitize HTML in the entry.content
-				const sanitizedContent = sanitizeHtml(entry.content ?? '', {
-					allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img'])
-				});
+				const sanitizedContent = sanitizeHtml(
+					entry.content?.replace(/:{3,}/g, '').replace(/\\(?!\w)/g, '') ?? '',
+					{
+						allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img']),
+						allowProtocolRelative: false
+					}
+				);
 
 				span.setAttribute('status', 'success');
 				span.setAttribute('content_length', sanitizedContent.length);

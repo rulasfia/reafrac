@@ -1,4 +1,4 @@
-import { IconCircleMinus } from '@intentui/icons';
+import { IconCircleMinus, IconPencilBox } from '@intentui/icons';
 import { Button } from '../ui/button';
 import type { Schema } from '@/lib/db-schema';
 import { useState } from 'react';
@@ -42,7 +42,10 @@ export function FeedItem({ item, onRemove }: FeedItemProps) {
 				onPress={handleRemove}
 				isDisabled={isRemoving || !onRemove}
 			>
-				{isRemoving ? <Loader /> : <IconCircleMinus className="mr-2 text-danger!" />}
+				{isRemoving ? <Loader /> : <IconCircleMinus className="text-danger!" />}
+			</Button>
+			<Button size="sq-sm" intent="plain" isDisabled>
+				{isRemoving ? <Loader /> : <IconPencilBox />}
 			</Button>
 			<img
 				width={18}

@@ -3,7 +3,7 @@ import * as z from 'zod/mini';
 import { authFnMiddleware } from '../middleware/auth-middleware';
 import { getExistingIntegrationServerFn } from './integration-sfn';
 import { ofetch } from 'ofetch';
-import type { Feed as FluxFeed, ReafracFeedType } from './types';
+import type { Feed as FluxFeed } from './types';
 import { sentryMiddleware } from '../middleware/sentry-middleware';
 import * as Sentry from '@sentry/tanstackstart-react';
 import { db } from '../db-connection';
@@ -128,6 +128,22 @@ export const addFeedServerFn = createServerFn({ method: 'GET' })
 				span.setAttribute('entries_count', validated.entries.length);
 				span.setAttribute('feed_title', validated.title);
 
+				// alternative icon parsing. go to the website and search for icon
+				let icon = '';
+				if (!validated.icon) {
+					const faviconEnpoints = ['favicon.ico', 'favicon.png', 'favicon.jpg', 'favicon.svg'];
+					for (const ico of faviconEnpoints) {
+						const faviconUrl = `${new URL(data.feedUrl).origin}/${ico}`;
+						// check if favicon exists
+						const faviconExists = await fetch(faviconUrl).then((res) => res.ok);
+						if (!faviconExists) continue;
+						icon = faviconUrl;
+						break;
+					}
+				} else {
+					icon = validated.icon;
+				}
+
 				// Insert to feed table
 				const newFeed = await db
 					.insert(feeds)
@@ -137,7 +153,7 @@ export const addFeedServerFn = createServerFn({ method: 'GET' })
 						description: validated.description,
 						link: data.feedUrl,
 						publishedAt: new Date(validated.published),
-						icon: validated.icon,
+						icon: icon,
 						generator: validated.generator,
 						language: validated.language
 					})
