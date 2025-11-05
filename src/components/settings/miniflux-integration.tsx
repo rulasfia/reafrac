@@ -101,7 +101,12 @@ export function MinifluxIntegrationSetting() {
 							{isLoading ? <Loader /> : 'Remove Integration'}
 						</Button>
 					) : (
-						<Button isPending={isLoading} isDisabled={!!data} type="submit">
+						<Button
+							isPending={isLoading}
+							// isDisabled={!!data}
+							isDisabled={true}
+							type="submit"
+						>
 							{isLoading ? <Loader /> : 'Connect to Server'}
 						</Button>
 					)}
