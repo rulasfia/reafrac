@@ -90,7 +90,7 @@ export const kickAuthedUserServerFn = createServerFn()
 					span.setAttribute('status', 'redirect');
 					span.setAttribute('session_exists', true);
 					span.setAttribute('user_id', session.user?.id);
-					throw redirect({ to: '/reader' });
+					throw redirect({ to: '/reader', search: { page: 'all-posts' } });
 				}
 
 				span.setAttribute('status', 'success');
