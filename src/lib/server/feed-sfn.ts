@@ -9,7 +9,7 @@ import * as Sentry from '@sentry/tanstackstart-react';
 import { db } from '../db-connection';
 import { entries, feeds } from '../db-schema';
 import type { Schema } from '../db-schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, asc } from 'drizzle-orm';
 import { extractFeed } from '../utils/feed-utils';
 
 export const getFeedsServerFn = createServerFn({ method: 'GET' })
@@ -26,7 +26,11 @@ export const getFeedsServerFn = createServerFn({ method: 'GET' })
 
 				let userFeeds: Array<Schema['Feed']> = [];
 
-				userFeeds = await db.select().from(feeds).where(eq(feeds.userId, context.user.id));
+				userFeeds = await db
+					.select()
+					.from(feeds)
+					.where(eq(feeds.userId, context.user.id))
+					.orderBy(asc(feeds.title));
 
 				if (integration) {
 					// get feeds
@@ -53,6 +57,7 @@ export const getFeedsServerFn = createServerFn({ method: 'GET' })
 							title: f.title,
 							description: f.title,
 							publishedAt: new Date(),
+							lastFetchedAt: new Date(),
 							updatedAt: new Date(),
 							createdAt: new Date()
 						});

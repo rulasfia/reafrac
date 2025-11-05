@@ -95,7 +95,6 @@ async function refetchFeedEntries(userId: string, feedIds?: string[]): Promise<v
 			}
 
 			span.setAttribute('feeds_to_refetch_count', feedsToRefetch.length);
-			console.log(`Refetching ${feedsToRefetch.length} feeds`);
 
 			// Get all existing entry titles at once for better efficiency
 			const allExistingEntries = await db

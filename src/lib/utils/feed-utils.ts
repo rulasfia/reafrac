@@ -31,7 +31,9 @@ export async function extractFeed(url: string) {
 							const parsedImg = parsedFeedIconSchema.parse(feed.icon);
 							icon = parsedImg;
 						} else {
-							// TODO: alternative icon parsing. go to the website and search for icon
+							// alternative icon parsing. go to the website and search for icon
+							const faviconUrl = `${new URL(url).origin}/favicon.ico`;
+							icon = faviconUrl;
 						}
 
 						return { icon };
@@ -50,7 +52,11 @@ export async function extractFeed(url: string) {
 						let content: string | null = null;
 						if ('content' in feedEntry) {
 							content = parsedFeedContentSchema.parse(feedEntry['content']);
+						} else if ('content:encoded' in feedEntry) {
+							content = parsedFeedContentSchema.parse(feedEntry['content:encoded']);
 						}
+
+						console.log(feedEntry);
 
 						return { author, content };
 					}

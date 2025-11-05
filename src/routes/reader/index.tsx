@@ -60,7 +60,7 @@ function RouteComponent() {
 							{entry.data.feed?.title}
 						</a>
 						<span className="h-full w-px bg-foreground/50" />
-						<span>{entry.data.author}</span>
+						<span className="w-fit">{entry.data.author}</span>
 						<span className="h-full w-px bg-foreground/50" />
 						<span>
 							{new Date(entry.data.publishedAt).toLocaleString(['en-SG', 'en-US'], {

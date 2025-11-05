@@ -30,7 +30,13 @@ export const parsedFeedIconSchema = z.union([
 ]);
 
 export const parsedFeedAuthorSchema = z.union([
-	z.string(),
+	z.string().transform((val) => {
+		// if include (), get the content inside
+		if (val.includes('(') && val.includes(')')) {
+			return val.split('(')[1].split(')')[0].trim();
+		}
+		return val.trim();
+	}),
 	z.object({ name: z.string() }).transform((val) => val.name.trim())
 ]);
 

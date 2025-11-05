@@ -64,8 +64,8 @@ export function ContentSidebar() {
 
 	return (
 		<div className="col-span-3 flex h-full flex-col overflow-y-auto">
-			<SidebarHeader className="flex w-full flex-row items-center justify-between">
-				<span className="min-h-7 gap-x-3 text-lg font-bold capitalize">
+			<SidebarHeader className="flex w-full flex-row items-start justify-between">
+				<span className="line-clamp-2 min-h-7 w-fit gap-x-3 text-lg font-bold capitalize">
 					{feedId ? (feed.data?.title ?? ' ') : search.page?.replaceAll('-', ' ')}
 				</span>
 				<Button size="sq-sm" intent="plain" onClick={() => entries.refetch()}>
