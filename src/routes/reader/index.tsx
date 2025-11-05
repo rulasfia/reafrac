@@ -23,10 +23,10 @@ function RouteComponent() {
 	});
 
 	const content = useQuery({
-		enabled: !!entry.data && search.view === 'expanded',
+		enabled: false,
 		staleTime: Infinity,
 		queryKey: ['entry-content', search.entry],
-		queryFn: async () => getEntryContent({ data: { entryUrl: entry.data?.url ?? '' } })
+		queryFn: async () => getEntryContent({ data: { entryUrl: entry.data?.link ?? '' } })
 	});
 
 	const onCloseReader = () => {
@@ -56,14 +56,14 @@ function RouteComponent() {
 			{entry.status === 'success' && (
 				<>
 					<div className="mx-auto flex w-full items-center gap-x-2 text-sm text-foreground/75">
-						<a href={entry.data.feed.site_url} className="text-primary hover:underline">
-							{entry.data.feed.title}
+						<a href={entry.data.feed?.link} className="text-primary hover:underline">
+							{entry.data.feed?.title}
 						</a>
 						<span className="h-full w-px bg-foreground/50" />
 						<span>{entry.data.author}</span>
 						<span className="h-full w-px bg-foreground/50" />
 						<span>
-							{new Date(entry.data.published_at).toLocaleString(['en-SG', 'en-US'], {
+							{new Date(entry.data.publishedAt).toLocaleString(['en-SG', 'en-US'], {
 								day: 'numeric',
 								month: 'long',
 								year: 'numeric',
@@ -73,7 +73,7 @@ function RouteComponent() {
 						</span>
 						<span className="h-full w-px bg-foreground/50" />
 						<a
-							href={entry.data.url}
+							href={entry.data.link}
 							target="_blank"
 							className="inline-flex items-center gap-x-1 text-primary hover:underline"
 						>
@@ -84,12 +84,12 @@ function RouteComponent() {
 						{entry.data?.title}
 					</h1>
 					<div
-						className="mx-auto prose max-w-2xl prose-neutral dark:prose-invert prose-a:decoration-accent prose-a:hover:decoration-foreground prose-img:rounded-xl prose-img:border prose-img:border-border prose-img:shadow-sm prose-img:shadow-accent/50"
+						className="mx-auto prose max-w-2xl prose-neutral xl:min-w-2xl dark:prose-invert prose-a:decoration-accent prose-a:hover:decoration-foreground prose-img:rounded-xl prose-img:border prose-img:border-border prose-img:shadow-sm prose-img:shadow-accent/50"
 						dangerouslySetInnerHTML={{
 							__html:
 								search.view === 'expanded' && content.status === 'success'
 									? (content.data?.content ?? 'Not Available!')
-									: entry.data?.content
+									: entry.data?.description
 						}}
 					/>
 

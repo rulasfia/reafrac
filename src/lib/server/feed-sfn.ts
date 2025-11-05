@@ -132,7 +132,7 @@ export const addFeedServerFn = createServerFn({ method: 'GET' })
 
 				// Extract feed with child spans for better tracking
 				const parsed = await Sentry.startSpan(
-					{ op: 'feed.extract', name: 'Extract feed data' },
+					{ op: 'feed.extract', name: 'Extract feed data', attributes: { feed_url: data.feedUrl } },
 					async () => {
 						return await extract(data.feedUrl, {
 							getExtraFeedFields: (feed) => {

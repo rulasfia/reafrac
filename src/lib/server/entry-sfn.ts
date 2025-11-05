@@ -5,7 +5,6 @@ import { authFnMiddleware } from '../middleware/auth-middleware';
 import { getExistingIntegrationServerFn } from './integration-sfn';
 import { ofetch } from 'ofetch';
 import sanitizeHtml from 'sanitize-html';
-import type { FeedEntry } from './types';
 import { sentryMiddleware } from '../middleware/sentry-middleware';
 import * as Sentry from '@sentry/tanstackstart-react';
 import { entries, feeds } from '../db-schema';
@@ -22,28 +21,10 @@ export const updateEntryStatusServerFn = createServerFn({ method: 'POST' })
 				span.setAttribute('entry_id', data.entryId);
 				span.setAttribute('user_id', context.user.id);
 
-				// get user integration
-				const integration = await getExistingIntegrationServerFn({
-					data: { userId: context.user.id }
-				});
-				if (!integration) {
-					throw new Error('Integration not found');
-				}
-
-				// update status
-				await ofetch(`/v1/entries`, {
-					baseURL: integration?.serverUrl,
-					timeout: 3000,
-					method: 'PUT',
-					body: {
-						entry_ids: [data.entryId],
-						status: 'read'
-					},
-					headers: {
-						'X-Auth-Token': integration?.apiKey,
-						'Content-Type': 'application/json'
-					}
-				});
+				await db
+					.update(entries)
+					.set({ status: 'read' })
+					.where(and(eq(entries.id, data.entryId), eq(entries.userId, context.user.id)));
 
 				span.setAttribute('status', 'success');
 				return true;
@@ -201,27 +182,50 @@ export const getEntryServerFn = createServerFn({ method: 'GET' })
 				span.setAttribute('entry_id', data.entryId);
 				span.setAttribute('user_id', context.user.id);
 
-				// get user integration
-				const integration = await getExistingIntegrationServerFn({
-					data: { userId: context.user.id }
-				});
-				if (!integration) {
-					throw new Error('Integration not found');
+				const res = await db
+					.select({
+						// Entry fields
+						id: entries.id,
+						userId: entries.userId,
+						feedId: entries.feedId,
+						title: entries.title,
+						link: entries.link,
+						description: entries.description,
+						author: entries.author,
+						content: entries.content,
+						status: entries.status,
+						starred: entries.starred,
+						publishedAt: entries.publishedAt,
+						createdAt: entries.createdAt,
+						updatedAt: entries.updatedAt,
+						// Feed fields
+						feed: {
+							id: feeds.id,
+							userId: feeds.userId,
+							categoryId: feeds.categoryId,
+							title: feeds.title,
+							link: feeds.link,
+							icon: feeds.icon,
+							description: feeds.description,
+							language: feeds.language,
+							generator: feeds.generator,
+							publishedAt: feeds.publishedAt,
+							createdAt: feeds.createdAt,
+							updatedAt: feeds.updatedAt
+						}
+					})
+					.from(entries)
+					.leftJoin(feeds, eq(entries.feedId, feeds.id))
+					.where(and(eq(entries.id, data.entryId), eq(entries.userId, context.user.id)))
+					.limit(1);
+
+				const entry = res[0];
+				if (!entry) {
+					throw new Error('Entry not found');
 				}
 
-				// get entry
-				const entry = await ofetch<FeedEntry>(`/v1/entries/${data.entryId}`, {
-					baseURL: integration?.serverUrl,
-					timeout: 3000,
-					method: 'GET',
-					headers: {
-						'X-Auth-Token': integration?.apiKey,
-						'Content-Type': 'application/json'
-					}
-				});
-
 				//  sanitize HTML in the entry.content
-				const sanitizedContent = sanitizeHtml(entry.content, {
+				const sanitizedContent = sanitizeHtml(entry.content ?? '', {
 					allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img'])
 				});
 
