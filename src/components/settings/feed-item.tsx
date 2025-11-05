@@ -9,12 +9,14 @@ import { toast } from 'sonner';
 interface FeedItemProps {
 	item: Schema['Feed'];
 	onRemove?: (feedId: string) => Promise<void>;
+	onUpdate?: (data: { feedId: string; title?: string; url?: string }) => Promise<void>;
 }
 
-export function FeedItem({ item, onRemove }: FeedItemProps) {
+export function FeedItem({ item, onRemove, onUpdate }: FeedItemProps) {
 	const { search } = useLocation();
 	const navigate = useNavigate();
 	const [isRemoving, setIsRemoving] = useState(false);
+	const [isEditing, setIsEditing] = useState(false);
 
 	const handleRemove = async () => {
 		if (onRemove && confirm(`Are you sure you want to remove "${item.title}"?`)) {
@@ -33,6 +35,44 @@ export function FeedItem({ item, onRemove }: FeedItemProps) {
 		}
 	};
 
+	const handleEdit = async () => {
+		setIsEditing(true);
+		try {
+			// Prompt for new title
+			const newTitle = prompt('Enter new title:', item.title);
+			if (newTitle === null) {
+				// User cancelled
+				return;
+			}
+
+			// Validate that at least one field was changed
+			if (newTitle.trim() === item.title) {
+				toast.info('No changes made');
+				return;
+			}
+
+			// Prepare update data
+			const updateData: { feedId: string; title?: string; url?: string } = {
+				feedId: item.id
+			};
+
+			if (newTitle.trim() !== item.title) {
+				updateData.title = newTitle.trim();
+			}
+
+			// Call onUpdate callback if provided
+			if (onUpdate) {
+				await onUpdate(updateData);
+				toast.success('Feed updated successfully');
+			}
+		} catch (error) {
+			console.error('Failed to update feed:', error);
+			toast.error('Failed to update feed');
+		} finally {
+			setIsEditing(false);
+		}
+	};
+
 	return (
 		<div className="flex flex-row items-center gap-x-2">
 			<Button
@@ -44,8 +84,14 @@ export function FeedItem({ item, onRemove }: FeedItemProps) {
 			>
 				{isRemoving ? <Loader /> : <IconCircleMinus className="text-danger!" />}
 			</Button>
-			<Button size="sq-sm" intent="plain" isDisabled>
-				{isRemoving ? <Loader /> : <IconPencilBox />}
+			<Button
+				size="sq-sm"
+				intent="plain"
+				className="hover:bg-primary/10"
+				onPress={handleEdit}
+				isDisabled={isEditing}
+			>
+				{isEditing ? <Loader /> : <IconPencilBox className="text-primary" />}
 			</Button>
 			<img
 				width={18}

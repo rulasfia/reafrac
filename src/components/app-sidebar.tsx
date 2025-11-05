@@ -130,6 +130,7 @@ function MenuSidebar() {
 								key={item.id}
 								tooltip={item.title}
 								isCurrent={search.page === item.id.toString()}
+								className="mr-4"
 								// @ts-expect-error - can't get the query param typesafety to work
 								href={`/reader?${getPageUrl(item.id)}`}
 							>

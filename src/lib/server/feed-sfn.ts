@@ -194,6 +194,53 @@ export const addFeedServerFn = createServerFn({ method: 'GET' })
 		});
 	});
 
+export const updateFeedServerFn = createServerFn({ method: 'POST' })
+	.middleware([sentryMiddleware, authFnMiddleware])
+	.inputValidator(
+		z.object({
+			feedId: z.string(),
+			title: z.optional(z.string()),
+			url: z.optional(z.string())
+		})
+	)
+	.handler(async ({ data, context }) => {
+		return Sentry.startSpan({ op: 'server_function', name: 'updateFeed' }, async (span) => {
+			try {
+				span.setAttribute('feed_id', data.feedId);
+				span.setAttribute('user_id', context.user.id);
+
+				// Build update object with only provided fields
+				const updateData: Partial<Schema['Feed']> = {};
+				if (data.title !== undefined) updateData.title = data.title;
+				if (data.url !== undefined) updateData.link = data.url;
+
+				// Update the feed for this user
+				const updatedFeed = await db
+					.update(feeds)
+					.set(updateData)
+					.where(and(eq(feeds.id, data.feedId), eq(feeds.userId, context.user.id)))
+					.returning();
+
+				if (updatedFeed.length === 0) {
+					throw new Error('Feed not found or not authorized to update');
+				}
+
+				span.setAttribute('status', 'success');
+				return { success: true, feed: updatedFeed[0] };
+			} catch (error) {
+				span.setAttribute('status', 'error');
+				Sentry.captureException(error, {
+					tags: { function: 'updateFeed', feedId: data.feedId },
+					extra: {
+						userId: context.user.id,
+						errorMessage: error instanceof Error ? error.message : 'Unknown error'
+					}
+				});
+				throw error;
+			}
+		});
+	});
+
 export const removeFeedServerFn = createServerFn({ method: 'POST' })
 	.middleware([sentryMiddleware, authFnMiddleware])
 	.inputValidator(z.object({ feedId: z.string() }))
