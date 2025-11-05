@@ -54,7 +54,7 @@ COPY --from=builder /app/server.ts ./
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/bun.lock ./
 # required for migrations
-COPY --from=builder /app/drizzle.config.ts ./
+COPY --from=builder /app/drizzle-prod.config.js ./
 COPY --from=builder /app/src/lib/db-schema.ts ./
 COPY --from=builder /app/migrations ./migrations
 
