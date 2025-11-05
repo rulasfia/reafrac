@@ -1,5 +1,4 @@
 import { createServerFn } from '@tanstack/react-start';
-import { extract, FeedData } from '@extractus/feed-extractor';
 import * as z from 'zod/mini';
 import { authFnMiddleware } from '../middleware/auth-middleware';
 import { getExistingIntegrationServerFn } from './integration-sfn';
@@ -10,8 +9,8 @@ import * as Sentry from '@sentry/tanstackstart-react';
 import { db } from '../db-connection';
 import { entries, feeds } from '../db-schema';
 import type { Schema } from '../db-schema';
-import { parsedFeedSchema } from '../schemas/feed-schemas';
 import { eq, and } from 'drizzle-orm';
+import { extractFeed } from '../utils/feed-utils';
 
 export const getFeedsServerFn = createServerFn({ method: 'GET' })
 	.middleware([sentryMiddleware, authFnMiddleware])
@@ -86,27 +85,16 @@ export const getFeedServerFn = createServerFn({ method: 'GET' })
 				span.setAttribute('feed_id', data.feedId);
 				span.setAttribute('user_id', context.user.id);
 
-				// get user integration
-				const integration = await getExistingIntegrationServerFn({
-					data: { userId: context.user.id }
-				});
-				if (!integration) {
-					throw new Error('Integration not found');
-				}
+				const feed = await db
+					.select()
+					.from(feeds)
+					.where(and(eq(feeds.id, data.feedId), eq(feeds.userId, context.user.id)))
+					.limit(1);
 
-				// get feed
-				const feed = await ofetch<FluxFeed>(`/v1/feeds/${data.feedId}`, {
-					baseURL: integration?.serverUrl,
-					timeout: 3000,
-					method: 'GET',
-					headers: {
-						'X-Auth-Token': integration?.apiKey,
-						'Content-Type': 'application/json'
-					}
-				});
+				if (feed.length === 0) throw new Error('Feed not found');
 
 				span.setAttribute('status', 'success');
-				return feed;
+				return feed[0];
 			} catch (error) {
 				span.setAttribute('status', 'error');
 				Sentry.captureException(error, {
@@ -130,38 +118,8 @@ export const addFeedServerFn = createServerFn({ method: 'GET' })
 				span.setAttribute('user_id', context.user.id);
 				span.setAttribute('feed_url', data.feedUrl);
 
-				// Extract feed with child spans for better tracking
-				const parsed = await Sentry.startSpan(
-					{ op: 'feed.extract', name: 'Extract feed data', attributes: { feed_url: data.feedUrl } },
-					async () => {
-						return await extract(data.feedUrl, {
-							getExtraFeedFields: (feed) => {
-								// parse website icon
-								let icon = '';
-								if ('image' in feed) {
-									const parsedImg = z.object({ url: z.url() }).safeParse(feed.image);
-									if (parsedImg.success) icon = parsedImg.data.url;
-								} else {
-									// TODO: alternative icon parsing. go to the website and search for icon
-								}
-
-								return { icon };
-							},
-							getExtraEntryFields: (feedEntry) => {
-								// parse entry author
-								let author = '';
-								if ('dc:creator' in feedEntry && typeof feedEntry['dc:creator'] === 'string') {
-									author = feedEntry['dc:creator'];
-								}
-
-								return { author };
-							}
-						});
-					}
-				);
-
-				// Validate feed data
-				const validated = parsedFeedSchema.parse(parsed);
+				// Extract feed using the centralized extractFeed function
+				const validated = await extractFeed(data.feedUrl);
 				span.setAttribute('entries_count', validated.entries.length);
 				span.setAttribute('feed_title', validated.title);
 
@@ -190,14 +148,15 @@ export const addFeedServerFn = createServerFn({ method: 'GET' })
 					description: entry.description,
 					link: entry.link,
 					publishedAt: new Date(entry.published),
-					author: entry.author
+					author: entry.author,
+					content: entry.content
 				}));
 
 				await db.insert(entries).values(entryValues);
 				span.setAttribute('inserted_entries_count', entryValues.length);
 
 				span.setAttribute('status', 'success');
-				return parsed;
+				return validated;
 			} catch (error) {
 				span.setAttribute('status', 'error');
 				Sentry.captureException(error, {

@@ -107,6 +107,7 @@ export const feeds = pgTable('feeds', {
 	language: text('language').notNull(),
 	generator: text('generator').notNull(),
 	publishedAt: timestamp('published_at').notNull(),
+	lastFetchedAt: timestamp('last_fetched_at').defaultNow().notNull(),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at')
 		.$onUpdate(() => /* @__PURE__ */ new Date())

@@ -22,6 +22,13 @@
       "when": 1761895648036,
       "tag": "0002_faulty_nemesis",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1762327663538,
+      "tag": "0003_fuzzy_goblin_queen",
+      "breakpoints": true
     }
   ]
 }

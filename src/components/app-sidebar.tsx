@@ -47,7 +47,7 @@ export function AppSidebar() {
 	);
 }
 
-const MENU_ITEMS = [
+export const MENU_ITEMS = [
 	{ label: 'All Posts', icon: <IconAlignmentJustify />, href: '/reader', page: 'all-posts' },
 	{ label: 'Unread', icon: <IconInbox2Fill />, href: '/reader', page: 'unread' },
 	{ label: 'Today', icon: <IconCalendar2Fill />, href: '/reader', page: 'today' },
@@ -109,7 +109,10 @@ function MenuSidebar() {
 				<hr className="border-border dark:border-sidebar" />
 
 				<SidebarSectionGroup>
-					<SidebarSection label="Feeds" href={`/reader/settings?${qs.stringify(search)}`}>
+					<SidebarSection
+						label="Feeds"
+						href={`/reader/settings?${qs.stringify({ ...search, entry: undefined })}`}
+					>
 						{feeds?.length === 0 ? (
 							<div className="col-span-2 flex w-[calc(100%-16px)] flex-col items-center justify-center gap-y-2 rounded-md border border-dashed border-sidebar-border bg-background p-4">
 								<span className="text-sm opacity-75">Personalize your feed.</span>
@@ -126,7 +129,7 @@ function MenuSidebar() {
 							<SidebarItem
 								key={item.id}
 								tooltip={item.title}
-								isCurrent={search.page?.split('_')[1] === item.id.toString()}
+								isCurrent={search.page === item.id.toString()}
 								// @ts-expect-error - can't get the query param typesafety to work
 								href={`/reader?${getPageUrl(item.id)}`}
 							>
@@ -175,7 +178,7 @@ function MenuSidebar() {
 							</MenuHeader>
 						</MenuSection>
 
-						<MenuItem href={`/reader/settings?${qs.stringify(search)}`}>
+						<MenuItem href={`/reader/settings?${qs.stringify({ ...search, entry: undefined })}`}>
 							<IconGear />
 							Settings
 						</MenuItem>

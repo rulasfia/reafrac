@@ -8,16 +8,17 @@ import { Button } from './ui/button';
 import { useServerFn } from '@tanstack/react-start';
 import { getEntriesServerFn } from '@/lib/server/entry-sfn';
 import { getFeedServerFn, getFeedsServerFn } from '@/lib/server/feed-sfn';
+import { MENU_ITEMS } from './app-sidebar';
 
 const PAGE_SIZE = 20;
 
 export function ContentSidebar() {
 	const { search } = useLocation();
 	const { user, integration } = useLoaderData({ from: '/reader' });
-	const feedId = search.page?.split('_')[1];
 	const getEntries = useServerFn(getEntriesServerFn);
 	const getFeed = useServerFn(getFeedServerFn);
 	const getFeeds = useServerFn(getFeedsServerFn);
+	const feedId = MENU_ITEMS.find((x) => x.page === search.page) ? undefined : search.page;
 
 	const entries = useInfiniteQuery({
 		queryKey: ['entries', integration?.id, search.page],
@@ -41,9 +42,7 @@ export function ContentSidebar() {
 		},
 		initialPageParam: 0,
 		select: (res) => {
-			return res.pages
-				.flatMap((page) => page.entries)
-				.sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime());
+			return res.pages.flatMap((page) => page.entries);
 		}
 	});
 
@@ -74,7 +73,7 @@ export function ContentSidebar() {
 				</Button>
 			</SidebarHeader>
 			<SidebarContent className="overflow-y-scroll">
-				{!feeds.data ? (
+				{feeds.data && feeds.data.length < 1 ? (
 					<div className="bg-bg mx-2 flex flex-col items-center gap-y-2 rounded-md p-4">
 						<IconCircleExclamation className="h-6 w-6 opacity-75" />
 						<span className="text-sm opacity-75">Your feed content will appear here.</span>

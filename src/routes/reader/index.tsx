@@ -89,7 +89,7 @@ function RouteComponent() {
 							__html:
 								search.view === 'expanded' && content.status === 'success'
 									? (content.data?.content ?? 'Not Available!')
-									: entry.data?.description
+									: entry.data?.content || entry.data?.description
 						}}
 					/>
 

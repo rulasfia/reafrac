@@ -3,6 +3,8 @@ import { Button } from '../ui/button';
 import type { Schema } from '@/lib/db-schema';
 import { useState } from 'react';
 import { Loader } from '../ui/loader';
+import { useLocation, useNavigate } from '@tanstack/react-router';
+import { toast } from 'sonner';
 
 interface FeedItemProps {
 	item: Schema['Feed'];
@@ -10,6 +12,8 @@ interface FeedItemProps {
 }
 
 export function FeedItem({ item, onRemove }: FeedItemProps) {
+	const { search } = useLocation();
+	const navigate = useNavigate();
 	const [isRemoving, setIsRemoving] = useState(false);
 
 	const handleRemove = async () => {
@@ -17,6 +21,10 @@ export function FeedItem({ item, onRemove }: FeedItemProps) {
 			setIsRemoving(true);
 			try {
 				await onRemove(item.id);
+				if (search.page === item.id) {
+					navigate({ to: '/reader/settings', search: { ...search, page: undefined } });
+				}
+				toast.success('Feed removed successfully');
 			} catch (error) {
 				console.error('Failed to remove feed:', error);
 			} finally {

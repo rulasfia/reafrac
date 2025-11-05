@@ -25,22 +25,27 @@ export function FeedSetting() {
 
 	const submitHandler = async (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
-		setIsLoading(true);
-		const formData = new FormData(event.currentTarget);
-		const feedUrl = formData.get('feedUrl') as string;
-		await addFeed({ data: { feedUrl } });
+		try {
+			setIsLoading(true);
+			const formData = new FormData(event.currentTarget);
+			const feedUrl = formData.get('feedUrl') as string;
+			await addFeed({ data: { feedUrl } });
 
-		await Promise.all([
-			qc.invalidateQueries({
-				queryKey: ['feeds', user.id, integration?.id]
-			}),
-			qc.invalidateQueries({
-				queryKey: ['entries', integration?.id, search.page]
-			})
-		]);
+			await Promise.all([
+				qc.invalidateQueries({
+					queryKey: ['feeds', user.id, integration?.id]
+				}),
+				qc.invalidateQueries({
+					queryKey: ['entries', integration?.id, search.page]
+				})
+			]);
 
-		setIsLoading(false);
-		event.currentTarget.reset();
+			event.currentTarget.reset();
+		} catch (error) {
+			console.error(error);
+		} finally {
+			setIsLoading(false);
+		}
 	};
 
 	const handleRemoveFeed = async (feedId: string) => {
