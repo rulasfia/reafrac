@@ -267,6 +267,39 @@ export const updateEntryStatusServerFn = createServerFn({ method: 'POST' })
 		});
 	});
 
+export const saveEntryToBookmarkServerFn = createServerFn({ method: 'POST' })
+	.middleware([sentryMiddleware, authFnMiddleware])
+	.inputValidator(z.object({ entryId: z.number(), saved: z.boolean() }))
+	.handler(async ({ data, context }) => {
+		return Sentry.startSpan(
+			{ op: 'server_function', name: 'saveEntryToBookmark' },
+			async (span) => {
+				try {
+					span.setAttribute('entry_id', data.entryId);
+					span.setAttribute('user_id', context.user.id);
+
+					await db
+						.update(entries)
+						.set({ starred: data.saved })
+						.where(and(eq(entries.id, data.entryId), eq(entries.userId, context.user.id)));
+
+					span.setAttribute('status', 'success');
+					return true;
+				} catch (error) {
+					span.setAttribute('status', 'error');
+					Sentry.captureException(error, {
+						tags: { function: 'saveEntryToBookmark', entryId: data.entryId },
+						extra: {
+							userId: context.user.id,
+							errorMessage: error instanceof Error ? error.message : 'Unknown error'
+						}
+					});
+					throw error;
+				}
+			}
+		);
+	});
+
 const EntryQuerySchema = z.object({
 	feedId: z.optional(z.string()),
 	offset: z.number(),
