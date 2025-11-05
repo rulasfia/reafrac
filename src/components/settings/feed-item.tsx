@@ -1,19 +1,17 @@
-import type { Feed } from '@/lib/server/types';
 import { IconCircleMinus } from '@intentui/icons';
-import { useLoaderData } from '@tanstack/react-router';
 import { Button } from '../ui/button';
+import type { Schema } from '@/lib/db-schema';
 
-export function FeedItem({ item }: { item: Feed }) {
-	const { integration } = useLoaderData({ from: '/reader' });
+export function FeedItem({ item }: { item: Schema['Feed'] }) {
 	return (
 		<div className="flex flex-row items-center gap-x-2">
-			<Button size="sq-sm" intent="plain" className="hover:bg-background" isDisabled>
+			<Button size="sq-sm" intent="plain" className="hover:bg-danger/10" isDisabled>
 				<IconCircleMinus className="mr-2 text-danger!" />
 			</Button>
 			<img
 				width={18}
 				height={18}
-				src={`${integration?.serverUrl}/feed/icon/${item.icon?.external_icon_id}`}
+				src={item.icon === '' ? '/favicon.ico' : item.icon}
 				alt={item.title}
 				className="size-5 rounded-xs border border-border"
 			/>

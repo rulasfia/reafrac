@@ -8,6 +8,10 @@ import sanitizeHtml from 'sanitize-html';
 import type { FeedEntry } from './types';
 import { sentryMiddleware } from '../middleware/sentry-middleware';
 import * as Sentry from '@sentry/tanstackstart-react';
+import { entries, feeds } from '../db-schema';
+import { eq, and, desc, lt, count } from 'drizzle-orm';
+import type { EntryMeta } from './types';
+import { db } from '../db-connection';
 
 export const updateEntryStatusServerFn = createServerFn({ method: 'POST' })
 	.middleware([sentryMiddleware, authFnMiddleware])
@@ -62,7 +66,7 @@ const EntryQuerySchema = z.object({
 	offset: z.number(),
 	after: z.optional(z.number()),
 	starred: z.optional(z.boolean()),
-	status: z.optional(z.enum(['read', 'unread', 'removed']))
+	status: z.optional(z.enum(['read', 'unread']))
 });
 
 export const getEntriesServerFn = createServerFn({ method: 'GET' })
@@ -77,42 +81,102 @@ export const getEntriesServerFn = createServerFn({ method: 'GET' })
 				span.setAttribute('status', data.status || 'all');
 				span.setAttribute('starred', data.starred || false);
 
-				// get user integration
-				const integration = await getExistingIntegrationServerFn({
-					data: { userId: context.user.id }
-				});
-				if (!integration) {
-					throw new Error('Integration not found');
+				// Build query conditions
+				const conditions = [eq(entries.userId, context.user.id)];
+
+				// Add filters based on input
+				if (data.feedId) {
+					conditions.push(eq(entries.feedId, data.feedId));
 				}
 
-				const PAGE_SIZE = 20;
-				// set endpoint based on existence of feedId
-				const endpoint = data.feedId ? `/v1/feeds/${data.feedId}/entries` : `/v1/entries`;
+				if (data.status) {
+					conditions.push(eq(entries.status, data.status));
+				}
 
-				// get entries
-				const entries = await ofetch<{ entries: FeedEntry[]; total: number }>(endpoint, {
-					baseURL: integration.serverUrl,
-					timeout: 3000,
-					method: 'GET',
-					query: {
-						direction: 'desc',
-						order: 'published_at',
-						limit: PAGE_SIZE,
-						offset: data.offset,
-						after: data.after,
-						starred: data.starred,
-						status: data.status
-					},
-					headers: {
-						'X-Auth-Token': integration?.apiKey,
-						'Content-Type': 'application/json'
-					}
-				});
+				if (data.starred !== undefined) {
+					conditions.push(eq(entries.starred, data.starred));
+				}
+
+				const baseWhereConditions = and(...conditions);
+
+				// Get total count of entries matching the filters
+				const totalCountResult = await db
+					.select({ count: count() })
+					.from(entries)
+					.where(baseWhereConditions)
+					.execute();
+
+				const totalItems = totalCountResult[0]?.count || 0;
+
+				// Load-more pagination using the `after` parameter (entry ID)
+				// If no `after` is provided, start from the beginning
+				const paginationCondition = data.after ? lt(entries.id, data.after) : undefined;
+
+				const whereConditions = paginationCondition
+					? and(...conditions, paginationCondition)
+					: and(...conditions);
+
+				// Query entries with load-more style pagination, including feed data
+				const userEntries = await db
+					.select({
+						// Entry fields
+						id: entries.id,
+						userId: entries.userId,
+						feedId: entries.feedId,
+						title: entries.title,
+						link: entries.link,
+						description: entries.description,
+						author: entries.author,
+						content: entries.content,
+						status: entries.status,
+						starred: entries.starred,
+						publishedAt: entries.publishedAt,
+						createdAt: entries.createdAt,
+						updatedAt: entries.updatedAt,
+						// Feed fields
+						feed: {
+							id: feeds.id,
+							userId: feeds.userId,
+							categoryId: feeds.categoryId,
+							title: feeds.title,
+							link: feeds.link,
+							icon: feeds.icon,
+							description: feeds.description,
+							language: feeds.language,
+							generator: feeds.generator,
+							publishedAt: feeds.publishedAt,
+							createdAt: feeds.createdAt,
+							updatedAt: feeds.updatedAt
+						}
+					})
+					.from(entries)
+					.leftJoin(feeds, eq(entries.feedId, feeds.id))
+					.where(whereConditions)
+					.orderBy(desc(entries.id))
+					.limit(20) // Load 20 entries at a time
+					.execute();
+
+				// Calculate pagination metadata
+				const itemsPerPage = 20;
+				const currentPage = Math.floor((data.offset || 0) / itemsPerPage) + 1;
+				const totalPages = Math.ceil(totalItems / itemsPerPage);
+				const hasNext = userEntries.length === itemsPerPage;
+				const hasPrev = data.offset !== undefined && data.offset > 0;
+
+				const meta: EntryMeta = {
+					totalItems,
+					currentPage,
+					totalPages,
+					hasNext,
+					hasPrev
+				};
 
 				span.setAttribute('status', 'success');
-				span.setAttribute('entries_count', entries.entries.length);
-				span.setAttribute('total_count', entries.total);
-				return entries;
+				span.setAttribute('entries_count', userEntries.length);
+				span.setAttribute('total_items', totalItems);
+				span.setAttribute('has_next', hasNext);
+
+				return { entries: userEntries, meta };
 			} catch (error) {
 				span.setAttribute('status', 'error');
 				Sentry.captureException(error, {

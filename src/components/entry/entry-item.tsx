@@ -1,11 +1,11 @@
-import type { FeedEntry } from '@/lib/server/types';
 import { Link, useLoaderData, useLocation } from '@tanstack/react-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { cn, formatRelativeDate } from '@/lib/utils';
 import { updateEntryStatusServerFn } from '@/lib/server/entry-sfn';
 import { useServerFn } from '@tanstack/react-start';
+import type { Schema } from '@/lib/db-schema';
 
-export function EntryItem({ entry }: { entry: FeedEntry }) {
+export function EntryItem({ entry }: { entry: Schema['Entry'] & { feed: Schema['Feed'] | null } }) {
 	const { search } = useLocation();
 	const { integration } = useLoaderData({ from: '/reader' });
 	const qc = useQueryClient();
@@ -35,15 +35,13 @@ export function EntryItem({ entry }: { entry: FeedEntry }) {
 				<img
 					width={16}
 					height={16}
-					src={`${integration?.serverUrl}/feed/icon/${entry.feed.icon?.external_icon_id}`}
+					src={entry.feed.icon}
 					alt={`${entry.feed.title} icon`}
 					className="size-4 rounded-xs border border-border"
 				/>
 				<span className="text-xs text-foreground/75">{entry.feed.title}</span>
 				<span>·</span>
-				<span className="text-xs text-foreground/75">
-					{formatRelativeDate(new Date(entry.published_at))}
-				</span>
+				<span className="text-xs text-foreground/75">{formatRelativeDate(entry.publishedAt)}</span>
 			</div>
 			<span className="font-medium text-pretty">{entry.title}</span>
 		</Link>

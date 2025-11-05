@@ -34,13 +34,16 @@ export const Route = wrapCreateRootRouteWithSentry(createRootRouteWithContext)<{
 		],
 		links: [{ rel: 'stylesheet', href: appCss }]
 	}),
-	scripts: () => [
-		{
-			defer: true,
-			src: 'https://static.cloudflareinsights.com/beacon.min.js',
-			'data-cf-beacon': '{"token": "318f2e2b66644f7489d82f25531ac742"}'
-		}
-	],
+	scripts: () =>
+		import.meta.env.PROD
+			? [
+					{
+						defer: true,
+						src: 'https://static.cloudflareinsights.com/beacon.min.js',
+						'data-cf-beacon': '{"token": "318f2e2b66644f7489d82f25531ac742"}'
+					}
+				]
+			: [],
 	shellComponent: RootDocument,
 	notFoundComponent: NotFoundComponent,
 	errorComponent: function ErrorComponent({ error }) {

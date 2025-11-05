@@ -16,6 +16,7 @@
 	},
 	"dependencies": {
 		"@extractus/article-extractor": "^8.0.20",
+		"@extractus/feed-extractor": "^7.1.7",
 		"@fontsource/fira-sans": "^5.2.7",
 		"@intentui/icons": "^1.11.0",
 		"@sentry/tanstackstart-react": "^10.22.0",

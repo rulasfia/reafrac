@@ -133,7 +133,7 @@ function MenuSidebar() {
 								<img
 									width={18}
 									height={18}
-									src={`${integration?.serverUrl}/feed/icon/${item.icon}`}
+									src={item.icon === '' ? '/favicon.ico' : item.icon}
 									alt={item.title}
 									className="mr-2 size-[18px] rounded-xs border border-border"
 								/>

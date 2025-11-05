@@ -2,28 +2,26 @@ import { SidebarContent, SidebarHeader } from '@/components/ui/sidebar';
 import { useLoaderData, useLocation } from '@tanstack/react-router';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { Loader } from './ui/loader';
-import { IconTriangleExclamation, IconCircleExclamation } from '@intentui/icons';
+import { IconTriangleExclamation, IconCircleExclamation, IconRotateLeft } from '@intentui/icons';
 import { EntryItem } from './entry/entry-item';
 import { Button } from './ui/button';
 import { useServerFn } from '@tanstack/react-start';
 import { getEntriesServerFn } from '@/lib/server/entry-sfn';
-import { getFeedServerFn } from '@/lib/server/feed-sfn';
+import { getFeedServerFn, getFeedsServerFn } from '@/lib/server/feed-sfn';
 
 const PAGE_SIZE = 20;
 
 export function ContentSidebar() {
 	const { search } = useLocation();
-	const { integration } = useLoaderData({ from: '/reader' });
+	const { user, integration } = useLoaderData({ from: '/reader' });
 	const feedId = search.page?.split('_')[1];
 	const getEntries = useServerFn(getEntriesServerFn);
 	const getFeed = useServerFn(getFeedServerFn);
+	const getFeeds = useServerFn(getFeedsServerFn);
 
 	const { data, status, fetchNextPage, hasNextPage, isFetchingNextPage, error } = useInfiniteQuery({
-		enabled: !!integration,
 		queryKey: ['entries', integration?.id, search.page],
 		queryFn: async ({ pageParam = 0 }) => {
-			if (!integration) return { entries: [], total: 0 };
-
 			const status = search.page === 'unread' ? 'unread' : undefined;
 			const starred = search.page === 'saved';
 			// today at 12am in unix timestamp
@@ -38,15 +36,20 @@ export function ContentSidebar() {
 			const currentOffset = allPages.length * PAGE_SIZE;
 			const hasMore =
 				lastPage.entries.length === PAGE_SIZE &&
-				currentOffset + lastPage.entries.length < lastPage.total;
+				currentOffset + lastPage.entries.length < lastPage.meta.totalItems;
 			return hasMore ? currentOffset : undefined;
 		},
 		initialPageParam: 0,
 		select: (res) => {
 			return res.pages
 				.flatMap((page) => page.entries)
-				.sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime());
+				.sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime());
 		}
+	});
+
+	const feeds = useQuery({
+		queryKey: ['feeds', user.id, integration?.id],
+		queryFn: async () => getFeeds()
 	});
 
 	const feed = useQuery({
@@ -66,16 +69,16 @@ export function ContentSidebar() {
 				<span className="min-h-7 gap-x-3 text-lg font-bold capitalize">
 					{feedId ? (feed.data?.title ?? ' ') : search.page?.replaceAll('-', ' ')}
 				</span>
-				{integration && status === 'pending' ? <Loader size="xs" /> : null}
+				{status === 'pending' ? <Loader size="xs" /> : <IconRotateLeft />}
 			</SidebarHeader>
 			<SidebarContent className="overflow-y-scroll">
-				{!integration ? (
+				{!feeds.data ? (
 					<div className="bg-bg mx-2 flex flex-col items-center gap-y-2 rounded-md p-4">
 						<IconCircleExclamation className="h-6 w-6 opacity-75" />
 						<span className="text-sm opacity-75">Your feed content will appear here.</span>
 					</div>
 				) : null}
-				{integration && status === 'success'
+				{status === 'success'
 					? data?.map((entry) => <EntryItem key={entry.id} entry={entry} />)
 					: null}
 				<div className="mx-2 mt-2 mb-4">
@@ -85,7 +88,7 @@ export function ContentSidebar() {
 							<span>{'Failed to load entries'}</span>
 						</div>
 					)}
-					{integration && status === 'success' && hasNextPage && (
+					{status === 'success' && hasNextPage && (
 						<Button
 							onClick={loadMore}
 							isDisabled={isFetchingNextPage}
