@@ -1,3 +1,6 @@
+import { FeedData } from '@extractus/feed-extractor';
+import type { Schema } from '../db-schema';
+
 // Miniflux API client
 export interface MinifluxConfig {
 	url: string;
@@ -74,6 +77,13 @@ export type Feed = {
 		external_icon_id: string;
 	} | null;
 };
+
+export type ReafracFeedType = Omit<FeedData, 'entries'> & {
+	icon: string;
+	entries: Array<NonNullable<FeedData['entries']>[0] & { author: string }>;
+};
+
+export type ReafracEntryType = Schema['Entry'];
 
 export interface Icon {
 	id: number;

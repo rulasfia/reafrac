@@ -38,7 +38,7 @@ function RouteComponent() {
 				onRequest: () => setIsLoading(true),
 				onSuccess: () => {
 					setIsLoading(false);
-					return navigate({ to: '/reader', replace: true, search: { page: 'dashboard' } });
+					return navigate({ to: '/reader', replace: true, search: { page: 'all-posts' } });
 				},
 				onError: ({ error }) => {
 					setIsLoading(false);
