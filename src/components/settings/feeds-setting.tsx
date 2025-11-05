@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { addFeedServerFn, getFeedsServerFn } from '@/lib/server/feed-sfn';
+import { addFeedServerFn, getFeedsServerFn, removeFeedServerFn } from '@/lib/server/feed-sfn';
 import { useLoaderData, useLocation } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
 import { FeedItem } from './feed-item';
@@ -14,6 +14,7 @@ export function FeedSetting() {
 	const qc = useQueryClient();
 	const getFeeds = useServerFn(getFeedsServerFn);
 	const addFeed = useServerFn(addFeedServerFn);
+	const removeFeed = useServerFn(removeFeedServerFn);
 
 	const [isLoading, setIsLoading] = useState(false);
 
@@ -27,8 +28,8 @@ export function FeedSetting() {
 		setIsLoading(true);
 		const formData = new FormData(event.currentTarget);
 		const feedUrl = formData.get('feedUrl') as string;
-		const res = await addFeed({ data: { feedUrl } });
-		console.log('feed', res);
+		await addFeed({ data: { feedUrl } });
+
 		await Promise.all([
 			qc.invalidateQueries({
 				queryKey: ['feeds', user.id, integration?.id]
@@ -39,9 +40,22 @@ export function FeedSetting() {
 		]);
 
 		setIsLoading(false);
-		// clear form
 		event.currentTarget.reset();
 	};
+
+	const handleRemoveFeed = async (feedId: string) => {
+		await removeFeed({ data: { feedId } });
+
+		await Promise.all([
+			qc.invalidateQueries({
+				queryKey: ['feeds', user.id, integration?.id]
+			}),
+			qc.invalidateQueries({
+				queryKey: ['entries', integration?.id, search.page]
+			})
+		]);
+	};
+
 	return (
 		<div>
 			<h3 className="mb-3 text-lg font-medium">Feeds Settings</h3>
@@ -61,7 +75,7 @@ export function FeedSetting() {
 				{!feeds && <li className="py-2 text-sm text-gray-500">&nbsp;</li>}
 				{feeds?.length === 0 && <li className="py-2 text-sm text-gray-500">No feeds found</li>}
 				{feeds?.map((feed) => (
-					<FeedItem key={feed.id} item={feed} />
+					<FeedItem key={feed.id} item={feed} onRemove={handleRemoveFeed} />
 				))}
 			</ul>
 		</div>

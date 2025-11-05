@@ -19,7 +19,7 @@ export function ContentSidebar() {
 	const getFeed = useServerFn(getFeedServerFn);
 	const getFeeds = useServerFn(getFeedsServerFn);
 
-	const { data, status, fetchNextPage, hasNextPage, isFetchingNextPage, error } = useInfiniteQuery({
+	const entries = useInfiniteQuery({
 		queryKey: ['entries', integration?.id, search.page],
 		queryFn: async ({ pageParam = 0 }) => {
 			const status = search.page === 'unread' ? 'unread' : undefined;
@@ -59,8 +59,8 @@ export function ContentSidebar() {
 	});
 
 	const loadMore = async () => {
-		if (!hasNextPage || isFetchingNextPage) return;
-		await fetchNextPage();
+		if (!entries.hasNextPage || entries.isFetchingNextPage) return;
+		await entries.fetchNextPage();
 	};
 
 	return (
@@ -69,7 +69,9 @@ export function ContentSidebar() {
 				<span className="min-h-7 gap-x-3 text-lg font-bold capitalize">
 					{feedId ? (feed.data?.title ?? ' ') : search.page?.replaceAll('-', ' ')}
 				</span>
-				{status === 'pending' ? <Loader size="xs" /> : <IconRotateLeft />}
+				<Button size="sq-sm" intent="plain" onClick={() => entries.refetch()}>
+					{entries.isFetching ? <Loader size="xs" /> : <IconRotateLeft />}
+				</Button>
 			</SidebarHeader>
 			<SidebarContent className="overflow-y-scroll">
 				{!feeds.data ? (
@@ -78,24 +80,24 @@ export function ContentSidebar() {
 						<span className="text-sm opacity-75">Your feed content will appear here.</span>
 					</div>
 				) : null}
-				{status === 'success'
-					? data?.map((entry) => <EntryItem key={entry.id} entry={entry} />)
+				{entries.status === 'success'
+					? entries.data?.map((entry) => <EntryItem key={entry.id} entry={entry} />)
 					: null}
 				<div className="mx-2 mt-2 mb-4">
-					{error && (
+					{entries.error && (
 						<div className="mb-2 flex items-center gap-2 rounded-md border border-red-200 bg-red-50 p-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300">
 							<IconTriangleExclamation className="h-4 w-4" />
 							<span>{'Failed to load entries'}</span>
 						</div>
 					)}
-					{status === 'success' && hasNextPage && (
+					{entries.status === 'success' && entries.hasNextPage && (
 						<Button
 							onClick={loadMore}
-							isDisabled={isFetchingNextPage}
+							isDisabled={entries.isFetchingNextPage}
 							className="w-full"
 							intent="outline"
 						>
-							{isFetchingNextPage ? (
+							{entries.isFetchingNextPage ? (
 								<div className="flex items-center justify-center gap-2">
 									<Loader className="h-4 w-4" />
 									<span>Loading more...</span>

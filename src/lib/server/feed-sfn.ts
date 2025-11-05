@@ -11,7 +11,7 @@ import { db } from '../db-connection';
 import { entries, feeds } from '../db-schema';
 import type { Schema } from '../db-schema';
 import { parsedFeedSchema } from '../schemas/feed-schemas';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 export const getFeedsServerFn = createServerFn({ method: 'GET' })
 	.middleware([sentryMiddleware, authFnMiddleware])
@@ -126,51 +126,64 @@ export const addFeedServerFn = createServerFn({ method: 'GET' })
 	.inputValidator(z.object({ feedUrl: z.string() }))
 	.handler(async ({ data, context }) => {
 		return Sentry.startSpan({ op: 'server_function', name: 'addFeed' }, async (span) => {
-			// parse feed url
-			const parsed = await extract(data.feedUrl, {
-				getExtraFeedFields: (feed) => {
-					// parse website icon
-					let icon = '';
-					if ('image' in feed) {
-						const parsedImg = z.object({ url: z.url() }).safeParse(feed.image);
-						if (parsedImg.success) icon = parsedImg.data.url;
-					} else {
-						// TODO: alternative icon parsing. go to the website and search for icon
+			try {
+				span.setAttribute('user_id', context.user.id);
+				span.setAttribute('feed_url', data.feedUrl);
+
+				// Extract feed with child spans for better tracking
+				const parsed = await Sentry.startSpan(
+					{ op: 'feed.extract', name: 'Extract feed data' },
+					async () => {
+						return await extract(data.feedUrl, {
+							getExtraFeedFields: (feed) => {
+								// parse website icon
+								let icon = '';
+								if ('image' in feed) {
+									const parsedImg = z.object({ url: z.url() }).safeParse(feed.image);
+									if (parsedImg.success) icon = parsedImg.data.url;
+								} else {
+									// TODO: alternative icon parsing. go to the website and search for icon
+								}
+
+								return { icon };
+							},
+							getExtraEntryFields: (feedEntry) => {
+								// parse entry author
+								let author = '';
+								if ('dc:creator' in feedEntry && typeof feedEntry['dc:creator'] === 'string') {
+									author = feedEntry['dc:creator'];
+								}
+
+								return { author };
+							}
+						});
 					}
+				);
 
-					return { icon };
-				},
-				getExtraEntryFields: (feedEntry) => {
-					// parse entry author
-					let author = '';
-					if ('dc:creator' in feedEntry && typeof feedEntry['dc:creator'] === 'string') {
-						author = feedEntry['dc:creator'];
-					}
+				// Validate feed data
+				const validated = parsedFeedSchema.parse(parsed);
+				span.setAttribute('entries_count', validated.entries.length);
+				span.setAttribute('feed_title', validated.title);
 
-					return { author };
-				}
-			});
+				// Insert to feed table
+				const newFeed = await db
+					.insert(feeds)
+					.values({
+						userId: context.user.id,
+						title: validated.title,
+						description: validated.description,
+						link: data.feedUrl,
+						publishedAt: new Date(validated.published),
+						icon: validated.icon,
+						generator: validated.generator,
+						language: validated.language
+					})
+					.returning();
 
-			const validated = parsedFeedSchema.parse(parsed);
+				span.setAttribute('new_feed_id', newFeed[0].id);
 
-			// insert to feed table
-			const newFeed = await db
-				.insert(feeds)
-				.values({
-					userId: context.user.id,
-					title: validated.title,
-					description: validated.description,
-					link: data.feedUrl,
-					publishedAt: new Date(validated.published),
-					icon: validated.icon,
-					generator: validated.generator,
-					language: validated.language
-				})
-				.returning();
-
-			// insert to entries table
-			await db.insert(entries).values(
-				validated.entries.map((entry) => ({
+				// Insert entries in batches if there are many entries
+				const entryValues = validated.entries.map((entry) => ({
 					userId: context.user.id,
 					feedId: newFeed[0].id,
 					title: entry.title,
@@ -178,9 +191,65 @@ export const addFeedServerFn = createServerFn({ method: 'GET' })
 					link: entry.link,
 					publishedAt: new Date(entry.published),
 					author: entry.author
-				}))
-			);
+				}));
 
-			return parsed;
+				await db.insert(entries).values(entryValues);
+				span.setAttribute('inserted_entries_count', entryValues.length);
+
+				span.setAttribute('status', 'success');
+				return parsed;
+			} catch (error) {
+				span.setAttribute('status', 'error');
+				Sentry.captureException(error, {
+					tags: { function: 'addFeed', feedUrl: data.feedUrl },
+					extra: {
+						userId: context.user.id,
+						feedUrl: data.feedUrl,
+						errorMessage: error instanceof Error ? error.message : 'Unknown error',
+						errorStack: error instanceof Error ? error.stack : undefined
+					}
+				});
+				throw error;
+			}
+		});
+	});
+
+export const removeFeedServerFn = createServerFn({ method: 'POST' })
+	.middleware([sentryMiddleware, authFnMiddleware])
+	.inputValidator(z.object({ feedId: z.string() }))
+	.handler(async ({ data, context }) => {
+		return Sentry.startSpan({ op: 'server_function', name: 'removeFeed' }, async (span) => {
+			try {
+				span.setAttribute('feed_id', data.feedId);
+				span.setAttribute('user_id', context.user.id);
+
+				// Delete entries associated with the feed for this user
+				await db
+					.delete(entries)
+					.where(and(eq(entries.feedId, data.feedId), eq(entries.userId, context.user.id)));
+
+				// Delete the feed for this user
+				const deletedFeed = await db
+					.delete(feeds)
+					.where(and(eq(feeds.id, data.feedId), eq(feeds.userId, context.user.id)))
+					.returning();
+
+				if (deletedFeed.length === 0) {
+					throw new Error('Feed not found or not authorized to delete');
+				}
+
+				span.setAttribute('status', 'success');
+				return { success: true, feedId: data.feedId };
+			} catch (error) {
+				span.setAttribute('status', 'error');
+				Sentry.captureException(error, {
+					tags: { function: 'removeFeed', feedId: data.feedId },
+					extra: {
+						userId: context.user.id,
+						errorMessage: error instanceof Error ? error.message : 'Unknown error'
+					}
+				});
+				throw error;
+			}
 		});
 	});
