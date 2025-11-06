@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useServerFn } from '@tanstack/react-start';
 import {
@@ -131,6 +131,19 @@ function RouteComponent() {
 						</a>
 					</div>
 
+					{entry.data?.thumbnail ? (
+						<div className="prose mb-4 prose-neutral dark:prose-invert">
+							<figure>
+								<img
+									src={entry.data?.thumbnail}
+									alt={`${entry.data?.title} image thumbnail`}
+									className="rounded-xl border border-border shadow-sm shadow-accent/50"
+									loading="lazy"
+								/>
+								<figcaption>{entry.data?.thumbnailCaption ?? entry.data?.title}</figcaption>
+							</figure>
+						</div>
+					) : null}
 					<div
 						className="mx-auto prose max-w-2xl prose-neutral xl:min-w-2xl dark:prose-invert prose-a:decoration-accent prose-a:hover:decoration-foreground prose-img:rounded-xl prose-img:border prose-img:border-border prose-img:shadow-sm prose-img:shadow-accent/50"
 						dangerouslySetInnerHTML={{

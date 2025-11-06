@@ -10,7 +10,7 @@ import { eq, and, desc, lt, count, inArray } from 'drizzle-orm';
 import type { EntryMeta } from './types';
 import { db } from '../db-connection';
 import { extractFeed } from '../utils/feed-utils';
-import { ParsedFeed } from '../schemas/feed-schemas';
+import { ParsedFeed, parsedFeedThumbnailSchema } from '../schemas/feed-schemas';
 
 // Simple in-memory cache for feed requests
 const feedCache = new Map<string, { data: any; timestamp: number; ttl: number }>();
@@ -109,9 +109,9 @@ async function refetchFeedEntries(
 
 			span.setAttribute('feeds_to_refetch_count', feedsToRefetch.length);
 
-			// Get all existing entry titles at once for better efficiency
+			// Get all existing entries at once for better efficiency
 			const allExistingEntries = await db
-				.select({ title: entries.title, feedId: entries.feedId })
+				.select({ title: entries.title, link: entries.link, feedId: entries.feedId })
 				.from(entries)
 				.where(
 					and(
@@ -125,13 +125,15 @@ async function refetchFeedEntries(
 
 			console.log(`Found ${allExistingEntries.length} existing entries`); // Debugging
 
-			// Group existing titles by feedId for faster lookup
-			const existingTitlesByFeed = new Map<string, Set<string>>();
+			// Group existing entries by feedId for faster lookup
+			// Use both title and link for more robust duplicate detection
+			const existingEntriesByFeed = new Map<string, Map<string, { title: string; link: string }>>();
 			for (const entry of allExistingEntries) {
-				if (!existingTitlesByFeed.has(entry.feedId)) {
-					existingTitlesByFeed.set(entry.feedId, new Set());
+				if (!existingEntriesByFeed.has(entry.feedId)) {
+					existingEntriesByFeed.set(entry.feedId, new Map());
 				}
-				existingTitlesByFeed.get(entry.feedId)!.add(entry.title);
+				const key = `${entry.title}|${entry.link}`;
+				existingEntriesByFeed.get(entry.feedId)!.set(key, { title: entry.title, link: entry.link });
 			}
 
 			// Process feeds in batches to limit concurrent requests
@@ -170,13 +172,15 @@ async function refetchFeedEntries(
 
 						span.setAttribute(`feed_${feed.id}_entries_count`, feedData.entries.length);
 
-						// Get existing titles for this specific feed
-						const existingTitles = existingTitlesByFeed.get(feed.id) || new Set();
+						// Get existing entries for this specific feed
+						const existingEntries = existingEntriesByFeed.get(feed.id) || new Map();
 
-						// Filter out entries that already exist based on title
-						const newEntries = feedData.entries.filter(
-							(entry) => entry.title && !existingTitles.has(entry.title)
-						);
+						// Filter out entries that already exist based on title AND link combination
+						const newEntries = feedData.entries.filter((entry) => {
+							if (!entry.title) return false;
+							const key = `${entry.title}|${entry.link || ''}`;
+							return !existingEntries.has(key);
+						});
 
 						span.setAttribute(`feed_${feed.id}_new_entries_count`, newEntries.length);
 
@@ -189,12 +193,14 @@ async function refetchFeedEntries(
 							const entryValues = newEntries.map((entry) => ({
 								userId,
 								feedId: feed.id,
-								title: entry.title || '',
-								description: entry.description || '',
-								link: entry.link || '',
+								title: entry.title,
+								description: entry.description,
+								link: entry.link,
 								publishedAt: new Date(entry.published || Date.now()),
 								author: typeof entry.author === 'string' ? entry.author : '',
-								content: entry.content
+								content: entry.content,
+								thumbnail: entry.thumbnail?.url,
+								thumbnailCaption: entry.thumbnail?.text ?? entry.title
 							}));
 
 							// Insert new entries
@@ -491,6 +497,8 @@ export const getEntryServerFn = createServerFn({ method: 'GET' })
 						status: entries.status,
 						starred: entries.starred,
 						publishedAt: entries.publishedAt,
+						thumbnail: entries.thumbnail,
+						thumbnailCaption: entries.thumbnailCaption,
 						// Feed fields
 						feed: {
 							id: feeds.id,

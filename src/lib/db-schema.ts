@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, uuid, serial } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, boolean, uuid, serial, unique } from 'drizzle-orm/pg-core';
 import { nanoid } from 'nanoid';
 
 export const users = pgTable('users', {
@@ -102,6 +102,7 @@ export const feeds = pgTable('feeds', {
 	categoryId: text('category_id').references(() => categories.id, { onDelete: 'cascade' }),
 	title: text('title').notNull(),
 	link: text('link').notNull(),
+	siteUrl: text('site_url').notNull().default(''),
 	icon: text('icon').notNull(),
 	description: text('description').notNull(),
 	language: text('language').notNull(),
@@ -114,28 +115,37 @@ export const feeds = pgTable('feeds', {
 		.notNull()
 });
 
-export const entries = pgTable('entries', {
-	// we use auto increment int here for even smaller size
-	id: serial().primaryKey(),
-	userId: uuid('user_id')
-		.notNull()
-		.references(() => users.id, { onDelete: 'cascade' }),
-	feedId: text('feed_id')
-		.notNull()
-		.references(() => feeds.id, { onDelete: 'cascade' }),
-	title: text('title').notNull(),
-	link: text('link').notNull(),
-	description: text('description').notNull(),
-	author: text('author').notNull(),
-	content: text('content'),
-	status: text('status', { enum: ['unread', 'read'] }).default('unread'),
-	starred: boolean('starred').default(false),
-	publishedAt: timestamp('published_at').notNull(),
-	createdAt: timestamp('created_at').defaultNow().notNull(),
-	updatedAt: timestamp('updated_at')
-		.$onUpdate(() => /* @__PURE__ */ new Date())
-		.notNull()
-});
+export const entries = pgTable(
+	'entries',
+	{
+		// we use auto increment int here for even smaller size
+		id: serial().primaryKey(),
+		userId: uuid('user_id')
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' }),
+		feedId: text('feed_id')
+			.notNull()
+			.references(() => feeds.id, { onDelete: 'cascade' }),
+		title: text('title').notNull(),
+		link: text('link').notNull(),
+		description: text('description').notNull(),
+		author: text('author').notNull(),
+		content: text('content'),
+		status: text('status', { enum: ['unread', 'read'] }).default('unread'),
+		starred: boolean('starred').default(false),
+		publishedAt: timestamp('published_at').notNull(),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at')
+			.$onUpdate(() => /* @__PURE__ */ new Date())
+			.notNull(),
+		thumbnail: text('thumbnail'),
+		thumbnailCaption: text('thumbnail_caption')
+	},
+	(table) => [
+		// Prevent duplicate entries within the same user feed based on title
+		unique('uniqueUserFeedEntryTitle').on(table.userId, table.feedId, table.title)
+	]
+);
 
 export type Schema = {
 	User: typeof users.$inferSelect;
