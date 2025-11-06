@@ -34,7 +34,7 @@ function RouteComponent() {
 				},
 				onError: ({ error }) => {
 					setIsLoading(false);
-					toast(error.message, { dismissible: true, icon: '❌' });
+					toast.error(error.message, { dismissible: true, icon: '❌' });
 				}
 			}
 		);

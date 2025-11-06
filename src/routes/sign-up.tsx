@@ -27,7 +27,7 @@ function RouteComponent() {
 		const repeatPassword = formData.get('repeat-password') as string;
 
 		if (password !== repeatPassword) {
-			toast('Invalid password', { dismissible: true, icon: '❌' });
+			toast.error('Invalid password', { dismissible: true, icon: '❌' });
 			return;
 		}
 
@@ -42,7 +42,7 @@ function RouteComponent() {
 				},
 				onError: ({ error }) => {
 					setIsLoading(false);
-					toast(error.message, { dismissible: true, icon: '❌' });
+					toast.error(error.message, { dismissible: true, icon: '❌' });
 				}
 			}
 		);

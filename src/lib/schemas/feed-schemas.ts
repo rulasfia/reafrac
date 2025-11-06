@@ -37,7 +37,8 @@ export const parsedFeedAuthorSchema = z.union([
 		}
 		return val.trim();
 	}),
-	z.object({ name: z.string() }).transform((val) => val.name.trim())
+	z.object({ name: z.string() }).transform((val) => val.name.trim()),
+	z.array(z.string()).transform((val) => val.join(', ').trim())
 ]);
 
 export const parsedFeedContentSchema = z.union([

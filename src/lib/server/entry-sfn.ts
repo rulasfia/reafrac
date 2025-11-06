@@ -141,7 +141,14 @@ async function refetchFeedEntries(userId: string, feedIds?: string[]): Promise<v
 						// Extract feed data with caching and timeout
 						const feedData = await Sentry.startSpan(
 							{ op: 'feed.extract', name: `Extract feed: ${feed.title}` },
-							async () => await getCachedFeedData(feed.link)
+							async () => {
+								try {
+									return await getCachedFeedData(feed.link);
+								} catch (error) {
+									console.error(`Error extracting feed ${feed.title}:`, error);
+									throw error;
+								}
+							}
 						);
 
 						if (!feedData?.entries?.length) {
