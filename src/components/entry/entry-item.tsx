@@ -21,6 +21,7 @@ export function EntryItem({ entry }: { entry: Schema['Entry'] & { feed: Schema['
 	return (
 		<Link
 			to="/reader"
+			preload={false}
 			search={{ ...search, entry: entry.id, view: undefined }}
 			onClick={() => mutate(entry.id)}
 			className={cn(
@@ -35,11 +36,11 @@ export function EntryItem({ entry }: { entry: Schema['Entry'] & { feed: Schema['
 				<img
 					width={16}
 					height={16}
-					src={entry.feed.icon}
-					alt={`${entry.feed.title} icon`}
+					src={entry.feed?.icon}
+					alt={`${entry.feed?.title} icon`}
 					className="size-4 rounded-xs border border-border"
 				/>
-				<span className="text-xs text-foreground/75">{entry.feed.title}</span>
+				<span className="text-xs text-foreground/75">{entry.feed?.title}</span>
 				<span>·</span>
 				<span className="text-xs text-foreground/75">{formatRelativeDate(entry.publishedAt)}</span>
 			</div>

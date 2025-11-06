@@ -8,7 +8,7 @@ export const parsedFeedSchema = z.object({
 	]),
 	link: z.url(),
 	published: z.string(),
-	icon: z.url().default(''),
+	icon: z.string().default(''),
 	generator: z.string().default(''),
 	language: z.string().default(''),
 	entries: z.array(
@@ -38,7 +38,10 @@ export const parsedFeedAuthorSchema = z.union([
 		return val.trim();
 	}),
 	z.object({ name: z.string() }).transform((val) => val.name.trim()),
-	z.array(z.string()).transform((val) => val.join(', ').trim())
+	z.array(z.string()).transform((val) => val.join(', ').trim()),
+	z
+		.array(z.object({ name: z.string() }).transform((val) => val.name.trim()))
+		.transform((val) => val.join(', ').trim())
 ]);
 
 export const parsedFeedContentSchema = z.union([

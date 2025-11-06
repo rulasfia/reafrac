@@ -32,8 +32,6 @@ export async function extractFeed(url: string) {
 							icon = parsedImg;
 						}
 
-						console.log({ icon });
-
 						return { icon };
 					},
 					getExtraEntryFields: (feedEntry) => {
