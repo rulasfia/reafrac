@@ -6,7 +6,7 @@ import sanitizeHtml from 'sanitize-html';
 import { sentryMiddleware } from '../middleware/sentry-middleware';
 import * as Sentry from '@sentry/tanstackstart-react';
 import { entries, feeds } from '../db-schema';
-import { eq, and, desc, lt, count, inArray, gt } from 'drizzle-orm';
+import { eq, and, desc, lt, count, inArray } from 'drizzle-orm';
 import type { EntryMeta } from './types';
 import { db } from '../db-connection';
 import { extractFeed } from '../utils/feed-utils';
@@ -61,13 +61,17 @@ async function getCachedFeedData(feedUrl: string): Promise<ParsedFeed> {
 }
 
 // Optimized helper function to refetch entries from feeds and insert only new entries
-async function refetchFeedEntries(userId: string, feedIds?: string[]): Promise<void> {
+async function refetchFeedEntries(
+	userId: string,
+	feedIds?: string[],
+	forceRefetch: boolean = false
+): Promise<void> {
 	return Sentry.startSpan({ op: 'function', name: 'refetchFeedEntries' }, async (span) => {
 		try {
 			span.setAttribute('user_id', userId);
 			span.setAttribute('feed_ids_count', feedIds?.length || 0);
 
-			// Get feeds to refetch, but only those that haven't been fetched recently
+			// Get feeds to refetch, but only those that haven't been fetched recently (unless forceRefetch is true)
 			const fiveMinutesAgo = new Date(Date.now() - REFETCH_CONFIG.MIN_REFETCH_INTERVAL);
 
 			const feedsToRefetch = feedIds
@@ -78,14 +82,23 @@ async function refetchFeedEntries(userId: string, feedIds?: string[]): Promise<v
 							and(
 								eq(feeds.userId, userId),
 								inArray(feeds.id, feedIds),
-								// Only refetch if feed hasn't been fetched in the last 5 minutes
-								lt(feeds.lastFetchedAt, fiveMinutesAgo)
+								// Only if feed hasn't been fetched in the last 5 minutes, unless forceRefetch is true
+								forceRefetch ? undefined : lt(feeds.lastFetchedAt, fiveMinutesAgo)
 							)
 						)
 				: await db
 						.select()
 						.from(feeds)
-						.where(and(eq(feeds.userId, userId), lt(feeds.lastFetchedAt, fiveMinutesAgo)));
+						.where(
+							and(
+								eq(feeds.userId, userId),
+								forceRefetch ? undefined : lt(feeds.lastFetchedAt, fiveMinutesAgo)
+							)
+						);
+
+			if (forceRefetch) {
+				console.log('Manually refetching feeds by user request');
+			}
 
 			if (feedsToRefetch.length === 0) {
 				span.setAttribute('status', 'skipped');
@@ -141,7 +154,14 @@ async function refetchFeedEntries(userId: string, feedIds?: string[]): Promise<v
 						// Extract feed data with caching and timeout
 						const feedData = await Sentry.startSpan(
 							{ op: 'feed.extract', name: `Extract feed: ${feed.title}` },
-							async () => await getCachedFeedData(feed.link)
+							async () => {
+								try {
+									return await getCachedFeedData(feed.link);
+								} catch (error) {
+									console.error(`Error extracting feed ${feed.title}:`, error);
+									throw error;
+								}
+							}
 						);
 
 						if (!feedData?.entries?.length) {
@@ -305,7 +325,8 @@ const EntryQuerySchema = z.object({
 	offset: z.number(),
 	after: z.optional(z.number()),
 	starred: z.optional(z.boolean()),
-	status: z.optional(z.enum(['read', 'unread']))
+	status: z.optional(z.enum(['read', 'unread'])),
+	forceRefetch: z.optional(z.boolean())
 });
 
 export const getEntriesServerFn = createServerFn({ method: 'GET' })
@@ -319,13 +340,18 @@ export const getEntriesServerFn = createServerFn({ method: 'GET' })
 				span.setAttribute('offset', data.offset);
 				span.setAttribute('status', data.status || 'all');
 				span.setAttribute('starred', data.starred || false);
+				span.setAttribute('force_refetch', data.forceRefetch || false);
 
 				// Refetch entries data from feeds link stored in db (non-blocking)
 				// Only refetch for specific feed if feedId is provided, otherwise refetch all feeds
 				// Start refetching in background without blocking the main request
 				Sentry.startSpan({ op: 'function', name: 'refetchBeforeGetEntries' }, async () => {
 					try {
-						await refetchFeedEntries(context.user.id, data.feedId ? [data.feedId] : undefined);
+						await refetchFeedEntries(
+							context.user.id,
+							data.feedId ? [data.feedId] : undefined,
+							data.forceRefetch
+						);
 					} catch (error) {
 						console.error('Error refetching feed entries:', error);
 						// Don't let refetch errors block the main request - just log them
@@ -334,6 +360,7 @@ export const getEntriesServerFn = createServerFn({ method: 'GET' })
 							extra: {
 								userId: context.user.id,
 								feedId: data.feedId,
+								forceRefetch: data.forceRefetch,
 								errorMessage: error instanceof Error ? error.message : 'Unknown error'
 							}
 						});
@@ -403,6 +430,7 @@ export const getEntriesServerFn = createServerFn({ method: 'GET' })
 							description: feeds.description,
 							language: feeds.language,
 							generator: feeds.generator,
+							lastFetchedAt: feeds.lastFetchedAt,
 							publishedAt: feeds.publishedAt,
 							createdAt: feeds.createdAt,
 							updatedAt: feeds.updatedAt

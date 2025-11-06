@@ -1,6 +1,6 @@
 import { SidebarContent, SidebarHeader } from '@/components/ui/sidebar';
 import { useLoaderData, useLocation } from '@tanstack/react-router';
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Loader } from './ui/loader';
 import { IconTriangleExclamation, IconCircleExclamation, IconRotateLeft } from '@intentui/icons';
 import { EntryItem } from './entry/entry-item';
@@ -18,18 +18,25 @@ export function ContentSidebar() {
 	const getEntries = useServerFn(getEntriesServerFn);
 	const getFeed = useServerFn(getFeedServerFn);
 	const getFeeds = useServerFn(getFeedsServerFn);
+	const queryClient = useQueryClient();
 	const feedId = MENU_ITEMS.find((x) => x.page === search.page) ? undefined : search.page;
+
+	function formatQueryParams(param: typeof search) {
+		const status = param.page === 'unread' ? ('unread' as const) : undefined;
+		const starred = param.page === 'saved';
+		// today at 12am in unix timestamp
+		const after =
+			param.page === 'today'
+				? new Date(new Date().setHours(0, 0, 0, 0)).getTime() / 1000
+				: undefined;
+
+		return { status, starred, after };
+	}
 
 	const entries = useInfiniteQuery({
 		queryKey: ['entries', integration?.id, search.page],
 		queryFn: async ({ pageParam = 0 }) => {
-			const status = search.page === 'unread' ? 'unread' : undefined;
-			const starred = search.page === 'saved';
-			// today at 12am in unix timestamp
-			const after =
-				search.page === 'today'
-					? new Date(new Date().setHours(0, 0, 0, 0)).getTime() / 1000
-					: undefined;
+			const { after, starred, status } = formatQueryParams(search);
 
 			return getEntries({ data: { feedId, offset: pageParam, after, starred, status } });
 		},
@@ -45,6 +52,16 @@ export function ContentSidebar() {
 			return res.pages.flatMap((page) => page.entries);
 		}
 	});
+
+	const handleForceRefresh = async () => {
+		const { after, starred, status } = formatQueryParams(search);
+
+		// TODO: update with more efficient approach so it didn't have to request twice
+		// Trigger a force refetch by directly calling the server function with forceRefetch: true
+		await getEntries({ data: { feedId, offset: 0, after, starred, status, forceRefetch: true } });
+		// After force refetch, invalidate the query to refresh the UI
+		await queryClient.invalidateQueries({ queryKey: ['entries', integration?.id, search.page] });
+	};
 
 	const feeds = useQuery({
 		queryKey: ['feeds', user.id, integration?.id],
@@ -68,7 +85,7 @@ export function ContentSidebar() {
 				<span className="line-clamp-2 min-h-7 w-fit gap-x-3 text-lg font-bold capitalize">
 					{feedId ? (feed.data?.title ?? ' ') : search.page?.replaceAll('-', ' ')}
 				</span>
-				<Button size="sq-sm" intent="plain" onClick={() => entries.refetch()}>
+				<Button size="sq-sm" intent="plain" onClick={handleForceRefresh}>
 					{entries.isFetching ? <Loader size="xs" /> : <IconRotateLeft />}
 				</Button>
 			</SidebarHeader>
