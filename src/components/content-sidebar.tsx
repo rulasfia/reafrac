@@ -10,7 +10,7 @@ import { getEntriesServerFn } from '@/lib/server/entry-sfn';
 import { getFeedServerFn, getFeedsServerFn } from '@/lib/server/feed-sfn';
 import { MENU_ITEMS } from './app-sidebar';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 export function ContentSidebar() {
 	const { search } = useLocation();

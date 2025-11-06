@@ -413,38 +413,27 @@ export const getEntriesServerFn = createServerFn({ method: 'GET' })
 						link: entries.link,
 						description: entries.description,
 						author: entries.author,
-						content: entries.content,
 						status: entries.status,
 						starred: entries.starred,
 						publishedAt: entries.publishedAt,
-						createdAt: entries.createdAt,
-						updatedAt: entries.updatedAt,
 						// Feed fields
 						feed: {
 							id: feeds.id,
-							userId: feeds.userId,
 							categoryId: feeds.categoryId,
 							title: feeds.title,
 							link: feeds.link,
-							icon: feeds.icon,
-							description: feeds.description,
-							language: feeds.language,
-							generator: feeds.generator,
-							lastFetchedAt: feeds.lastFetchedAt,
-							publishedAt: feeds.publishedAt,
-							createdAt: feeds.createdAt,
-							updatedAt: feeds.updatedAt
+							icon: feeds.icon
 						}
 					})
 					.from(entries)
 					.leftJoin(feeds, eq(entries.feedId, feeds.id))
 					.where(whereConditions)
 					.orderBy(desc(entries.publishedAt))
-					.limit(20) // Load 20 entries at a time
+					.limit(10) // Load 10 entries at a time
 					.execute();
 
 				// Calculate pagination metadata
-				const itemsPerPage = 20;
+				const itemsPerPage = 10;
 				const currentPage = Math.floor((data.offset || 0) / itemsPerPage) + 1;
 				const totalPages = Math.ceil(totalItems / itemsPerPage);
 				const hasNext = userEntries.length === itemsPerPage;
@@ -502,8 +491,6 @@ export const getEntryServerFn = createServerFn({ method: 'GET' })
 						status: entries.status,
 						starred: entries.starred,
 						publishedAt: entries.publishedAt,
-						createdAt: entries.createdAt,
-						updatedAt: entries.updatedAt,
 						// Feed fields
 						feed: {
 							id: feeds.id,
@@ -514,10 +501,7 @@ export const getEntryServerFn = createServerFn({ method: 'GET' })
 							icon: feeds.icon,
 							description: feeds.description,
 							language: feeds.language,
-							generator: feeds.generator,
-							publishedAt: feeds.publishedAt,
-							createdAt: feeds.createdAt,
-							updatedAt: feeds.updatedAt
+							generator: feeds.generator
 						}
 					})
 					.from(entries)

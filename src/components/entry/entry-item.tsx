@@ -5,7 +5,13 @@ import { updateEntryStatusServerFn } from '@/lib/server/entry-sfn';
 import { useServerFn } from '@tanstack/react-start';
 import type { Schema } from '@/lib/db-schema';
 
-export function EntryItem({ entry }: { entry: Schema['Entry'] & { feed: Schema['Feed'] | null } }) {
+type Props = {
+	entry: Omit<Schema['Entry'], 'content' | 'createdAt' | 'updatedAt'> & {
+		feed: Pick<Schema['Feed'], 'id' | 'categoryId' | 'title' | 'icon' | 'link'> | null;
+	};
+};
+
+export function EntryItem({ entry }: Props) {
 	const { search } = useLocation();
 	const { integration } = useLoaderData({ from: '/reader' });
 	const qc = useQueryClient();
