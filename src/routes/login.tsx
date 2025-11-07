@@ -40,17 +40,41 @@ function RouteComponent() {
 		);
 	};
 
+	const googleLoginHandler = async () => {
+		await authClient.signIn.social(
+			{ provider: 'google' },
+			{
+				onRequest: () => setIsLoading(true),
+				onSuccess: () => {
+					setIsLoading(false);
+					window.location.assign('/reader?page=all-posts');
+				},
+				onError: ({ error }) => {
+					setIsLoading(false);
+					toast.error(error.message, { dismissible: true, icon: '❌' });
+				}
+			}
+		);
+	};
+
 	return (
 		<div className="container mx-auto h-screen py-12">
 			<form
 				onSubmit={submitHandler}
-				className="mx-auto grid max-w-md grid-cols-1 gap-y-2 rounded-md border border-border p-4"
+				className="mx-auto grid max-w-sm grid-cols-1 gap-y-2 rounded-md border border-border p-4"
 			>
 				<TextField name="email" label="Email" placeholder="example@email.com" type="email" />
 				<TextField name="password" label="Password" placeholder="Your Password" type="password" />
-				<Button isPending={isLoading} type="submit" className="mt-3 w-fit">
-					{isLoading ? <Loader /> : 'Let me in!'}
-				</Button>
+				<div className="mt-3 grid grid-cols-1 gap-y-3">
+					<Button isPending={isLoading} type="submit">
+						{isLoading ? <Loader /> : 'Login'}
+					</Button>
+
+					<Button isPending={isLoading} onClick={googleLoginHandler} intent="outline">
+						<img src="/svg/google.svg" width={16} />
+						Continue with Google
+					</Button>
+				</div>
 				<hr className="my-2" />
 				<p className="text-sm">
 					Don't have an account?{' '}

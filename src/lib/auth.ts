@@ -5,11 +5,18 @@ import { username } from 'better-auth/plugins';
 import { db } from './db-connection';
 import * as schema from './db-schema';
 
+const googleClientId = process.env.GOOGLE_CLIENT_ID;
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+
+if (!googleClientId || !googleClientSecret) {
+	throw new Error(
+		'Missing required Google OAuth environment variables: GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET'
+	);
+}
+
 export const auth = betterAuth({
 	session: {
-		cookieCache: {
-			enabled: true
-		}
+		cookieCache: { enabled: true }
 	},
 	database: drizzleAdapter(db, {
 		provider: 'pg',
@@ -21,6 +28,12 @@ export const auth = betterAuth({
 	},
 	emailAndPassword: {
 		enabled: true
+	},
+	socialProviders: {
+		google: {
+			clientId: googleClientId,
+			clientSecret: googleClientSecret
+		}
 	},
 	plugins: [username(), reactStartCookies()]
 });
