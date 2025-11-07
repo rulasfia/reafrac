@@ -4,7 +4,8 @@ import {
 	parsedFeedAuthorSchema,
 	parsedFeedContentSchema,
 	parsedFeedIconSchema,
-	parsedFeedSchema
+	parsedFeedSchema,
+	parsedFeedThumbnailSchema
 } from '../schemas/feed-schemas';
 
 export async function extractFeed(url: string) {
@@ -52,7 +53,15 @@ export async function extractFeed(url: string) {
 							content = parsedFeedContentSchema.parse(feedEntry['content:encoded']);
 						}
 
-						return { author, content };
+						let thumbnail: { url: string; text?: string } | null = null;
+						if ('media:content' in feedEntry) {
+							thumbnail = parsedFeedThumbnailSchema.parse(feedEntry['media:content']);
+							// TODO: fallback thumbnail parsing in the content
+						}
+
+						console.log({ thumbnail });
+
+						return { author, content, thumbnail };
 					}
 				});
 

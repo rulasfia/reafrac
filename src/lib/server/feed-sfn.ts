@@ -170,7 +170,9 @@ export const addFeedServerFn = createServerFn({ method: 'GET' })
 					link: entry.link,
 					publishedAt: new Date(entry.published),
 					author: entry.author,
-					content: entry.content
+					content: entry.content,
+					thumbnail: entry.thumbnail?.url,
+					thumbnailCaption: entry.thumbnail?.text ?? entry.title
 				}));
 
 				await db.insert(entries).values(entryValues);

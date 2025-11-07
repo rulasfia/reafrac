@@ -29,6 +29,27 @@
       "when": 1762327663538,
       "tag": "0003_fuzzy_goblin_queen",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1762417997824,
+      "tag": "0004_large_songbird",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1762418930351,
+      "tag": "0005_bored_maximus",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1762419481713,
+      "tag": "0006_square_madame_web",
+      "breakpoints": true
     }
   ]
 }
