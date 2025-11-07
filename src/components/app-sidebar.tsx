@@ -83,6 +83,11 @@ function MenuSidebar() {
 		});
 	};
 
+	const userInitial = user.name
+		.split(' ')
+		.map((n) => n[0])
+		.join('');
+
 	return (
 		<div className="mr col-span-2 flex h-full flex-col overflow-y-auto border-r bg-muted dark:bg-accent">
 			<SidebarHeader>
@@ -156,9 +161,10 @@ function MenuSidebar() {
 					>
 						<div className="flex items-center gap-x-2">
 							<Avatar
-								className="size-8 *:size-8 group-data-[state=collapsed]:size-6 group-data-[state=collapsed]:*:size-6"
+								className="size-8 bg-background text-xs *:size-8 group-data-[state=collapsed]:size-6 group-data-[state=collapsed]:*:size-6"
 								isSquare
-								src="https://intentui.com/images/avatar/cobain.jpg"
+								src={user.image}
+								initials={userInitial}
 							/>
 
 							<div className="text-sm in-data-[collapsible=dock]:hidden">
@@ -175,7 +181,7 @@ function MenuSidebar() {
 						<MenuSection>
 							<MenuHeader separator>
 								<span className="block">{user.name}</span>
-								<span className="font-normal text-muted-fg">@{user.username}</span>
+								<span className="font-normal text-muted-fg">{user.email}</span>
 							</MenuHeader>
 						</MenuSection>
 
