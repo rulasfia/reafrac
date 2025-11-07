@@ -132,7 +132,7 @@ function RouteComponent() {
 					</div>
 
 					{entry.data?.thumbnail ? (
-						<div className="prose mb-4 prose-neutral dark:prose-invert">
+						<div className="prose mb-4 max-w-2xl prose-neutral xl:min-w-2xl dark:prose-invert">
 							<figure>
 								<img
 									src={entry.data?.thumbnail}

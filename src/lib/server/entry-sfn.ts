@@ -6,7 +6,7 @@ import sanitizeHtml from 'sanitize-html';
 import { sentryMiddleware } from '../middleware/sentry-middleware';
 import * as Sentry from '@sentry/tanstackstart-react';
 import { entries, feeds } from '../db-schema';
-import { eq, and, desc, lt, count, inArray } from 'drizzle-orm';
+import { eq, and, desc, lt, count, inArray, gte } from 'drizzle-orm';
 import type { EntryMeta } from './types';
 import { db } from '../db-connection';
 import { extractFeed } from '../utils/feed-utils';
@@ -329,7 +329,7 @@ export const saveEntryToBookmarkServerFn = createServerFn({ method: 'POST' })
 const EntryQuerySchema = z.object({
 	feedId: z.optional(z.string()),
 	offset: z.number(),
-	after: z.optional(z.number()),
+	after: z.optional(z.date()),
 	starred: z.optional(z.boolean()),
 	status: z.optional(z.enum(['read', 'unread'])),
 	forceRefetch: z.optional(z.boolean())
@@ -389,6 +389,11 @@ export const getEntriesServerFn = createServerFn({ method: 'GET' })
 					conditions.push(eq(entries.starred, data.starred));
 				}
 
+				// Add "today" filter - only show entries published after the specified timestamp
+				if (data.after) {
+					conditions.push(gte(entries.publishedAt, data.after));
+				}
+
 				const baseWhereConditions = and(...conditions);
 
 				// Get total count of entries matching the filters
@@ -400,13 +405,9 @@ export const getEntriesServerFn = createServerFn({ method: 'GET' })
 
 				const totalItems = totalCountResult[0]?.count || 0;
 
-				// Load-more pagination using the `after` parameter (entry ID)
-				// If no `after` is provided, start from the beginning
-				const paginationCondition = data.after ? lt(entries.id, data.after) : undefined;
-
-				const whereConditions = paginationCondition
-					? and(...conditions, paginationCondition)
-					: and(...conditions);
+				// Load-more pagination using the `offset` parameter
+				// Skip the specified number of entries based on the offset
+				const whereConditions = and(...conditions);
 
 				// Query entries with load-more style pagination, including feed data
 				const userEntries = await db
@@ -436,6 +437,7 @@ export const getEntriesServerFn = createServerFn({ method: 'GET' })
 					.where(whereConditions)
 					.orderBy(desc(entries.publishedAt))
 					.limit(10) // Load 10 entries at a time
+					.offset(data.offset || 0) // Skip entries based on offset
 					.execute();
 
 				// Calculate pagination metadata

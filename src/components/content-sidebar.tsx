@@ -25,10 +25,7 @@ export function ContentSidebar() {
 		const status = param.page === 'unread' ? ('unread' as const) : undefined;
 		const starred = param.page === 'saved';
 		// today at 12am in unix timestamp
-		const after =
-			param.page === 'today'
-				? new Date(new Date().setHours(0, 0, 0, 0)).getTime() / 1000
-				: undefined;
+		const after = param.page === 'today' ? new Date(new Date().setHours(0, 0, 0, 0)) : undefined;
 
 		return { status, starred, after };
 	}
