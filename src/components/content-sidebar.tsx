@@ -24,8 +24,16 @@ export function ContentSidebar() {
 	function formatQueryParams(param: typeof search) {
 		const status = param.page === 'unread' ? ('unread' as const) : undefined;
 		const starred = param.page === 'saved';
-		// today at 12am in unix timestamp
-		const after = param.page === 'today' ? new Date(new Date().setHours(0, 0, 0, 0)) : undefined;
+
+		// today at 12am UTC in milliseconds
+		let after: number | undefined = undefined;
+		if (param.page === 'today') {
+			const now = new Date();
+			const utcToday = new Date(
+				Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0)
+			);
+			after = Math.floor(utcToday.getTime() / 1000); // Convert to Unix timestamp (seconds)
+		}
 
 		return { status, starred, after };
 	}

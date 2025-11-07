@@ -329,7 +329,7 @@ export const saveEntryToBookmarkServerFn = createServerFn({ method: 'POST' })
 const EntryQuerySchema = z.object({
 	feedId: z.optional(z.string()),
 	offset: z.number(),
-	after: z.optional(z.date()),
+	after: z.optional(z.number()),
 	starred: z.optional(z.boolean()),
 	status: z.optional(z.enum(['read', 'unread'])),
 	forceRefetch: z.optional(z.boolean())
@@ -391,7 +391,8 @@ export const getEntriesServerFn = createServerFn({ method: 'GET' })
 
 				// Add "today" filter - only show entries published after the specified timestamp
 				if (data.after) {
-					conditions.push(gte(entries.publishedAt, data.after));
+					// Convert Unix timestamp (seconds) to JavaScript Date for comparison with PostgreSQL timestamp
+					conditions.push(gte(entries.publishedAt, new Date(data.after * 1000)));
 				}
 
 				const baseWhereConditions = and(...conditions);

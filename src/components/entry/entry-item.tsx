@@ -6,7 +6,10 @@ import { useServerFn } from '@tanstack/react-start';
 import type { Schema } from '@/lib/db-schema';
 
 type Props = {
-	entry: Omit<Schema['Entry'], 'content' | 'createdAt' | 'updatedAt'> & {
+	entry: Omit<
+		Schema['Entry'],
+		'content' | 'createdAt' | 'updatedAt' | 'thumbnail' | 'thumbnailCaption'
+	> & {
 		feed: Pick<Schema['Feed'], 'id' | 'categoryId' | 'title' | 'icon' | 'link'> | null;
 	};
 };
