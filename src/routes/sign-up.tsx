@@ -98,7 +98,7 @@ function RouteComponent() {
 						{isLoading ? <Loader /> : 'Register'}
 					</Button>
 
-					<Button isPending={isLoading} onClick={googleLoginHandler} intent="outline" type="submit">
+					<Button isPending={isLoading} onClick={googleLoginHandler} intent="outline">
 						<img src="/svg/google.svg" width={16} />
 						Continue with Google
 					</Button>

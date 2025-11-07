@@ -84,9 +84,11 @@ function MenuSidebar() {
 	};
 
 	const userInitial = user.name
-		.split(' ')
-		.map((n) => n[0])
-		.join('');
+		? user.name
+				.split(' ')
+				.map((n) => n[0])
+				.join('')
+		: (user.email?.[0]?.toUpperCase() ?? '?');
 
 	return (
 		<div className="mr col-span-2 flex h-full flex-col overflow-y-auto border-r bg-muted dark:bg-accent">
