@@ -55,11 +55,16 @@ docker-compose run --rm migrate
 ## Architecture Overview
 
 ### Technology Stack
-- **Framework**: TanStack Start (React SSR framework)
-- **Database**: PostgreSQL with Drizzle ORM
-- **Authentication**: Better Auth
-- **Styling**: Tailwind CSS with React Aria Components
+- **Framework**: TanStack Start (React SSR framework with file-based routing)
+- **Runtime**: Bun (JavaScript runtime)
+- **Database**: PostgreSQL 17 with Drizzle ORM
+- **Authentication**: Better Auth (supports email/password + Google OAuth)
+- **Styling**: Tailwind CSS v4 with Base UI
+- **UI Components**: Custom components with class-variance-authority and tailwind-variants
+- **Data Fetching**: TanStack Query (React Query) + ofetch for external HTTP requests
 - **Testing**: Vitest with React Testing Library
+- **Linting**: oxc (alternative to ESLint)
+- **Error Tracking**: Sentry integration with custom spans
 - **Deployment**: Docker with GitHub Actions
 
 ### Project Structure
@@ -75,6 +80,7 @@ docker-compose run --rm migrate
 - `auth-schema.ts` - Legacy auth schema (using text primary keys) - **DO NOT EDIT**
 - `src/lib/auth.ts` - Better Auth configuration
 - `src/lib/auth-client.ts` - Client-side auth utilities
+- `src/lib/middleware/` - Custom middleware (auth, Sentry, logging)
 - `drizzle.config.ts` - Drizzle ORM configuration
 
 #### Key Directories
@@ -86,9 +92,11 @@ docker-compose run --rm migrate
 ### Application Features
 This is an RSS reader client designed to work with Miniflux servers, featuring:
 - User authentication with Better Auth
-- RSS feed management and reading
+- RSS feed management and reading with full content extraction
 - Miniflux server connections via `fluxConnections` table
 - Modern responsive UI with dark/light theme support
+- Feed categorization and organization
+- Article entry tracking with read/unread status and bookmarking
 
 ### Development Patterns
 
@@ -100,15 +108,19 @@ This is an RSS reader client designed to work with Miniflux servers, featuring:
 
 #### Database Schema
 - Primary schema uses UUID primary keys
+- Categories and feeds use nanoid for URL-friendly IDs
+- Entries use serial for primary key
 - Snake_case naming convention in PostgreSQL
 - Schema changes require migration generation and application
 - Better Auth integration for user management
 
 #### Styling
-- Tailwind CSS with custom components
-- React Aria Components for accessible UI primitives
+- Tailwind CSS v4 with @tailwindcss/vite plugin
+- Base UI for accessible UI primitives
 - Component variants using class-variance-authority and tailwind-variants
 - Theme provider for dark/light mode support
+- Custom design tokens and responsive design
+- @tailwindcss/typography for article content styling
 
 #### Error Handling
 - Sentry integration for error tracking
@@ -173,6 +185,10 @@ async function fetchUserData(userId) {
 ### Environment Variables
 Key environment variables (see `.env` for complete list):
 - `DATABASE_URL` - PostgreSQL connection string
+- `GOOGLE_CLIENT_ID` - Google OAuth client ID (optional)
+- `GOOGLE_CLIENT_SECRET` - Google OAuth client secret (optional)
+- `BETTER_AUTH_SECRET` - Authentication secret key
+- `BETTER_AUTH_URL` - Authentication service URL
 - `VITE_SENTRY_DSN` - Sentry error tracking
 - `PORT` - Server port (default: 3000)
 
@@ -183,3 +199,10 @@ The custom production server (`server.ts`) includes:
 - Gzip compression for eligible assets
 - Configurable file filtering via glob patterns
 - Performance logging and monitoring
+- Memory-efficient response generation
+
+### Server Functions
+- Type-safe server functions with `createServerFn`
+- Input validation with Zod schemas
+- Built-in middleware support (auth, Sentry, logging)
+- Sentry tracing integration for performance monitoring
