@@ -19,13 +19,13 @@ import {
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
-	SidebarSeparator
+	SidebarSeparator,
+	useSidebar
 } from '../ui/sidebar';
 import { Link, useLoaderData, useLocation } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
 import { getFeedsServerFn } from '@/lib/server/feed-sfn';
 import { Button } from '../ui/button';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 export const MENU_ITEMS = [
 	{ label: 'All Posts', icon: <ListIcon />, href: '/reader', page: 'all-posts' },
@@ -35,7 +35,7 @@ export const MENU_ITEMS = [
 ] as const;
 
 export function MenuSidebar() {
-	const isMobile = useIsMobile();
+	const { isMobile, toggleSidebar } = useSidebar();
 	const { search, pathname } = useLocation();
 	const { user, integration } = useLoaderData({ from: '/reader' });
 	const getFeeds = useServerFn(getFeedsServerFn);
@@ -136,7 +136,10 @@ export function MenuSidebar() {
 									isActive={pathname.startsWith('/reader/settings')}
 									className="justify-center lg:justify-start"
 								>
-									<Link to="/reader/settings/feeds">
+									<Link
+										to="/reader/settings/feeds"
+										onClick={() => (isMobile ? toggleSidebar() : undefined)}
+									>
 										<SettingsIcon />
 										<span className="hidden lg:block">Settings</span>
 									</Link>

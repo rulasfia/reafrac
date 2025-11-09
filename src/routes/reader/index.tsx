@@ -18,7 +18,7 @@ export const Route = createFileRoute('/reader/')({
 	component: RouteComponent,
 	loader: async ({ context }) => {
 		// prefetch feeds
-		await context.queryClient.fetchQuery({
+		await context.queryClient.prefetchQuery({
 			queryKey: ['feeds', context.user.id, null],
 			queryFn: async () => getFeedsServerFn()
 		});
