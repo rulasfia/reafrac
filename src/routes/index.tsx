@@ -1,4 +1,4 @@
-import { buttonStyles } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { createFileRoute } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/')({
@@ -10,9 +10,9 @@ function App() {
 		<div className="container mx-auto py-12 text-center">
 			<h1 className="font-serif text-xl">Welcome to Reafrac</h1>
 			<hr className="my-4" />
-			<a className={buttonStyles({ intent: 'outline', className: 'min-w-28' })} href="/login">
+			<Button render={<a href="/login" />} variant="outline" className="min-w-28">
 				Login
-			</a>
+			</Button>
 		</div>
 	);
 }

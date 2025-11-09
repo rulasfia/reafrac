@@ -1,10 +1,11 @@
 import { IconCircleMinus, IconPencilBox } from '@intentui/icons';
-import { Button } from '../ui/button';
 import type { Schema } from '@/lib/db-schema';
 import { useState } from 'react';
-import { Loader } from '../ui/loader';
 import { useLocation, useNavigate } from '@tanstack/react-router';
-import { toast } from 'sonner';
+import { toastManager } from '../ui/toast';
+import { Button } from '../ui/button';
+import { Spinner } from '../ui/spinner';
+import { Separator } from '../ui/separator';
 
 interface FeedItemProps {
 	item: Schema['Feed'];
@@ -26,9 +27,9 @@ export function FeedItem({ item, onRemove, onUpdate }: FeedItemProps) {
 				if (search.page === item.id) {
 					navigate({ to: '/reader/settings', search: { ...search, page: undefined } });
 				}
-				toast.success('Feed removed successfully');
 			} catch (error) {
 				console.error('Failed to remove feed:', error);
+				throw error;
 			} finally {
 				setIsRemoving(false);
 			}
@@ -47,7 +48,11 @@ export function FeedItem({ item, onRemove, onUpdate }: FeedItemProps) {
 
 			// Validate that at least one field was changed
 			if (newTitle.trim() === item.title) {
-				toast.info('No changes made');
+				toastManager.add({
+					title: 'Feed Unchanged',
+					description: 'No changes were made to the feed.',
+					type: 'info'
+				});
 				return;
 			}
 
@@ -63,11 +68,10 @@ export function FeedItem({ item, onRemove, onUpdate }: FeedItemProps) {
 			// Call onUpdate callback if provided
 			if (onUpdate) {
 				await onUpdate(updateData);
-				toast.success('Feed updated successfully');
 			}
 		} catch (error) {
 			console.error('Failed to update feed:', error);
-			toast.error('Failed to update feed');
+			throw error;
 		} finally {
 			setIsEditing(false);
 		}
@@ -76,23 +80,17 @@ export function FeedItem({ item, onRemove, onUpdate }: FeedItemProps) {
 	return (
 		<div className="flex flex-row items-center gap-x-2">
 			<Button
-				size="sq-sm"
-				intent="plain"
-				className="hover:bg-danger/10"
-				onPress={handleRemove}
-				isDisabled={isRemoving || !onRemove}
+				size="icon-sm"
+				variant="destructive-outline"
+				onClick={handleRemove}
+				disabled={isRemoving || !onRemove}
 			>
-				{isRemoving ? <Loader /> : <IconCircleMinus className="text-danger!" />}
+				{isRemoving ? <Spinner /> : <IconCircleMinus />}
 			</Button>
-			<Button
-				size="sq-sm"
-				intent="plain"
-				className="hover:bg-primary/10"
-				onPress={handleEdit}
-				isDisabled={isEditing}
-			>
-				{isEditing ? <Loader /> : <IconPencilBox className="text-primary" />}
+			<Button size="icon-sm" variant="outline" onClick={handleEdit} disabled={isEditing}>
+				{isEditing ? <Spinner /> : <IconPencilBox />}
 			</Button>
+			<Separator orientation="vertical" className="mx-2" />
 			<img
 				width={18}
 				height={18}

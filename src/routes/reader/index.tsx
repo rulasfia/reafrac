@@ -6,13 +6,21 @@ import {
 	getEntryServerFn,
 	saveEntryToBookmarkServerFn
 } from '@/lib/server/entry-sfn';
-import { Loader } from '@/components/ui/loader';
-import { Button, buttonStyles } from '@/components/ui/button';
-import { IconBookmark, IconBookmarkFill, IconOpenLink, IconX } from '@intentui/icons';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { getFeedsServerFn } from '@/lib/server/feed-sfn';
+import { Spinner } from '@/components/ui/spinner';
+import { BookmarkIcon, ExternalLinkIcon, XIcon } from 'lucide-react';
 
 export const Route = createFileRoute('/reader/')({
-	component: RouteComponent
+	component: RouteComponent,
+	loader: async ({ context }) => {
+		// prefetch feeds
+		await context.queryClient.fetchQuery({
+			queryKey: ['feeds', context.user.id, null],
+			queryFn: async () => getFeedsServerFn()
+		});
+	}
 });
 
 function RouteComponent() {
@@ -64,14 +72,14 @@ function RouteComponent() {
 	return (
 		<div className="mx-auto grid max-w-2xl grid-cols-1 justify-center gap-y-1">
 			<Button
-				size="sq-sm"
-				intent="outline"
+				size="icon-sm"
+				variant="outline"
 				className="absolute top-1.5 right-1.5 cursor-pointer rounded-sm"
 				onClick={onCloseReader}
 			>
-				<IconX />
+				<XIcon />
 			</Button>
-			{entry.status === 'pending' && <Loader className="mx-auto my-4" />}
+			{entry.status === 'pending' && <Spinner className="mx-auto my-4" />}
 			{entry.status === 'error' && 'Error'}
 			{entry.status === 'success' && (
 				<>
@@ -111,24 +119,25 @@ function RouteComponent() {
 							{content.isLoading ? <Loader /> : null}
 						</Link>*/}
 						<Button
-							intent="outline"
+							variant="outline"
 							className="w-fit cursor-pointer rounded-r-none"
 							onClick={onSaveToBookmark}
 						>
-							{entry.data.starred ? <IconBookmarkFill /> : <IconBookmark />}
+							{entry.data.starred ? (
+								<BookmarkIcon fill="var(--color-primary)" strokeWidth={1} />
+							) : (
+								<BookmarkIcon />
+							)}
 							Save
 						</Button>
-						<a
-							className={buttonStyles({
-								intent: 'outline',
-								className: '-ml-px w-fit cursor-pointer rounded-l-none'
-							})}
-							href={entry.data.link}
-							target="_blank"
+						<Button
+							variant="outline"
+							className="-ml-px w-fit cursor-pointer rounded-l-none"
+							render={<a href={entry.data.link} target="_blank" />}
 						>
 							Read Original Source
-							<IconOpenLink />
-						</a>
+							<ExternalLinkIcon />
+						</Button>
 					</div>
 
 					{entry.data?.thumbnail ? (

@@ -10,7 +10,7 @@ import {
 	IconLogout,
 	IconPlus
 } from '@intentui/icons';
-import { Avatar } from '@/components/ui/avatar';
+import { Avatar } from '@/components/primitive/avatar';
 import {
 	Sidebar,
 	SidebarContent,
@@ -20,7 +20,7 @@ import {
 	SidebarLabel,
 	SidebarSection,
 	SidebarSectionGroup
-} from '@/components/ui/sidebar';
+} from '@/components/primitive/sidebar';
 import {
 	Menu,
 	MenuContent,
@@ -28,13 +28,13 @@ import {
 	MenuItem,
 	MenuSection,
 	MenuTrigger
-} from '@/components/ui/menu';
+} from '@/components/primitive/menu';
 import { ContentSidebar } from './content-sidebar';
 import { Link, useLoaderData, useLocation, useNavigate } from '@tanstack/react-router';
 import { authClient } from '@/lib/auth-client';
 import { useServerFn } from '@tanstack/react-start';
 import { getFeedsServerFn } from '@/lib/server/feed-sfn';
-import { buttonStyles } from './ui/button';
+import { buttonStyles } from './primitive/button';
 
 export function AppSidebar() {
 	return (
@@ -171,7 +171,7 @@ function MenuSidebar() {
 
 							<div className="text-sm in-data-[collapsible=dock]:hidden">
 								<SidebarLabel className="text-sm">{user.name}</SidebarLabel>
-								<span className="-mt-0.5 block text-xs text-muted-fg">{user.email}</span>
+								<span className="text-muted-fg -mt-0.5 block text-xs">{user.email}</span>
 							</div>
 						</div>
 						<IconChevronsY data-slot="chevron" />
@@ -183,7 +183,7 @@ function MenuSidebar() {
 						<MenuSection>
 							<MenuHeader separator>
 								<span className="block">{user.name}</span>
-								<span className="font-normal text-muted-fg">{user.email}</span>
+								<span className="text-muted-fg font-normal">{user.email}</span>
 							</MenuHeader>
 						</MenuSection>
 

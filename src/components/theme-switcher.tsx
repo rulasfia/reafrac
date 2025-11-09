@@ -1,5 +1,5 @@
 import { IconMoon, IconSun } from '@intentui/icons';
-import { Button } from './ui/button';
+import { Button } from './primitive/button';
 import { useTheme } from './theme-provider';
 
 interface Props {

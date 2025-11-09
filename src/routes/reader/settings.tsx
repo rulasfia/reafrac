@@ -1,6 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { MinifluxIntegrationSetting } from '@/components/settings/miniflux-integration';
-import { FeedSetting } from '@/components/settings/feeds-setting';
+import { createFileRoute, Outlet } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/reader/settings')({
 	component: RouteComponent
@@ -9,10 +7,8 @@ export const Route = createFileRoute('/reader/settings')({
 function RouteComponent() {
 	return (
 		<>
-			<h2 className="mb-4 text-2xl font-semibold">Settings</h2>
 			<section className="grid grid-cols-1 gap-y-5">
-				<FeedSetting />
-				<MinifluxIntegrationSetting />
+				<Outlet />
 			</section>
 		</>
 	);

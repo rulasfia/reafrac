@@ -15,7 +15,9 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ReaderIndexRouteImport } from './routes/reader/index'
 import { Route as ReaderSettingsRouteImport } from './routes/reader/settings'
-import { Route as ReaderDashboardRouteImport } from './routes/reader/dashboard'
+import { Route as ReaderSettingsIntegrationsRouteImport } from './routes/reader/settings/integrations'
+import { Route as ReaderSettingsFeedsRouteImport } from './routes/reader/settings/feeds'
+import { Route as ReaderSettingsAccountRouteImport } from './routes/reader/settings/account'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
 const SignUpRoute = SignUpRouteImport.update({
@@ -48,10 +50,21 @@ const ReaderSettingsRoute = ReaderSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => ReaderRoute,
 } as any)
-const ReaderDashboardRoute = ReaderDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => ReaderRoute,
+const ReaderSettingsIntegrationsRoute =
+  ReaderSettingsIntegrationsRouteImport.update({
+    id: '/integrations',
+    path: '/integrations',
+    getParentRoute: () => ReaderSettingsRoute,
+  } as any)
+const ReaderSettingsFeedsRoute = ReaderSettingsFeedsRouteImport.update({
+  id: '/feeds',
+  path: '/feeds',
+  getParentRoute: () => ReaderSettingsRoute,
+} as any)
+const ReaderSettingsAccountRoute = ReaderSettingsAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => ReaderSettingsRoute,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
@@ -64,19 +77,23 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/reader': typeof ReaderRouteWithChildren
   '/sign-up': typeof SignUpRoute
-  '/reader/dashboard': typeof ReaderDashboardRoute
-  '/reader/settings': typeof ReaderSettingsRoute
+  '/reader/settings': typeof ReaderSettingsRouteWithChildren
   '/reader/': typeof ReaderIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/reader/settings/account': typeof ReaderSettingsAccountRoute
+  '/reader/settings/feeds': typeof ReaderSettingsFeedsRoute
+  '/reader/settings/integrations': typeof ReaderSettingsIntegrationsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/sign-up': typeof SignUpRoute
-  '/reader/dashboard': typeof ReaderDashboardRoute
-  '/reader/settings': typeof ReaderSettingsRoute
+  '/reader/settings': typeof ReaderSettingsRouteWithChildren
   '/reader': typeof ReaderIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/reader/settings/account': typeof ReaderSettingsAccountRoute
+  '/reader/settings/feeds': typeof ReaderSettingsFeedsRoute
+  '/reader/settings/integrations': typeof ReaderSettingsIntegrationsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -84,10 +101,12 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/reader': typeof ReaderRouteWithChildren
   '/sign-up': typeof SignUpRoute
-  '/reader/dashboard': typeof ReaderDashboardRoute
-  '/reader/settings': typeof ReaderSettingsRoute
+  '/reader/settings': typeof ReaderSettingsRouteWithChildren
   '/reader/': typeof ReaderIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/reader/settings/account': typeof ReaderSettingsAccountRoute
+  '/reader/settings/feeds': typeof ReaderSettingsFeedsRoute
+  '/reader/settings/integrations': typeof ReaderSettingsIntegrationsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -96,29 +115,35 @@ export interface FileRouteTypes {
     | '/login'
     | '/reader'
     | '/sign-up'
-    | '/reader/dashboard'
     | '/reader/settings'
     | '/reader/'
     | '/api/auth/$'
+    | '/reader/settings/account'
+    | '/reader/settings/feeds'
+    | '/reader/settings/integrations'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
     | '/sign-up'
-    | '/reader/dashboard'
     | '/reader/settings'
     | '/reader'
     | '/api/auth/$'
+    | '/reader/settings/account'
+    | '/reader/settings/feeds'
+    | '/reader/settings/integrations'
   id:
     | '__root__'
     | '/'
     | '/login'
     | '/reader'
     | '/sign-up'
-    | '/reader/dashboard'
     | '/reader/settings'
     | '/reader/'
     | '/api/auth/$'
+    | '/reader/settings/account'
+    | '/reader/settings/feeds'
+    | '/reader/settings/integrations'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -173,12 +198,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReaderSettingsRouteImport
       parentRoute: typeof ReaderRoute
     }
-    '/reader/dashboard': {
-      id: '/reader/dashboard'
-      path: '/dashboard'
-      fullPath: '/reader/dashboard'
-      preLoaderRoute: typeof ReaderDashboardRouteImport
-      parentRoute: typeof ReaderRoute
+    '/reader/settings/integrations': {
+      id: '/reader/settings/integrations'
+      path: '/integrations'
+      fullPath: '/reader/settings/integrations'
+      preLoaderRoute: typeof ReaderSettingsIntegrationsRouteImport
+      parentRoute: typeof ReaderSettingsRoute
+    }
+    '/reader/settings/feeds': {
+      id: '/reader/settings/feeds'
+      path: '/feeds'
+      fullPath: '/reader/settings/feeds'
+      preLoaderRoute: typeof ReaderSettingsFeedsRouteImport
+      parentRoute: typeof ReaderSettingsRoute
+    }
+    '/reader/settings/account': {
+      id: '/reader/settings/account'
+      path: '/account'
+      fullPath: '/reader/settings/account'
+      preLoaderRoute: typeof ReaderSettingsAccountRouteImport
+      parentRoute: typeof ReaderSettingsRoute
     }
     '/api/auth/$': {
       id: '/api/auth/$'
@@ -190,15 +229,29 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface ReaderSettingsRouteChildren {
+  ReaderSettingsAccountRoute: typeof ReaderSettingsAccountRoute
+  ReaderSettingsFeedsRoute: typeof ReaderSettingsFeedsRoute
+  ReaderSettingsIntegrationsRoute: typeof ReaderSettingsIntegrationsRoute
+}
+
+const ReaderSettingsRouteChildren: ReaderSettingsRouteChildren = {
+  ReaderSettingsAccountRoute: ReaderSettingsAccountRoute,
+  ReaderSettingsFeedsRoute: ReaderSettingsFeedsRoute,
+  ReaderSettingsIntegrationsRoute: ReaderSettingsIntegrationsRoute,
+}
+
+const ReaderSettingsRouteWithChildren = ReaderSettingsRoute._addFileChildren(
+  ReaderSettingsRouteChildren,
+)
+
 interface ReaderRouteChildren {
-  ReaderDashboardRoute: typeof ReaderDashboardRoute
-  ReaderSettingsRoute: typeof ReaderSettingsRoute
+  ReaderSettingsRoute: typeof ReaderSettingsRouteWithChildren
   ReaderIndexRoute: typeof ReaderIndexRoute
 }
 
 const ReaderRouteChildren: ReaderRouteChildren = {
-  ReaderDashboardRoute: ReaderDashboardRoute,
-  ReaderSettingsRoute: ReaderSettingsRoute,
+  ReaderSettingsRoute: ReaderSettingsRouteWithChildren,
   ReaderIndexRoute: ReaderIndexRoute,
 }
 

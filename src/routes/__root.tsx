@@ -9,7 +9,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { wrapCreateRootRouteWithSentry } from '@sentry/tanstackstart-react';
 import * as Sentry from '@sentry/tanstackstart-react';
 import { requestLoggerMiddleware } from '@/lib/middleware/logger-middleware';
-import { Toast } from '@/components/ui/toast';
+import { ToastProvider } from '@/components/ui/toast';
 import { ThemeProvider } from '@/components/theme-provider';
 import { QueryProvider } from '@/components/query-provider';
 import { RouteProviders } from '@/components/route-provider';
@@ -65,8 +65,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				<body>
 					<RouteProviders>
 						<QueryProvider>
-							<Toast />
-							{children}
+							<ToastProvider>{children}</ToastProvider>
 							<DevTools />
 							<Scripts />
 						</QueryProvider>

@@ -1,6 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import { TextField } from '@/components/ui/text-field';
-import { Button } from '@/components/ui/button';
 import { useServerFn } from '@tanstack/react-start';
 import {
 	fluxIntegrationServerFn,
@@ -9,8 +7,11 @@ import {
 } from '@/lib/server/integration-sfn';
 import { toast } from 'sonner';
 import { useState } from 'react';
-import { Loader } from '@/components/ui/loader';
 import { useLoaderData } from '@tanstack/react-router';
+import { Field, FieldError, FieldLabel } from '../ui/field';
+import { Input } from '../ui/input';
+import { Button } from '../ui/button';
+import { Spinner } from '../ui/spinner';
 
 export function MinifluxIntegrationSetting() {
 	const { user } = useLoaderData({ from: '/reader' });
@@ -76,38 +77,39 @@ export function MinifluxIntegrationSetting() {
 			</p>
 
 			<form onSubmit={submitHandler} className="flex max-w-md flex-col gap-y-2">
-				<TextField
-					name="server-url"
-					type="url"
-					label="Miniflux Server URL"
-					placeholder={data ? data?.serverUrl : 'https://miniflux.example.com'}
-					isDisabled={!!data}
-				/>
-				<TextField
-					name="api-key"
-					type="password"
-					label="Miniflux API Key"
-					placeholder="****************"
-					isDisabled={!!data}
-				/>
+				<Field name="server-url">
+					<FieldLabel>Miniflux Server URL</FieldLabel>
+					<Input
+						name="server-url"
+						placeholder={data ? data?.serverUrl : 'https://miniflux.example.com'}
+						type="email"
+						disabled={isLoading || !!data}
+					/>
+					<FieldError />
+				</Field>
+
+				<Field name="api-key">
+					<FieldLabel>Miniflux API Key</FieldLabel>
+					<Input
+						name="api-key"
+						type="password"
+						placeholder="****************"
+						disabled={isLoading || !!data}
+					/>
+				</Field>
+
 				<div className="mt-2">
 					{data ? (
-						<Button
-							isPending={isLoading}
-							isDisabled={!data}
-							onClick={removeIntegrationHandler}
-							type="button"
-						>
-							{isLoading ? <Loader /> : 'Remove Integration'}
+						<Button disabled={isLoading || !data} onClick={removeIntegrationHandler} type="button">
+							{isLoading ? <Spinner /> : 'Remove Integration'}
 						</Button>
 					) : (
 						<Button
-							isPending={isLoading}
-							// isDisabled={!!data}
-							isDisabled={true}
+							// disabled={isLoading || !!data}
+							disabled
 							type="submit"
 						>
-							{isLoading ? <Loader /> : 'Connect to Server'}
+							{isLoading ? <Spinner /> : 'Connect to Server'}
 						</Button>
 					)}
 					{data ? <span className="ml-2 text-success">Integration connected!</span> : null}
