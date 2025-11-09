@@ -14,6 +14,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { QueryProvider } from '@/components/query-provider';
 import { DevTools } from '@/components/devtools';
 import appCss from '../styles.css?url';
+import { getAppConfigServerFn } from '@/lib/server/app-sfn';
 
 export const Route = wrapCreateRootRouteWithSentry(createRootRouteWithContext)<{
 	queryClient: QueryClient;
@@ -43,6 +44,10 @@ export const Route = wrapCreateRootRouteWithSentry(createRootRouteWithContext)<{
 					}
 				]
 			: [],
+	loader: async () => {
+		const config = await getAppConfigServerFn();
+		return config;
+	},
 	shellComponent: RootDocument,
 	notFoundComponent: NotFoundComponent,
 	errorComponent: function ErrorComponent({ error }) {

@@ -6,7 +6,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { toastManager } from '@/components/ui/toast';
 import { authClient } from '@/lib/auth-client';
 import { kickAuthedUserServerFn } from '@/lib/server/auth-sfn';
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, Link, useLoaderData, useNavigate } from '@tanstack/react-router';
 import { nanoid } from 'nanoid';
 import { useState } from 'react';
 import { z } from 'zod/mini';
@@ -32,6 +32,7 @@ const registerSchema = z.object({
 type Errors = Record<string, string | string[]>;
 
 function RouteComponent() {
+	const { isGoogleAuthEnabled } = useLoaderData({ from: '__root__' });
 	const [isLoading, setIsLoading] = useState(false);
 	const [errors, setErrors] = useState<Errors>({});
 	const handleClearErrors = (next: Errors) => setErrors(next);
@@ -84,6 +85,7 @@ function RouteComponent() {
 	};
 
 	const googleLoginHandler = async () => {
+		if (!isGoogleAuthEnabled) return;
 		await authClient.signIn.social(
 			{ provider: 'google' },
 			{
@@ -144,10 +146,12 @@ function RouteComponent() {
 						{isLoading ? <Spinner /> : 'Register'}
 					</Button>
 
-					<Button disabled={isLoading} onClick={googleLoginHandler} variant="outline">
-						<img src="/svg/google.svg" width={16} />
-						Continue with Google
-					</Button>
+					{isGoogleAuthEnabled && (
+						<Button disabled={isLoading} onClick={googleLoginHandler} variant="outline">
+							<img src="/svg/google.svg" width={16} />
+							Continue with Google
+						</Button>
+					)}
 				</div>
 
 				<hr className="my-2" />

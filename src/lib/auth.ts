@@ -8,10 +8,13 @@ import * as schema from './db-schema';
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
 
-if (!googleClientId || !googleClientSecret) {
-	throw new Error(
-		'Missing required Google OAuth environment variables: GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET'
-	);
+const socialProviders: Record<string, Record<string, string>> = {};
+
+if (googleClientId && googleClientSecret) {
+	socialProviders.google = {
+		clientId: googleClientId,
+		clientSecret: googleClientSecret
+	};
 }
 
 export const auth = betterAuth({
@@ -29,11 +32,6 @@ export const auth = betterAuth({
 	emailAndPassword: {
 		enabled: true
 	},
-	socialProviders: {
-		google: {
-			clientId: googleClientId,
-			clientSecret: googleClientSecret
-		}
-	},
+	socialProviders,
 	plugins: [username(), reactStartCookies()]
 });
