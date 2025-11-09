@@ -11,9 +11,10 @@ import type { EntryMeta } from './types';
 import { db } from '../db-connection';
 import { extractFeed } from '../utils/feed-utils';
 import { ParsedFeed } from '../schemas/feed-schemas';
+import { SimpleCache } from '../cache';
 
-// Simple in-memory cache for feed requests
-const feedCache = new Map<string, { data: any; timestamp: number; ttl: number }>();
+// Feed cache using SimpleCache with stale-while-revalidate support
+const feedCache = new SimpleCache<ParsedFeed>(2 * 60 * 1000); // 2 minutes TTL
 
 // Configuration for feed refetching
 const REFETCH_CONFIG = {
@@ -28,36 +29,26 @@ const REFETCH_CONFIG = {
 };
 
 // Helper function to get cached feed data or fetch new data
-async function getCachedFeedData(feedUrl: string): Promise<ParsedFeed> {
-	const now = Date.now();
-	const cached = feedCache.get(feedUrl);
-
-	if (cached && now - cached.timestamp < cached.ttl) {
-		return cached.data;
-	}
-
-	try {
-		const data = await Promise.race([
-			extractFeed(feedUrl),
-			new Promise((_, reject) =>
-				setTimeout(() => reject(new Error('Feed fetch timeout')), REFETCH_CONFIG.FETCH_TIMEOUT)
-			)
-		]);
-
-		feedCache.set(feedUrl, {
-			data,
-			timestamp: now,
-			ttl: REFETCH_CONFIG.FETCH_CACHE_TTL
-		});
-
-		return data as ParsedFeed;
-	} catch (error) {
-		// If we have cached data that's expired (but not too old), return it as fallback
-		if (cached && now - cached.timestamp < REFETCH_CONFIG.FETCH_CACHE_TTL * 3) {
-			return cached.data;
+async function getCachedFeedData(userId: string, feedUrl: string): Promise<ParsedFeed> {
+	return feedCache.getOrFetchWithStale(
+		`${userId}:${feedUrl}`,
+		async () => {
+			return await Promise.race([
+				extractFeed(feedUrl),
+				new Promise<never>((_, reject) =>
+					setTimeout(() => reject(new Error('Feed fetch timeout')), REFETCH_CONFIG.FETCH_TIMEOUT)
+				)
+			]);
+		},
+		{
+			ttl: REFETCH_CONFIG.FETCH_CACHE_TTL,
+			staleTtl: REFETCH_CONFIG.FETCH_CACHE_TTL * 2, // Allow 2x TTL for stale data
+			onStaleUsed: (_data) => {
+				// Optional: log when stale data is used
+				console.log(`Using stale feed data for ${feedUrl}`);
+			}
 		}
-		throw error;
-	}
+	);
 }
 
 // Optimized helper function to refetch entries from feeds and insert only new entries
@@ -158,7 +149,7 @@ async function refetchFeedEntries(
 							{ op: 'feed.extract', name: `Extract feed: ${feed.title}` },
 							async () => {
 								try {
-									return await getCachedFeedData(feed.link);
+									return await getCachedFeedData(userId, feed.link);
 								} catch (error) {
 									console.error(`Error extracting feed ${feed.title}:`, error);
 									throw error;
@@ -348,9 +339,8 @@ export const getEntriesServerFn = createServerFn({ method: 'GET' })
 				span.setAttribute('starred', data.starred || false);
 				span.setAttribute('force_refetch', data.forceRefetch || false);
 
-				// Refetch entries data from feeds link stored in db (non-blocking)
+				// Refetch entries data from feeds link stored in db
 				// Only refetch for specific feed if feedId is provided, otherwise refetch all feeds
-				// Start refetching in background without blocking the main request
 				Sentry.startSpan({ op: 'function', name: 'refetchBeforeGetEntries' }, async () => {
 					try {
 						await refetchFeedEntries(
