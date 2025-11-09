@@ -102,7 +102,8 @@ export function MinifluxIntegrationSetting() {
 					<Input
 						name="server-url"
 						placeholder={data ? data?.serverUrl : 'https://miniflux.example.com'}
-						type="email"
+						type="url"
+						inputMode="url"
 						disabled={isLoading || !!data}
 					/>
 					<FieldError />

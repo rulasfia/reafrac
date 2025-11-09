@@ -100,7 +100,11 @@ function RouteComponent() {
 			{!!search.entry && entry.status === 'success' ? (
 				<>
 					<div className="mx-auto mt-8 flex w-full flex-wrap items-center gap-x-2 gap-y-1 text-sm text-foreground/75 lg:mt-0">
-						<a href={entry.data.feed?.link} className="text-primary hover:underline">
+						<a
+							href={entry.data.feed?.link}
+							className="text-primary hover:underline"
+							rel="noopener noreferrer"
+						>
 							{entry.data.feed?.title}
 						</a>
 						<Separator orientation="vertical" />
@@ -149,7 +153,7 @@ function RouteComponent() {
 						<Button
 							variant="outline"
 							className="-ml-px w-fit cursor-pointer rounded-l-none"
-							render={<a href={entry.data.link} target="_blank" />}
+							render={<a href={entry.data.link} target="_blank" rel="noopener noreferrer" />}
 						>
 							Read Original Source
 							<ExternalLinkIcon />

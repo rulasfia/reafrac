@@ -48,7 +48,6 @@ export function FeedSetting() {
 		event.preventDefault();
 		try {
 			setErrors({});
-			setIsLoading(true);
 			const formData = new FormData(event.currentTarget);
 			const feedUrl = formData.get('feedUrl') as string;
 
@@ -58,8 +57,8 @@ export function FeedSetting() {
 				setErrors(fieldErrors);
 				return;
 			}
-			console.log('currentTarget-1', formRef.current);
 
+			setIsLoading(true);
 			await addFeed({ data: { feedUrl } });
 			await Promise.all([
 				qc.invalidateQueries({
