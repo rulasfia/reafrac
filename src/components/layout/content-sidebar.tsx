@@ -123,7 +123,7 @@ export function ContentSidebar() {
 					<Button
 						onClick={loadMore}
 						disabled={entries.isFetchingNextPage}
-						className="mb-4"
+						className="mb-2"
 						variant="outline"
 					>
 						{entries.isFetchingNextPage ? (

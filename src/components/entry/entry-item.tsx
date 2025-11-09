@@ -35,11 +35,12 @@ export function EntryItem({ entry }: Props) {
 			search={{ ...search, entry: entry.id, view: undefined }}
 			onClick={() => mutate(entry.id)}
 			className={cn(
-				'rounded-sm border-[0.5px] border-transparent p-2 text-sm text-foreground',
+				'rounded-sm border-l-4 border-transparent py-2 pr-2 pl-3 text-sm text-foreground',
 				search.entry === entry.id
-					? 'border-border/20 bg-primary/7.5 shadow-xs shadow-accent/20 dark:bg-neutral-800'
+					? 'border-primary bg-background shadow-xs shadow-accent'
 					: 'hover:bg-foreground/5',
-				entry.status === 'read' ? 'text-foreground/50' : ''
+				entry.status === 'read' && search.entry !== entry.id ? 'text-foreground/50' : '',
+				entry.status === 'read' && search.entry === entry.id ? 'text-foreground/80' : ''
 			)}
 		>
 			<div className="mb-1 flex flex-row items-center gap-x-1">

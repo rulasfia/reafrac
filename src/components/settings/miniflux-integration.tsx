@@ -5,13 +5,13 @@ import {
 	getExistingIntegrationServerFn,
 	removeExistingIntegrationServerFn
 } from '@/lib/server/integration-sfn';
-import { toast } from 'sonner';
 import { useState } from 'react';
 import { useLoaderData } from '@tanstack/react-router';
 import { Field, FieldError, FieldLabel } from '../ui/field';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Spinner } from '../ui/spinner';
+import { toastManager } from '../ui/toast';
 
 export function MinifluxIntegrationSetting() {
 	const { user } = useLoaderData({ from: '/reader' });
@@ -35,19 +35,31 @@ export function MinifluxIntegrationSetting() {
 			const token = formData.get('api-key') as string;
 
 			if (!server_url || !token) {
-				toast('Please fill in all fields', { closeButton: true });
+				toastManager.add({
+					title: 'Incomplete Fields',
+					description: 'Please fill in all fields',
+					type: 'error'
+				});
 				return;
 			}
 
 			const res = await postFluxIntegration({ data: { server_url, token } });
 
 			if (res) {
-				toast('MiniFlux successfully connected!');
+				toastManager.add({
+					title: 'MiniFlux Connected',
+					description: 'MiniFlux integration setup completed successfully!',
+					type: 'success'
+				});
 				await refetch();
 			}
 		} catch (error) {
 			console.error(error);
-			toast('Failed to connect to MiniFlux');
+			toastManager.add({
+				title: 'MiniFlux Connection Failed',
+				description: 'Failed to connect to MiniFlux. Please check your server URL and API key.',
+				type: 'error'
+			});
 		} finally {
 			setIsLoading(false);
 		}
@@ -58,12 +70,20 @@ export function MinifluxIntegrationSetting() {
 		try {
 			const res = await removeExistingIntegration();
 			if (res) {
-				toast('MiniFlux integration removed successfully!');
+				toastManager.add({
+					title: 'MiniFlux Integration Removed',
+					description: 'MiniFlux integration has been removed successfully!',
+					type: 'success'
+				});
 				await refetch();
 			}
 		} catch (error) {
 			console.error(error);
-			toast('Failed to remove MiniFlux integration');
+			toastManager.add({
+				title: 'MiniFlux Integration Removal Failed',
+				description: 'Failed to remove MiniFlux integration. Please try again.',
+				type: 'error'
+			});
 		} finally {
 			setIsLoading(false);
 		}

@@ -12,7 +12,6 @@ import { requestLoggerMiddleware } from '@/lib/middleware/logger-middleware';
 import { ToastProvider } from '@/components/ui/toast';
 import { ThemeProvider } from '@/components/theme-provider';
 import { QueryProvider } from '@/components/query-provider';
-import { RouteProviders } from '@/components/route-provider';
 import { DevTools } from '@/components/devtools';
 import appCss from '../styles.css?url';
 
@@ -57,20 +56,17 @@ export const Route = wrapCreateRootRouteWithSentry(createRootRouteWithContext)<{
 
 function RootDocument({ children }: { children: React.ReactNode }) {
 	return (
-		<ThemeProvider>
+		<ThemeProvider defaultTheme="system">
 			<html lang="en">
 				<head>
 					<HeadContent />
 				</head>
 				<body>
-					<RouteProviders>
-						<QueryProvider>
-							<ToastProvider>{children}</ToastProvider>
-							<DevTools />
-							<Scripts />
-						</QueryProvider>
-					</RouteProviders>
-					{/*<!-- Cloudflare Web Analytics -->*/}
+					<QueryProvider>
+						<ToastProvider>{children}</ToastProvider>
+						<DevTools />
+						<Scripts />
+					</QueryProvider>
 				</body>
 			</html>
 		</ThemeProvider>

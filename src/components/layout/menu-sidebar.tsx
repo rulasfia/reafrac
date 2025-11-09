@@ -1,4 +1,3 @@
-import qs from 'query-string';
 import { useQuery } from '@tanstack/react-query';
 import {
 	BookmarkIcon,

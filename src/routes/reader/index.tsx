@@ -7,10 +7,10 @@ import {
 	saveEntryToBookmarkServerFn
 } from '@/lib/server/entry-sfn';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
 import { getFeedsServerFn } from '@/lib/server/feed-sfn';
 import { Spinner } from '@/components/ui/spinner';
 import { BookmarkIcon, ExternalLinkIcon, XIcon } from 'lucide-react';
+import { toastManager } from '@/components/ui/toast';
 
 export const Route = createFileRoute('/reader/')({
 	component: RouteComponent,
@@ -54,10 +54,13 @@ function RouteComponent() {
 			const newValue = !entry.data.starred;
 			await saveEntryToBookmark({ data: { entryId: entry.data.id, saved: newValue } });
 			await qc.invalidateQueries({ queryKey: ['entry', search.entry] });
-			toast.success(newValue ? 'Added to bookmark' : 'Removed from bookmark');
+			toastManager.add({
+				title: newValue ? 'Added to bookmark' : 'Removed from bookmark',
+				type: 'success'
+			});
 		} catch (error) {
 			console.error(error);
-			toast.error('Failed to update bookmark');
+			toastManager.add({ title: 'Failed to update bookmark', type: 'error' });
 		}
 	};
 
@@ -100,7 +103,7 @@ function RouteComponent() {
 							})}
 						</span>
 					</div>
-					<h1 className="mx-auto mt-4 mb-3 w-full text-3xl leading-[105%] font-bold text-pretty">
+					<h1 className="mx-auto mt-4 mb-3 w-full font-serif text-3xl font-semibold text-pretty">
 						{entry.data?.title}
 					</h1>
 

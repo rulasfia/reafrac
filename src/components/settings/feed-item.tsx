@@ -1,4 +1,3 @@
-import { IconCircleMinus, IconPencilBox } from '@intentui/icons';
 import type { Schema } from '@/lib/db-schema';
 import { useState } from 'react';
 import { useLocation, useNavigate } from '@tanstack/react-router';
@@ -6,6 +5,7 @@ import { toastManager } from '../ui/toast';
 import { Button } from '../ui/button';
 import { Spinner } from '../ui/spinner';
 import { Separator } from '../ui/separator';
+import { CircleMinusIcon, SquarePenIcon } from 'lucide-react';
 
 interface FeedItemProps {
 	item: Schema['Feed'];
@@ -85,10 +85,10 @@ export function FeedItem({ item, onRemove, onUpdate }: FeedItemProps) {
 				onClick={handleRemove}
 				disabled={isRemoving || !onRemove}
 			>
-				{isRemoving ? <Spinner /> : <IconCircleMinus />}
+				{isRemoving ? <Spinner /> : <CircleMinusIcon />}
 			</Button>
 			<Button size="icon-sm" variant="outline" onClick={handleEdit} disabled={isEditing}>
-				{isEditing ? <Spinner /> : <IconPencilBox />}
+				{isEditing ? <Spinner /> : <SquarePenIcon />}
 			</Button>
 			<Separator orientation="vertical" className="mx-2" />
 			<img
