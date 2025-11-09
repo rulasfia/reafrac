@@ -10,7 +10,7 @@ import { eq, and, desc, lt, count, inArray, gte } from 'drizzle-orm';
 import type { EntryMeta } from './types';
 import { db } from '../db-connection';
 import { extractFeed } from '../utils/feed-utils';
-import { ParsedFeed, parsedFeedThumbnailSchema } from '../schemas/feed-schemas';
+import { ParsedFeed } from '../schemas/feed-schemas';
 
 // Simple in-memory cache for feed requests
 const feedCache = new Map<string, { data: any; timestamp: number; ttl: number }>();

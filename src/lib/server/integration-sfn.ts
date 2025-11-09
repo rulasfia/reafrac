@@ -3,11 +3,32 @@ import { ofetch } from 'ofetch';
 import { type MinifluxUser } from './types';
 import * as z from 'zod/mini';
 import { db } from '../db-connection';
-import { fluxConnections } from '../db-schema';
+import { fluxConnections, Schema } from '../db-schema';
 import { eq } from 'drizzle-orm';
 import { authFnMiddleware } from '../middleware/auth-middleware';
 import { sentryMiddleware } from '../middleware/sentry-middleware';
 import * as Sentry from '@sentry/tanstackstart-react';
+import { SimpleCache } from '../cache';
+
+const integrationCache = new SimpleCache<Schema['FluxConnection'] | null>(6 * 60 * 60 * 1000); // 6 hours TTL
+
+// Helper function to get cached integration data or fetch from database
+async function getCachedIntegration(userId: string): Promise<Schema['FluxConnection'] | null> {
+	return integrationCache.getOrFetch(`integration_${userId}`, async () => {
+		const res = await db
+			.select()
+			.from(fluxConnections)
+			.where(eq(fluxConnections.userId, userId))
+			.limit(1);
+
+		return res && res.length > 0 ? res[0] : null;
+	});
+}
+
+// Helper function to invalidate cache for a specific user
+function invalidateIntegrationCache(userId: string): void {
+	integrationCache.remove(`integration_${userId}`);
+}
 
 const FluxIntegrationSchema = z.object({
 	server_url: z.string().check(z.minLength(1)),
@@ -46,6 +67,9 @@ export const fluxIntegrationServerFn = createServerFn({ method: 'POST' })
 					apiKey: data.token
 				});
 
+				// Invalidate cache for this user after adding new integration
+				invalidateIntegrationCache(context.user.id);
+
 				span.setAttribute('status', 'success');
 				span.setAttribute('username', res.username);
 				return res;
@@ -74,20 +98,16 @@ export const getExistingIntegrationServerFn = createServerFn({ method: 'GET' })
 				try {
 					span.setAttribute('user_id', data.userId);
 
-					const res = await db
-						.select()
-						.from(fluxConnections)
-						.where(eq(fluxConnections.userId, data.userId))
-						.limit(1);
+					const res = await getCachedIntegration(data.userId);
 
-					if (!res || res.length === 0) {
+					if (!res) {
 						span.setAttribute('status', 'not_found');
 						return null;
 					}
 
 					span.setAttribute('status', 'success');
 					span.setAttribute('integration_found', true);
-					return res[0];
+					return res;
 				} catch (error) {
 					span.setAttribute('status', 'error');
 					Sentry.captureException(error, {
@@ -121,6 +141,9 @@ export const removeExistingIntegrationServerFn = createServerFn({ method: 'POST'
 						span.setAttribute('status', 'not_found');
 						return { success: false, message: 'No integration found for this user' };
 					}
+
+					// Invalidate cache for this user after removing integration
+					invalidateIntegrationCache(context.user.id);
 
 					span.setAttribute('status', 'success');
 					span.setAttribute('integration_removed', true);
