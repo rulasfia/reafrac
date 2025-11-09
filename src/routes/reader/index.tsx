@@ -6,16 +6,27 @@ import {
 	getEntryServerFn,
 	saveEntryToBookmarkServerFn
 } from '@/lib/server/entry-sfn';
-import { Loader } from '@/components/ui/loader';
-import { Button, buttonStyles } from '@/components/ui/button';
-import { IconBookmark, IconBookmarkFill, IconOpenLink, IconX } from '@intentui/icons';
-import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { getFeedsServerFn } from '@/lib/server/feed-sfn';
+import { Spinner } from '@/components/ui/spinner';
+import { BookmarkIcon, ExternalLinkIcon, PanelLeftIcon, XIcon } from 'lucide-react';
+import { toastManager } from '@/components/ui/toast';
+import { Separator } from '@/components/ui/separator';
+import { useSidebar } from '@/components/ui/sidebar';
 
 export const Route = createFileRoute('/reader/')({
-	component: RouteComponent
+	component: RouteComponent,
+	loader: async ({ context }) => {
+		// prefetch feeds
+		await context.queryClient.fetchQuery({
+			queryKey: ['feeds', context.user.id, null],
+			queryFn: async () => getFeedsServerFn()
+		});
+	}
 });
 
 function RouteComponent() {
+	const { toggleSidebar, isMobile } = useSidebar();
 	const search = Route.useSearch();
 	const qc = useQueryClient();
 	const getEntry = useServerFn(getEntryServerFn);
@@ -37,6 +48,7 @@ function RouteComponent() {
 	});
 
 	const onCloseReader = () => {
+		if (isMobile) toggleSidebar();
 		navigate({ search: (prev) => ({ ...prev, entry: undefined }) });
 	};
 
@@ -46,42 +58,58 @@ function RouteComponent() {
 			const newValue = !entry.data.starred;
 			await saveEntryToBookmark({ data: { entryId: entry.data.id, saved: newValue } });
 			await qc.invalidateQueries({ queryKey: ['entry', search.entry] });
-			toast.success(newValue ? 'Added to bookmark' : 'Removed from bookmark');
+			toastManager.add({
+				title: newValue ? 'Added to bookmark' : 'Removed from bookmark',
+				type: 'success'
+			});
 		} catch (error) {
 			console.error(error);
-			toast.error('Failed to update bookmark');
+			toastManager.add({ title: 'Failed to update bookmark', type: 'error' });
 		}
 	};
-
-	if (!search.entry) {
-		return (
-			<div className="mx-auto grid max-w-2xl grid-cols-1 items-center justify-center gap-y-1">
-				<p className="text-center font-medium opacity-75">No Entry Selected</p>
-			</div>
-		);
-	}
 
 	return (
 		<div className="mx-auto grid max-w-2xl grid-cols-1 justify-center gap-y-1">
 			<Button
-				size="sq-sm"
-				intent="outline"
-				className="absolute top-1.5 right-1.5 cursor-pointer rounded-sm"
+				size="icon-sm"
+				variant="outline"
+				className="absolute top-2 left-2 flex cursor-pointer rounded-sm lg:top-1.5 lg:left-1.5 lg:hidden"
+				onClick={toggleSidebar}
+			>
+				<PanelLeftIcon />
+				<span className="sr-only">Toggle Sidebar</span>
+			</Button>
+			<Button
+				size="icon-sm"
+				variant="outline"
+				className="absolute top-2 right-2 cursor-pointer rounded-sm"
 				onClick={onCloseReader}
 			>
-				<IconX />
+				<XIcon />
+				<span className="sr-only">Close Entry</span>
 			</Button>
-			{entry.status === 'pending' && <Loader className="mx-auto my-4" />}
-			{entry.status === 'error' && 'Error'}
-			{entry.status === 'success' && (
+
+			{!search.entry ? (
+				<div className="mx-auto grid grid-cols-1 items-center justify-center gap-y-1 py-12 lg:py-4">
+					<p className="text-center font-medium opacity-75">No Entry Selected</p>
+				</div>
+			) : null}
+
+			{!!search.entry && entry.status === 'pending' ? <Spinner className="mx-auto my-4" /> : null}
+			{!!search.entry && entry.status === 'error' ? 'Error!' : null}
+			{!!search.entry && entry.status === 'success' ? (
 				<>
-					<div className="mx-auto flex w-full items-center gap-x-2 text-sm text-foreground/75">
-						<a href={entry.data.feed?.link} className="text-primary hover:underline">
+					<div className="mx-auto mt-8 flex w-full flex-wrap items-center gap-x-2 gap-y-1 text-sm text-foreground/75 lg:mt-0">
+						<a
+							href={entry.data.feed?.link}
+							className="text-primary hover:underline"
+							rel="noopener noreferrer"
+						>
 							{entry.data.feed?.title}
 						</a>
-						<span className="h-full w-px bg-foreground/50" />
+						<Separator orientation="vertical" />
 						<span className="w-fit">{entry.data.author}</span>
-						<span className="h-full w-px bg-foreground/50" />
+						<Separator orientation="vertical" />
 						<span>
 							{new Date(entry.data.publishedAt).toLocaleString(['en-SG', 'en-US'], {
 								day: 'numeric',
@@ -92,7 +120,7 @@ function RouteComponent() {
 							})}
 						</span>
 					</div>
-					<h1 className="mx-auto mt-4 mb-3 w-full text-3xl leading-[105%] font-bold text-pretty">
+					<h1 className="mx-auto mt-4 mb-3 w-full font-serif text-3xl font-semibold text-pretty">
 						{entry.data?.title}
 					</h1>
 
@@ -111,24 +139,25 @@ function RouteComponent() {
 							{content.isLoading ? <Loader /> : null}
 						</Link>*/}
 						<Button
-							intent="outline"
+							variant="outline"
 							className="w-fit cursor-pointer rounded-r-none"
 							onClick={onSaveToBookmark}
 						>
-							{entry.data.starred ? <IconBookmarkFill /> : <IconBookmark />}
+							{entry.data.starred ? (
+								<BookmarkIcon fill="var(--color-primary)" strokeWidth={1} />
+							) : (
+								<BookmarkIcon />
+							)}
 							Save
 						</Button>
-						<a
-							className={buttonStyles({
-								intent: 'outline',
-								className: '-ml-px w-fit cursor-pointer rounded-l-none'
-							})}
-							href={entry.data.link}
-							target="_blank"
+						<Button
+							variant="outline"
+							className="-ml-px w-fit cursor-pointer rounded-l-none"
+							render={<a href={entry.data.link} target="_blank" rel="noopener noreferrer" />}
 						>
 							Read Original Source
-							<IconOpenLink />
-						</a>
+							<ExternalLinkIcon />
+						</Button>
 					</div>
 
 					{entry.data?.thumbnail ? (
@@ -154,7 +183,7 @@ function RouteComponent() {
 						}}
 					/>
 				</>
-			)}
+			) : null}
 		</div>
 	);
 }

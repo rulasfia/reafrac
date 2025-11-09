@@ -17,7 +17,8 @@ export const getRouter = () => {
 		defaultPreload: 'intent',
 		context: { queryClient },
 		scrollRestoration: true,
-		defaultPreloadStaleTime: 0
+		defaultPreloadStaleTime: 0,
+		defaultStructuralSharing: true
 	});
 
 	setupRouterSsrQueryIntegration({

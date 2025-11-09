@@ -4,6 +4,8 @@ import { cn, formatRelativeDate } from '@/lib/utils';
 import { updateEntryStatusServerFn } from '@/lib/server/entry-sfn';
 import { useServerFn } from '@tanstack/react-start';
 import type { Schema } from '@/lib/db-schema';
+import { BookmarkIcon } from 'lucide-react';
+import { useSidebar } from '../ui/sidebar';
 
 type Props = {
 	entry: Omit<
@@ -16,6 +18,7 @@ type Props = {
 
 export function EntryItem({ entry }: Props) {
 	const { search } = useLocation();
+	const { toggleSidebar, isMobile } = useSidebar();
 	const { integration } = useLoaderData({ from: '/reader' });
 	const qc = useQueryClient();
 	const updateEntryStatus = useServerFn(updateEntryStatusServerFn);
@@ -27,18 +30,26 @@ export function EntryItem({ entry }: Props) {
 		}
 	});
 
+	const onEntryClick = () => {
+		if (isMobile) toggleSidebar();
+		if (entry.status === 'unread') {
+			mutate(entry.id);
+		}
+	};
+
 	return (
 		<Link
 			to="/reader"
 			preload={false}
 			search={{ ...search, entry: entry.id, view: undefined }}
-			onClick={() => mutate(entry.id)}
+			onClick={onEntryClick}
 			className={cn(
-				'mx-2 my-0.5 rounded-sm border-[0.5px] border-transparent p-2 text-sm text-foreground',
+				'rounded-sm border-l-4 border-transparent py-2 pr-2 pl-3 text-sm text-foreground',
 				search.entry === entry.id
-					? 'border-border/20 bg-primary/7.5 shadow-xs shadow-accent/20 dark:bg-neutral-800'
+					? 'border-primary bg-background shadow-xs shadow-accent'
 					: 'hover:bg-foreground/5',
-				entry.status === 'read' ? 'text-foreground/50' : ''
+				entry.status === 'read' && search.entry !== entry.id ? 'text-foreground/50' : '',
+				entry.status === 'read' && search.entry === entry.id ? 'text-foreground/80' : ''
 			)}
 		>
 			<div className="mb-1 flex flex-row items-center gap-x-1">
@@ -52,6 +63,12 @@ export function EntryItem({ entry }: Props) {
 				<span className="text-xs text-foreground/75">{entry.feed?.title}</span>
 				<span>·</span>
 				<span className="text-xs text-foreground/75">{formatRelativeDate(entry.publishedAt)}</span>
+				{entry.starred ? (
+					<>
+						<span>·</span>
+						<BookmarkIcon fill="var(--color-foreground)" className="size-4" />
+					</>
+				) : null}
 			</div>
 			<span className="font-medium text-pretty">{entry.title}</span>
 		</Link>
