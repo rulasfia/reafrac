@@ -34,8 +34,9 @@ export const Route = createFileRoute('/reader')({
 });
 
 function RouteComponent() {
+	const { entry } = Route.useSearch();
 	return (
-		<SidebarProvider>
+		<SidebarProvider defaultOpenMobile={!entry ? true : false}>
 			<AppSidebar />
 			<SidebarInset>
 				<div className="p-4 lg:p-6">

@@ -6,7 +6,8 @@ import {
 	SidebarHeader,
 	SidebarMenu,
 	SidebarMenuButton,
-	SidebarMenuItem
+	SidebarMenuItem,
+	useSidebar
 } from '../ui/sidebar';
 import { BlocksIcon, RssIcon, ShieldUserIcon } from 'lucide-react';
 
@@ -30,9 +31,14 @@ const SETTING_ITEMS = [
 
 export function SettingsSidebar() {
 	const { pathname } = useLocation();
+	const { toggleSidebar, isMobile } = useSidebar();
+
+	const onEntryClick = () => {
+		if (isMobile) toggleSidebar();
+	};
 
 	return (
-		<div className="col-span-3 flex h-full flex-col overflow-y-auto">
+		<div className="col-span-4 flex h-full flex-col overflow-y-auto lg:col-span-3">
 			<SidebarHeader>
 				<span className="text-lg font-semibold">Settings</span>
 			</SidebarHeader>
@@ -47,7 +53,7 @@ export function SettingsSidebar() {
 										asChild
 										className="active:bg-sidebar-accent data-[active=true]:bg-sidebar-accent data-[state=open]:hover:bg-sidebar-accent"
 									>
-										<Link to={item.href}>
+										<Link to={item.href} onClick={onEntryClick}>
 											{item.icon}
 											{item.label}
 										</Link>

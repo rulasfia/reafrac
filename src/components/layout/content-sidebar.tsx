@@ -91,7 +91,7 @@ export function ContentSidebar() {
 	})();
 
 	return (
-		<div className="col-span-3 flex h-full flex-col overflow-y-auto">
+		<div className="col-span-4 flex h-full flex-col overflow-y-auto lg:col-span-3">
 			<SidebarHeader className="flex flex-row items-start justify-between">
 				<span className="line-clamp-2 min-h-7 w-fit gap-x-3 text-lg font-semibold capitalize">
 					{pageTitle}

@@ -9,8 +9,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { getFeedsServerFn } from '@/lib/server/feed-sfn';
 import { Spinner } from '@/components/ui/spinner';
-import { BookmarkIcon, ExternalLinkIcon, XIcon } from 'lucide-react';
+import { BookmarkIcon, ExternalLinkIcon, PanelLeftIcon, XIcon } from 'lucide-react';
 import { toastManager } from '@/components/ui/toast';
+import { Separator } from '@/components/ui/separator';
+import { useSidebar } from '@/components/ui/sidebar';
 
 export const Route = createFileRoute('/reader/')({
 	component: RouteComponent,
@@ -24,6 +26,7 @@ export const Route = createFileRoute('/reader/')({
 });
 
 function RouteComponent() {
+	const { toggleSidebar, isMobile } = useSidebar();
 	const search = Route.useSearch();
 	const qc = useQueryClient();
 	const getEntry = useServerFn(getEntryServerFn);
@@ -45,6 +48,7 @@ function RouteComponent() {
 	});
 
 	const onCloseReader = () => {
+		if (isMobile) toggleSidebar();
 		navigate({ search: (prev) => ({ ...prev, entry: undefined }) });
 	};
 
@@ -64,35 +68,44 @@ function RouteComponent() {
 		}
 	};
 
-	if (!search.entry) {
-		return (
-			<div className="mx-auto grid max-w-2xl grid-cols-1 items-center justify-center gap-y-1">
-				<p className="text-center font-medium opacity-75">No Entry Selected</p>
-			</div>
-		);
-	}
-
 	return (
 		<div className="mx-auto grid max-w-2xl grid-cols-1 justify-center gap-y-1">
 			<Button
 				size="icon-sm"
 				variant="outline"
-				className="absolute top-1.5 right-1.5 cursor-pointer rounded-sm"
+				className="absolute top-2 left-2 flex cursor-pointer rounded-sm lg:top-1.5 lg:left-1.5 lg:hidden"
+				onClick={toggleSidebar}
+			>
+				<PanelLeftIcon />
+				<span className="sr-only">Toggle Sidebar</span>
+			</Button>
+			<Button
+				size="icon-sm"
+				variant="outline"
+				className="absolute top-2 right-2 cursor-pointer rounded-sm"
 				onClick={onCloseReader}
 			>
 				<XIcon />
+				<span className="sr-only">Close Entry</span>
 			</Button>
-			{entry.status === 'pending' && <Spinner className="mx-auto my-4" />}
-			{entry.status === 'error' && 'Error'}
-			{entry.status === 'success' && (
+
+			{!search.entry ? (
+				<div className="mx-auto grid grid-cols-1 items-center justify-center gap-y-1 py-12 lg:py-4">
+					<p className="text-center font-medium opacity-75">No Entry Selected</p>
+				</div>
+			) : null}
+
+			{!!search.entry && entry.status === 'pending' ? <Spinner className="mx-auto my-4" /> : null}
+			{!!search.entry && entry.status === 'error' ? 'Error!' : null}
+			{!!search.entry && entry.status === 'success' ? (
 				<>
-					<div className="mx-auto flex w-full items-center gap-x-2 text-sm text-foreground/75">
+					<div className="mx-auto mt-8 flex w-full flex-wrap items-center gap-x-2 gap-y-1 text-sm text-foreground/75 lg:mt-0">
 						<a href={entry.data.feed?.link} className="text-primary hover:underline">
 							{entry.data.feed?.title}
 						</a>
-						<span className="h-full w-px bg-foreground/50" />
+						<Separator orientation="vertical" />
 						<span className="w-fit">{entry.data.author}</span>
-						<span className="h-full w-px bg-foreground/50" />
+						<Separator orientation="vertical" />
 						<span>
 							{new Date(entry.data.publishedAt).toLocaleString(['en-SG', 'en-US'], {
 								day: 'numeric',
@@ -166,7 +179,7 @@ function RouteComponent() {
 						}}
 					/>
 				</>
-			)}
+			) : null}
 		</div>
 	);
 }

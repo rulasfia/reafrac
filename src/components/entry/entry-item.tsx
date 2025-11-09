@@ -5,6 +5,7 @@ import { updateEntryStatusServerFn } from '@/lib/server/entry-sfn';
 import { useServerFn } from '@tanstack/react-start';
 import type { Schema } from '@/lib/db-schema';
 import { BookmarkIcon } from 'lucide-react';
+import { useSidebar } from '../ui/sidebar';
 
 type Props = {
 	entry: Omit<
@@ -17,6 +18,7 @@ type Props = {
 
 export function EntryItem({ entry }: Props) {
 	const { search } = useLocation();
+	const { toggleSidebar, isMobile } = useSidebar();
 	const { integration } = useLoaderData({ from: '/reader' });
 	const qc = useQueryClient();
 	const updateEntryStatus = useServerFn(updateEntryStatusServerFn);
@@ -28,12 +30,19 @@ export function EntryItem({ entry }: Props) {
 		}
 	});
 
+	const onEntryClick = () => {
+		if (isMobile) toggleSidebar();
+		if (entry.status === 'unread') {
+			mutate(entry.id);
+		}
+	};
+
 	return (
 		<Link
 			to="/reader"
 			preload={false}
 			search={{ ...search, entry: entry.id, view: undefined }}
-			onClick={() => mutate(entry.id)}
+			onClick={onEntryClick}
 			className={cn(
 				'rounded-sm border-l-4 border-transparent py-2 pr-2 pl-3 text-sm text-foreground',
 				search.entry === entry.id
