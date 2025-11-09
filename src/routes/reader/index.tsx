@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useServerFn } from '@tanstack/react-start';
 import {
@@ -9,10 +9,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { getFeedsServerFn } from '@/lib/server/feed-sfn';
 import { Spinner } from '@/components/ui/spinner';
-import { BookmarkIcon, ExternalLinkIcon, PanelLeftIcon, XIcon } from 'lucide-react';
+import { BookmarkIcon, ExternalLinkIcon } from 'lucide-react';
 import { toastManager } from '@/components/ui/toast';
 import { Separator } from '@/components/ui/separator';
-import { useSidebar } from '@/components/ui/sidebar';
+import { FloatingMenuButton } from '@/components/entry/floating-menu-button';
+import { EntryHeader } from '@/components/entry/entry-header';
 
 export const Route = createFileRoute('/reader/')({
 	component: RouteComponent,
@@ -26,13 +27,11 @@ export const Route = createFileRoute('/reader/')({
 });
 
 function RouteComponent() {
-	const { toggleSidebar, isMobile } = useSidebar();
 	const search = Route.useSearch();
 	const qc = useQueryClient();
 	const getEntry = useServerFn(getEntryServerFn);
 	const getEntryContent = useServerFn(getEntryContentServerFn);
 	const saveEntryToBookmark = useServerFn(saveEntryToBookmarkServerFn);
-	const navigate = useNavigate({ from: Route.fullPath });
 
 	const entry = useQuery({
 		enabled: !!search.entry,
@@ -46,11 +45,6 @@ function RouteComponent() {
 		queryKey: ['entry-content', search.entry],
 		queryFn: async () => getEntryContent({ data: { entryUrl: entry.data?.link ?? '' } })
 	});
-
-	const onCloseReader = () => {
-		if (isMobile) toggleSidebar();
-		navigate({ search: (prev) => ({ ...prev, entry: undefined }) });
-	};
 
 	const onSaveToBookmark = async () => {
 		try {
@@ -69,25 +63,9 @@ function RouteComponent() {
 	};
 
 	return (
-		<div className="mx-auto grid max-w-2xl grid-cols-1 justify-center gap-y-1">
-			<Button
-				size="icon-sm"
-				variant="outline"
-				className="absolute top-2 left-2 flex cursor-pointer rounded-sm lg:top-1.5 lg:left-1.5 lg:hidden"
-				onClick={toggleSidebar}
-			>
-				<PanelLeftIcon />
-				<span className="sr-only">Toggle Sidebar</span>
-			</Button>
-			<Button
-				size="icon-sm"
-				variant="outline"
-				className="absolute top-2 right-2 cursor-pointer rounded-sm"
-				onClick={onCloseReader}
-			>
-				<XIcon />
-				<span className="sr-only">Close Entry</span>
-			</Button>
+		<div className="mx-auto grid max-w-2xl grid-cols-1 justify-center gap-y-1 pb-16 lg:pb-0">
+			<EntryHeader />
+			<FloatingMenuButton />
 
 			{!search.entry ? (
 				<div className="mx-auto grid grid-cols-1 items-center justify-center gap-y-1 py-12 lg:py-4">
