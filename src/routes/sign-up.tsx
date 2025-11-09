@@ -1,11 +1,15 @@
 import { Button } from '@/components/ui/button';
-import { Loader } from '@/components/ui/loader';
-import { TextField } from '@/components/ui/text-field';
+import { Field, FieldError, FieldLabel } from '@/components/ui/field';
+import { Form } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Spinner } from '@/components/ui/spinner';
+import { toastManager } from '@/components/ui/toast';
 import { authClient } from '@/lib/auth-client';
 import { kickAuthedUserServerFn } from '@/lib/server/auth-sfn';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
+import { nanoid } from 'nanoid';
 import { useState } from 'react';
-import { toast } from 'sonner';
+import { z } from 'zod/mini';
 
 export const Route = createFileRoute('/sign-up')({
 	component: RouteComponent,
@@ -14,8 +18,23 @@ export const Route = createFileRoute('/sign-up')({
 	}
 });
 
+const registerSchema = z.object({
+	name: z.string(),
+	email: z.email({ error: 'Invalid email' }).check(z.trim()),
+	password: z
+		.string({ error: 'Invalid password' })
+		.check(z.minLength(8, { error: 'Password must be at least 8 characters' })),
+	repeatPassword: z
+		.string()
+		.check(z.minLength(8, { error: 'Password must be at least 8 characters' }))
+});
+
+type Errors = Record<string, string | string[]>;
+
 function RouteComponent() {
 	const [isLoading, setIsLoading] = useState(false);
+	const [errors, setErrors] = useState<Errors>({});
+	const handleClearErrors = (next: Errors) => setErrors(next);
 	const navigate = useNavigate();
 
 	const submitHandler = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -24,14 +43,30 @@ function RouteComponent() {
 		const name = formData.get('name') as string;
 		const email = formData.get('email') as string;
 		const password = formData.get('password') as string;
-		const repeatPassword = formData.get('repeat-password') as string;
+		const repeatPassword = formData.get('repeatPassword') as string;
 
-		if (password !== repeatPassword) {
-			toast.error('Invalid password', { dismissible: true, icon: '❌' });
+		const result = registerSchema.safeParse({
+			name,
+			email,
+			password,
+			repeatPassword
+		});
+
+		if (!result.success) {
+			const { fieldErrors } = z.flattenError(result.error);
+			setErrors(fieldErrors);
 			return;
 		}
 
-		const username = `${name.replaceAll(' ', '').toLowerCase()}${Math.floor(Math.random() * 101)}`;
+		if (password !== repeatPassword) {
+			setErrors({ repeatPassword: ['Passwords do not match'] });
+			return;
+		}
+
+		const date = new Date().getDate();
+		const uid = nanoid(4);
+		const username = `${name.split(' ')[0].toLowerCase()}-${date}${uid}`;
+
 		await authClient.signUp.email(
 			{ email, password, name, username },
 			{
@@ -42,7 +77,7 @@ function RouteComponent() {
 				},
 				onError: ({ error }) => {
 					setIsLoading(false);
-					toast.error(error.message, { dismissible: true, icon: '❌' });
+					toastManager.add({ title: 'Sign up failed!', description: error.message, type: 'error' });
 				}
 			}
 		);
@@ -59,7 +94,7 @@ function RouteComponent() {
 				},
 				onError: ({ error }) => {
 					setIsLoading(false);
-					toast.error(error.message, { dismissible: true, icon: '❌' });
+					toastManager.add({ title: 'Sign up failed!', description: error.message, type: 'error' });
 				}
 			}
 		);
@@ -67,38 +102,49 @@ function RouteComponent() {
 
 	return (
 		<div className="container mx-auto h-screen py-12">
-			<form
+			<Form
 				onSubmit={submitHandler}
+				errors={errors}
+				onClearErrors={handleClearErrors}
 				className="mx-auto grid max-w-sm grid-cols-1 gap-y-2 rounded-md border border-border p-4"
 			>
-				<TextField name="name" label="Name" placeholder="John Doe" type="text" isRequired />
-				<TextField
-					name="email"
-					label="Email"
-					placeholder="example@email.com"
-					type="email"
-					isRequired
-				/>
-				<TextField
-					name="password"
-					label="Password"
-					placeholder="Your Password"
-					type="password"
-					isRequired
-				/>
-				<TextField
-					name="repeat-password"
-					label="Repeat Password"
-					placeholder="Your Password"
-					type="password"
-				/>
+				<h1 className="mb-2 text-xl font-semibold">Sign up to Reafrac</h1>
+
+				<Field name="name">
+					<FieldLabel>Name</FieldLabel>
+					<Input name="name" placeholder="John Doe" type="text" disabled={isLoading} />
+					<FieldError />
+				</Field>
+
+				<Field name="email">
+					<FieldLabel>Email</FieldLabel>
+					<Input name="email" placeholder="example@email.com" type="email" disabled={isLoading} />
+					<FieldError />
+				</Field>
+
+				<Field name="password">
+					<FieldLabel>Password</FieldLabel>
+					<Input name="password" placeholder="password" type="password" disabled={isLoading} />
+					<FieldError />
+				</Field>
+
+				<Field name="repeatPassword">
+					<FieldLabel>Repeat Password</FieldLabel>
+					<Input
+						name="repeatPassword"
+						placeholder="password"
+						type="password"
+						disabled={isLoading}
+					/>
+					<FieldError />
+				</Field>
 
 				<div className="mt-3 grid grid-cols-1 gap-y-3">
-					<Button type="submit" isPending={isLoading}>
-						{isLoading ? <Loader /> : 'Register'}
+					<Button type="submit" disabled={isLoading}>
+						{isLoading ? <Spinner /> : 'Register'}
 					</Button>
 
-					<Button isPending={isLoading} onClick={googleLoginHandler} intent="outline">
+					<Button disabled={isLoading} onClick={googleLoginHandler} variant="outline">
 						<img src="/svg/google.svg" width={16} />
 						Continue with Google
 					</Button>
@@ -111,7 +157,7 @@ function RouteComponent() {
 						Login here
 					</Link>
 				</p>
-			</form>
+			</Form>
 		</div>
 	);
 }

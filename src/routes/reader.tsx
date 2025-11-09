@@ -1,4 +1,4 @@
-import { AppSidebar } from '@/components/app-sidebar';
+import { AppSidebar } from '@/components/layout/sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { getExistingIntegrationServerFn } from '@/lib/server/integration-sfn';
 import { getUserInfoServerFn } from '@/lib/server/user-sfn';
@@ -14,8 +14,11 @@ const readerSearchSchema = z.object({
 export const Route = createFileRoute('/reader')({
 	component: RouteComponent,
 	validateSearch: readerSearchSchema,
-	beforeLoad: async ({ search, context }) => {
-		if (!search.page) throw redirect({ to: '/reader', search: { page: 'all-posts' } });
+	beforeLoad: async ({ search, context, location }) => {
+		if (location.pathname === '/reader' && !search.page) {
+			throw redirect({ to: '/reader', search: { page: 'all-posts' } });
+		}
+
 		const user = await context.queryClient.ensureQueryData({
 			queryKey: ['user'],
 			queryFn: async () => getUserInfoServerFn(),
@@ -31,8 +34,9 @@ export const Route = createFileRoute('/reader')({
 });
 
 function RouteComponent() {
+	const { entry } = Route.useSearch();
 	return (
-		<SidebarProvider>
+		<SidebarProvider defaultOpenMobile={!entry ? true : false}>
 			<AppSidebar />
 			<SidebarInset>
 				<div className="p-4 lg:p-6">
