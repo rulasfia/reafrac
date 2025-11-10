@@ -24,15 +24,17 @@ export function EntryHeader() {
 				<span className="sr-only">Toggle Sidebar</span>
 			</Button>
 
-			<Button
-				size="icon-sm"
-				variant="outline"
-				className="absolute top-2 right-2 cursor-pointer rounded-sm"
-				onClick={onCloseReader}
-			>
-				<XIcon />
-				<span className="sr-only">Close Entry</span>
-			</Button>
+			{isMobile ? null : (
+				<Button
+					size="icon-sm"
+					variant="outline"
+					className="absolute top-2 right-2 cursor-pointer rounded-sm"
+					onClick={onCloseReader}
+				>
+					<XIcon />
+					<span className="sr-only">Close Entry</span>
+				</Button>
+			)}
 		</>
 	);
 }

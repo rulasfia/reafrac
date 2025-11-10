@@ -63,7 +63,7 @@ function RouteComponent() {
 	};
 
 	return (
-		<div className="mx-auto grid max-w-2xl grid-cols-1 justify-center gap-y-1 pb-16 lg:pb-0">
+		<div className="container mx-auto grid max-w-[65ch] grid-cols-1 justify-center gap-y-1 pb-16 lg:pb-0 xl:max-w-2xl xl:min-w-xl">
 			<EntryHeader />
 			<FloatingMenuButton />
 
@@ -152,7 +152,7 @@ function RouteComponent() {
 						</div>
 					) : null}
 					<div
-						className="mx-auto prose max-w-2xl prose-neutral xl:min-w-2xl dark:prose-invert prose-a:decoration-accent prose-a:hover:decoration-foreground prose-img:rounded-xl prose-img:border prose-img:border-border prose-img:shadow-sm prose-img:shadow-accent/50"
+						className="container mx-auto prose w-full prose-neutral xl:max-w-2xl xl:min-w-xl dark:prose-invert prose-a:decoration-accent prose-a:hover:decoration-foreground prose-img:rounded-xl prose-img:border prose-img:border-border prose-img:shadow-sm prose-img:shadow-accent/50"
 						dangerouslySetInnerHTML={{
 							__html:
 								search.view === 'expanded' && content.status === 'success'
