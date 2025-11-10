@@ -29,9 +29,9 @@ const REFETCH_CONFIG = {
 };
 
 // Helper function to get cached feed data or fetch new data
-async function getCachedFeedData(userId: string, feedUrl: string): Promise<ParsedFeed> {
+async function getCachedFeedData(feedUrl: string): Promise<ParsedFeed> {
 	return feedCache.getOrFetchWithStale(
-		`${userId}:${feedUrl}`,
+		feedUrl,
 		async () => {
 			return await Promise.race([
 				extractFeed(feedUrl),
@@ -149,7 +149,7 @@ async function refetchFeedEntries(
 							{ op: 'feed.extract', name: `Extract feed: ${feed.title}` },
 							async () => {
 								try {
-									return await getCachedFeedData(userId, feed.link);
+									return await getCachedFeedData(feed.link);
 								} catch (error) {
 									console.error(`Error extracting feed ${feed.title}:`, error);
 									throw error;
