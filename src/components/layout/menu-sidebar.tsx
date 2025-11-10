@@ -89,7 +89,7 @@ export function MenuSidebar() {
 
 					<SidebarGroupContent>
 						{feeds?.length === 0 ? (
-							<div className="flex flex-col items-center justify-center gap-y-3 rounded-md border border-dashed border-sidebar-border bg-background px-2 py-6">
+							<div className="hidden flex-col items-center justify-center gap-y-3 rounded-md border border-dashed border-sidebar-border bg-background px-2 py-6 lg:flex">
 								<span className="text-sm opacity-75">Personalize your feed.</span>
 								<Button size="xs" render={<Link to="/reader/settings/feeds" search={search} />}>
 									<PlusIcon className="size-5" /> Add Feed

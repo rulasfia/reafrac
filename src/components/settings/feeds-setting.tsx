@@ -9,7 +9,7 @@ import {
 import { useLoaderData, useLocation } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
 import { FeedItem } from './feed-item';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { z } from 'zod/mini';
 import { toastManager } from '../ui/toast';
 import { Form } from '../ui/form';
@@ -25,6 +25,15 @@ const addFeedSchema = z.object({
 
 type Errors = Record<string, string | string[]>;
 
+const STARTER_FEED = [
+	{
+		link: 'https://feeds.arstechnica.com/arstechnica/features',
+		title: 'Arstechnica long-form feature articles'
+	},
+	{ link: 'https://newsletter.posthog.com/feed', title: 'Product for Engineers by PostHog' },
+	{ link: 'https://www.theverge.com/rss/index.xml', title: 'The Verge' }
+];
+
 export function FeedSetting() {
 	const { search } = useLocation();
 	const { user, integration } = useLoaderData({ from: '/reader' });
@@ -34,7 +43,6 @@ export function FeedSetting() {
 	const removeFeed = useServerFn(removeFeedServerFn);
 	const updateFeed = useServerFn(updateFeedServerFn);
 
-	const formRef = useRef(null);
 	const [isLoading, setIsLoading] = useState(false);
 	const [errors, setErrors] = useState<Errors>({});
 	const handleClearErrors = (next: Errors) => setErrors(next);
@@ -137,6 +145,12 @@ export function FeedSetting() {
 		}
 	};
 
+	const clickSuggestionHandler = (link: string) => {
+		const form = document.getElementById('feedForm') as HTMLFormElement;
+		const input = form.querySelector('input[name="feedUrl"]') as HTMLInputElement;
+		input.value = link;
+	};
+
 	return (
 		<div>
 			<h3 className="text-lg font-medium">Feeds Settings</h3>
@@ -145,6 +159,7 @@ export function FeedSetting() {
 			</p>
 
 			<Form
+				id="feedForm"
 				onSubmit={submitHandler}
 				errors={errors}
 				onClearErrors={handleClearErrors}
@@ -178,9 +193,27 @@ export function FeedSetting() {
 			</Form>
 
 			<Label className="mt-4 mb-3">Followed Feeds</Label>
-			<ul className="grid grid-cols-1 gap-y-2">
-				{!feeds && <li className="py-2 text-sm text-gray-500">&nbsp;</li>}
-				{feeds?.length === 0 && <li className="py-2 text-sm text-gray-500">No feeds found</li>}
+			<div className="grid grid-cols-1 gap-y-2">
+				{!feeds && <span className="py-2 text-sm text-gray-500">&nbsp;</span>}
+				{feeds?.length === 0 && (
+					<div>
+						<span className="py-2 text-sm text-gray-500">
+							No feeds found. Here are some recommendations to help you get started:
+						</span>
+						<ul className="list list-inside list-disc">
+							{STARTER_FEED.map((feed) => (
+								<li key={feed.link}>
+									<button
+										className="cursor-pointer text-sm text-primary hover:underline"
+										onClick={() => clickSuggestionHandler(feed.link)}
+									>
+										{feed.title}
+									</button>
+								</li>
+							))}
+						</ul>
+					</div>
+				)}
 				{feeds?.map((feed) => (
 					<FeedItem
 						key={feed.id}
@@ -189,7 +222,7 @@ export function FeedSetting() {
 						onUpdate={handleUpdateFeed}
 					/>
 				))}
-			</ul>
+			</div>
 		</div>
 	);
 }
