@@ -59,7 +59,8 @@ export function MenuSidebar() {
 									<SidebarMenuButton
 										asChild
 										isActive={item.page === search.page}
-										className="justify-center lg:justify-start"
+										size={isMobile ? 'icon-lg' : 'default'}
+										className="mx-auto justify-center lg:mx-0 lg:justify-start"
 									>
 										<Link to="/reader" search={{ ...search, page: item.page }}>
 											{item.icon}
@@ -103,7 +104,8 @@ export function MenuSidebar() {
 									<SidebarMenuButton
 										asChild
 										isActive={item.id === search.page}
-										className="justify-center lg:justify-start"
+										size={isMobile ? 'icon-lg' : 'default'}
+										className="mx-auto justify-center lg:mx-0 lg:justify-start"
 									>
 										<Link to="/reader" search={{ ...search, page: item.id }}>
 											<img
