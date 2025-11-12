@@ -77,7 +77,7 @@ function RouteComponent() {
 			{!!search.entry && entry.status === 'error' ? 'Error!' : null}
 			{!!search.entry && entry.status === 'success' ? (
 				<>
-					<div className="mx-auto mt-8 flex w-full flex-wrap items-center gap-x-2 gap-y-1 text-sm text-foreground/75 lg:mt-0">
+					<div className="mx-auto mt-2 flex w-full flex-wrap items-center gap-x-2 gap-y-1 text-sm text-foreground/75 lg:mt-0">
 						<a
 							href={entry.data.feed?.link}
 							className="text-primary hover:underline"
