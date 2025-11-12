@@ -1,5 +1,5 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { GithubIcon } from 'lucide-react';
+import { createFileRoute, Link } from '@tanstack/react-router';
+import { ArrowRightIcon, ExternalLinkIcon, GithubIcon } from 'lucide-react';
 
 export const Route = createFileRoute('/')({
 	component: LandingPage
@@ -12,7 +12,9 @@ function LandingPage() {
 			<header className="border-b border-border">
 				<div className="container mx-auto px-4 py-4">
 					<div className="flex items-center justify-between">
-						<h1 className="font-mono text-2xl font-bold text-primary">Reafrac</h1>
+						<Link to="/">
+							<h1 className="font-sans text-2xl font-bold text-primary">Reafrac</h1>
+						</Link>
 						<nav className="space-x-6">
 							<a href="#about" className="hover:underline">
 								About
@@ -21,15 +23,24 @@ function LandingPage() {
 								Features
 							</a>
 							<a href="#download" className="hover:underline">
-								Download
+								Guide
 							</a>
 							<a
-								href="https://github.com/yourusername/reafrac"
+								href="https://github.com/rulasfia/reafrac"
 								target="_blank"
 								rel="noopener noreferrer"
-								className="hover:underline"
+								className="inline-flex items-center gap-x-1.5 hover:underline"
 							>
 								GitHub
+								<ExternalLinkIcon size={12} />
+							</a>
+
+							<a
+								href="/login"
+								className="inline-flex items-center gap-x-1.5 border-2 border-foreground bg-foreground px-4 py-1 text-background hover:opacity-90"
+							>
+								Login
+								<ArrowRightIcon size={13} />
 							</a>
 						</nav>
 					</div>
@@ -115,7 +126,7 @@ function LandingPage() {
 							</p>
 							<div className="flex items-center justify-center gap-x-4">
 								<a
-									href="https://github.com/yourusername/reafrac#installation"
+									href="https://github.com/rulasfia/reafrac#installation"
 									target="_blank"
 									rel="noopener noreferrer"
 									className="inline-flex items-center border-2 border-foreground bg-transparent px-6 py-2 text-foreground hover:bg-foreground hover:text-background"
@@ -123,7 +134,7 @@ function LandingPage() {
 									Installation Guide
 								</a>
 								<a
-									href="https://github.com/yourusername/reafrac"
+									href="https://github.com/rulasfia/reafrac"
 									target="_blank"
 									rel="noopener noreferrer"
 									className="inline-flex items-center border-2 border-foreground bg-transparent px-6 py-2 text-foreground hover:bg-foreground hover:text-background"
@@ -145,7 +156,7 @@ function LandingPage() {
 					</p>
 					<p className="text-sm text-stone-600 dark:text-stone-500">
 						<a
-							href="https://github.com/yourusername/reafrac"
+							href="https://github.com/rulasfia/reafrac"
 							target="_blank"
 							rel="noopener noreferrer"
 							className="hover:underline"
