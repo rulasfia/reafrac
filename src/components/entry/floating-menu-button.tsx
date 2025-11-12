@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { MenuIcon, PanelLeftOpenIcon } from 'lucide-react';
+import { PanelLeftOpenIcon } from 'lucide-react';
 import { useSidebar } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 

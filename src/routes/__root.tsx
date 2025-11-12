@@ -62,7 +62,7 @@ export const Route = wrapCreateRootRouteWithSentry(createRootRouteWithContext)<{
 function RootDocument({ children }: { children: React.ReactNode }) {
 	return (
 		<ThemeProvider defaultTheme="system">
-			<html lang="en">
+			<html lang="en" className="bg-background lg:bg-sidebar">
 				<head>
 					<HeadContent />
 				</head>
