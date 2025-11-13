@@ -117,14 +117,19 @@ async function refetchFeedEntries(
 			console.log(`Found ${allExistingEntries.length} existing entries`); // Debugging
 
 			// Group existing entries by feedId for faster lookup
-			// Use both title and link for more robust duplicate detection
-			const existingEntriesByFeed = new Map<string, Map<string, { title: string; link: string }>>();
+			// Track titles and links separately for duplicate detection (skip if ANY match)
+			const existingEntriesByFeed = new Map<string, { titles: Set<string>; links: Set<string> }>();
 			for (const entry of allExistingEntries) {
 				if (!existingEntriesByFeed.has(entry.feedId)) {
-					existingEntriesByFeed.set(entry.feedId, new Map());
+					existingEntriesByFeed.set(entry.feedId, { titles: new Set(), links: new Set() });
 				}
-				const key = `${entry.title}|${entry.link}`;
-				existingEntriesByFeed.get(entry.feedId)!.set(key, { title: entry.title, link: entry.link });
+				const existing = existingEntriesByFeed.get(entry.feedId)!;
+				if (entry.title) {
+					existing.titles.add(entry.title);
+				}
+				if (entry.link) {
+					existing.links.add(entry.link);
+				}
 			}
 
 			// Process feeds in batches to limit concurrent requests
@@ -164,13 +169,20 @@ async function refetchFeedEntries(
 						span.setAttribute(`feed_${feed.id}_entries_count`, feedData.entries.length);
 
 						// Get existing entries for this specific feed
-						const existingEntries = existingEntriesByFeed.get(feed.id) || new Map();
+						const existingEntries = existingEntriesByFeed.get(feed.id) || {
+							titles: new Set(),
+							links: new Set()
+						};
 
-						// Filter out entries that already exist based on title AND link combination
+						// Filter out entries that already exist based on title OR link matching
 						const newEntries = feedData.entries.filter((entry) => {
 							if (!entry.title) return false;
-							const key = `${entry.title}|${entry.link || ''}`;
-							return !existingEntries.has(key);
+
+							// Skip if title already exists OR link already exists
+							const titleExists = entry.title ? existingEntries.titles.has(entry.title) : false;
+							const linkExists = entry.link ? existingEntries.links.has(entry.link) : false;
+
+							return !titleExists && !linkExists;
 						});
 
 						span.setAttribute(`feed_${feed.id}_new_entries_count`, newEntries.length);
