@@ -26,7 +26,9 @@ export const Route = wrapCreateRootRouteWithSentry(createRootRouteWithContext)<{
 		meta: [
 			{ charSet: 'utf-8' },
 			{ name: 'viewport', content: 'width=device-width, initial-scale=1' },
-			{ title: 'Reafrac' },
+			{
+				title: process.env.NODE_ENV?.toLowerCase() === 'production' ? 'Reafrac' : 'Reafrac - Dev'
+			},
 			{
 				name: 'description',
 				content: 'A modern RSS reader client, designed to work seamlessly with Miniflux servers.'

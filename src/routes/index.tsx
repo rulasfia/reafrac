@@ -101,15 +101,14 @@ function LandingPage() {
 						<div className="mx-auto max-w-3xl">
 							<ul className="list list-inside list-disc space-y-3 text-lg">
 								<li>Full article content extraction</li>
-								<li>Dark and light theme support</li>
-								<li>Mobile responsive design</li>
 								<li>Feed categorization</li>
 								<li>Read/unread status tracking</li>
 								<li>Bookmarking support</li>
+								<li>Dark and light theme support</li>
+								<li>Mobile responsive design</li>
 								<li>Miniflux server integration</li>
-								<li>No tracking or analytics</li>
 								<li>Self-hostable</li>
-								<li>Open source (MIT license)</li>
+								<li>Open source</li>
 							</ul>
 						</div>
 					</div>
