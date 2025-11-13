@@ -15,7 +15,7 @@ export function FeedSetting() {
 	const removeFeed = useServerFn(removeFeedServerFn);
 	const updateFeed = useServerFn(updateFeedServerFn);
 
-	const { data: feeds } = useQuery({
+	const { data: feeds, refetch: invalidateFeeds } = useQuery({
 		queryKey: ['feeds', user.id, integration?.id],
 		queryFn: async () => getFeeds()
 	});
@@ -23,9 +23,7 @@ export function FeedSetting() {
 	const handleRemoveFeed = async (feedId: string) => {
 		try {
 			await removeFeed({ data: { feedId } });
-			await qc.invalidateQueries({
-				queryKey: ['feeds', user.id, integration?.id]
-			});
+			await invalidateFeeds();
 			// don't await, let it start in the bg
 			qc.invalidateQueries({
 				queryKey: ['entries', integration?.id, search.page]
@@ -49,9 +47,7 @@ export function FeedSetting() {
 	const handleUpdateFeed = async (data: { feedId: string; title?: string; url?: string }) => {
 		try {
 			await updateFeed({ data });
-			await qc.invalidateQueries({
-				queryKey: ['feeds', user.id, integration?.id]
-			});
+			await invalidateFeeds();
 			// don't await, let it start in the bg
 			qc.invalidateQueries({
 				queryKey: ['entries', integration?.id, search.page]

@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { PlusIcon, SearchIcon } from 'lucide-react';
 import { Form } from '../ui/form';
@@ -32,7 +32,6 @@ type Errors = Record<string, string | string[]>;
 
 export function AddFeedDialog() {
 	const { user, integration } = useLoaderData({ from: '/reader' });
-	const qc = useQueryClient();
 	const getFeeds = useServerFn(getFeedsServerFn);
 	const previewFeed = useServerFn(previewFeedServerFn);
 	const addFeed = useServerFn(addFeedServerFn);
@@ -44,7 +43,7 @@ export function AddFeedDialog() {
 	const [errors, setErrors] = useState<Errors>({});
 	const handleClearErrors = (next: Errors) => setErrors(next);
 
-	const { data: feeds } = useQuery({
+	const { data: feeds, refetch: invalidateFeeds } = useQuery({
 		queryKey: ['feeds', user.id, integration?.id],
 		queryFn: async () => getFeeds()
 	});
@@ -79,9 +78,7 @@ export function AddFeedDialog() {
 			if (!feed) return;
 			setIsAdding(true);
 			await addFeed({ data: { feedUrl: feed?.feedUrl } });
-			await qc.invalidateQueries({
-				queryKey: ['feeds', user.id, integration?.id]
-			});
+			await invalidateFeeds();
 
 			toastManager.add({
 				title: 'Success',
