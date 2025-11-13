@@ -115,6 +115,57 @@ export const getFeedServerFn = createServerFn({ method: 'GET' })
 		});
 	});
 
+export const previewFeedServerFn = createServerFn({ method: 'GET' })
+	.middleware([sentryMiddleware, authFnMiddleware])
+	.inputValidator(z.object({ feedUrl: z.string() }))
+	.handler(async ({ data, context }) => {
+		return Sentry.startSpan({ op: 'server_function', name: 'previewFeed' }, async (span) => {
+			try {
+				span.setAttribute('user_id', context.user.id);
+				span.setAttribute('feed_url', data.feedUrl);
+
+				// Extract feed using the centralized extractFeed function
+				const validated = await extractFeed(data.feedUrl);
+				span.setAttribute('entries_count', validated.entries.length);
+				span.setAttribute('feed_title', validated.title);
+
+				// alternative icon parsing. go to the website and search for icon
+				let icon = '';
+				if (!validated.icon) {
+					const faviconEnpoints = ['favicon.ico', 'favicon.png', 'favicon.jpg', 'favicon.svg'];
+					for (const ico of faviconEnpoints) {
+						const faviconUrl = `${new URL(data.feedUrl).origin}/${ico}`;
+						// check if favicon exists
+						const faviconExists = await fetch(faviconUrl).then((res) => res.ok);
+						if (!faviconExists) continue;
+						icon = faviconUrl;
+						break;
+					}
+				} else {
+					icon = validated.icon;
+				}
+
+				span.setAttribute('status', 'success');
+				return {
+					...validated,
+					icon
+				};
+			} catch (error) {
+				span.setAttribute('status', 'error');
+				Sentry.captureException(error, {
+					tags: { function: 'previewFeed', feedUrl: data.feedUrl },
+					extra: {
+						userId: context.user.id,
+						feedUrl: data.feedUrl,
+						errorMessage: error instanceof Error ? error.message : 'Unknown error',
+						errorStack: error instanceof Error ? error.stack : undefined
+					}
+				});
+				throw error;
+			}
+		});
+	});
+
 export const addFeedServerFn = createServerFn({ method: 'GET' })
 	.middleware([sentryMiddleware, authFnMiddleware])
 	.inputValidator(z.object({ feedUrl: z.string() }))
