@@ -41,6 +41,11 @@ export const Route = wrapCreateRootRouteWithSentry(createRootRouteWithContext)<{
 			? [
 					{
 						defer: true,
+						src: 'https://info.reafrac.com/fetch.js',
+						'data-website-id': '5147e632-e5ad-41d3-8b11-47eca01895f4'
+					},
+					{
+						defer: true,
 						src: 'https://static.cloudflareinsights.com/beacon.min.js',
 						'data-cf-beacon': '{"token": "318f2e2b66644f7489d82f25531ac742"}'
 					}

@@ -53,7 +53,7 @@ function LandingPage() {
 				<section className="py-16">
 					<div className="container mx-auto px-4 text-center">
 						<h1 className="mb-4 font-serif text-5xl text-primary">Reafrac</h1>
-						<p className="mx-auto mb-8 max-w-2xl text-xl text-stone-700 dark:text-stone-200">
+						<p className="mx-auto mb-8 max-w-2xl text-xl text-muted-foreground">
 							A self-hostable RSS reader for the modern web
 						</p>
 						<div className="space-x-4">
@@ -150,10 +150,10 @@ function LandingPage() {
 			{/* Footer */}
 			<footer className="py-8">
 				<div className="container mx-auto px-4 text-center">
-					<p className="mb-2 text-sm text-stone-600 dark:text-stone-500">
+					<p className="mb-2 text-sm text-muted-foreground">
 						© 2024 Reafrac - Open source RSS reader
 					</p>
-					<p className="text-sm text-stone-600 dark:text-stone-500">
+					<p className="text-sm text-muted-foreground">
 						<a
 							href="https://github.com/rulasfia/reafrac"
 							target="_blank"
