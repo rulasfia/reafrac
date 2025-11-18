@@ -41,8 +41,8 @@ export const Route = wrapCreateRootRouteWithSentry(createRootRouteWithContext)<{
 			? [
 					{
 						defer: true,
-						src: 'https://info.reafrac.com/fetch.js',
-						'data-website-id': '5147e632-e5ad-41d3-8b11-47eca01895f4'
+						src: 'https://data.reafrac.com/fetch.js',
+						'data-website-id': '4e5bbb85-7851-4565-8705-76e296b8b7b7'
 					},
 					{
 						defer: true,
