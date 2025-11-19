@@ -249,15 +249,30 @@ export const addFeedServerFn = createServerFn({ method: 'GET' })
 		});
 	});
 
+const UpdateFeedSchema = z.object({
+	feedId: z.string(),
+	title: z.optional(z.string()),
+	url: z.optional(z.url()),
+	icon: z.optional(
+		z
+			.url()
+			.check(
+				z.refine(
+					(val) =>
+						val.includes('.ico') ||
+						val.includes('.png') ||
+						val.includes('.svg') ||
+						val.includes('.jpg') ||
+						val.includes('.jpeg'),
+					{ message: 'Invalid icon URL' }
+				)
+			)
+	)
+});
+
 export const updateFeedServerFn = createServerFn({ method: 'POST' })
 	.middleware([sentryMiddleware, authFnMiddleware])
-	.inputValidator(
-		z.object({
-			feedId: z.string(),
-			title: z.optional(z.string()),
-			url: z.optional(z.string())
-		})
-	)
+	.inputValidator(UpdateFeedSchema)
 	.handler(async ({ data, context }) => {
 		return Sentry.startSpan({ op: 'server_function', name: 'updateFeed' }, async (span) => {
 			try {
@@ -268,6 +283,7 @@ export const updateFeedServerFn = createServerFn({ method: 'POST' })
 				const updateData: Partial<Schema['Feed']> = {};
 				if (data.title !== undefined) updateData.title = data.title;
 				if (data.url !== undefined) updateData.link = data.url;
+				if (data.icon !== undefined) updateData.icon = data.icon;
 
 				// Update the feed for this user
 				const updatedFeed = await db

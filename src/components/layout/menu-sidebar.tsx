@@ -42,7 +42,8 @@ export function MenuSidebar() {
 
 	const { data: feeds } = useQuery({
 		queryKey: ['feeds', user.id, integration?.id],
-		queryFn: async () => getFeeds()
+		queryFn: async () => getFeeds(),
+		staleTime: 2 * 60 * 1000 // 2 minutes
 	});
 
 	return (

@@ -1,23 +1,22 @@
 import type { Schema } from '@/lib/db-schema';
 import { useState } from 'react';
 import { useLocation, useNavigate } from '@tanstack/react-router';
-import { toastManager } from '../ui/toast';
 import { Button } from '../ui/button';
 import { Spinner } from '../ui/spinner';
 import { Separator } from '../ui/separator';
 import { CircleMinusIcon, SquarePenIcon } from 'lucide-react';
+import { EditFeedDialog } from './edit-feed-dialog';
 
 interface FeedItemProps {
 	item: Schema['Feed'];
 	onRemove?: (feedId: string) => Promise<void>;
-	onUpdate?: (data: { feedId: string; title?: string; url?: string }) => Promise<void>;
+	onUpdate?: () => void;
 }
 
 export function FeedItem({ item, onRemove, onUpdate }: FeedItemProps) {
 	const { search } = useLocation();
 	const navigate = useNavigate();
 	const [isRemoving, setIsRemoving] = useState(false);
-	const [isEditing, setIsEditing] = useState(false);
 
 	const handleRemove = async () => {
 		if (onRemove && confirm(`Are you sure you want to remove "${item.title}"?`)) {
@@ -36,47 +35,6 @@ export function FeedItem({ item, onRemove, onUpdate }: FeedItemProps) {
 		}
 	};
 
-	const handleEdit = async () => {
-		setIsEditing(true);
-		try {
-			// Prompt for new title
-			const newTitle = prompt('Enter new title:', item.title);
-			if (newTitle === null) {
-				// User cancelled
-				return;
-			}
-
-			// Validate that at least one field was changed
-			if (newTitle.trim() === item.title) {
-				toastManager.add({
-					title: 'Feed Unchanged',
-					description: 'No changes were made to the feed.',
-					type: 'info'
-				});
-				return;
-			}
-
-			// Prepare update data
-			const updateData: { feedId: string; title?: string; url?: string } = {
-				feedId: item.id
-			};
-
-			if (newTitle.trim() !== item.title) {
-				updateData.title = newTitle.trim();
-			}
-
-			// Call onUpdate callback if provided
-			if (onUpdate) {
-				await onUpdate(updateData);
-			}
-		} catch (error) {
-			console.error('Failed to update feed:', error);
-			throw error;
-		} finally {
-			setIsEditing(false);
-		}
-	};
-
 	return (
 		<div className="flex flex-row items-center gap-x-2">
 			<Button
@@ -87,8 +45,8 @@ export function FeedItem({ item, onRemove, onUpdate }: FeedItemProps) {
 			>
 				{isRemoving ? <Spinner /> : <CircleMinusIcon />}
 			</Button>
-			<Button size="icon-sm" variant="outline" onClick={handleEdit} disabled={isEditing}>
-				{isEditing ? <Spinner /> : <SquarePenIcon />}
+			<Button size="icon-sm" variant="outline" onClick={() => onUpdate?.()}>
+				<SquarePenIcon />
 			</Button>
 			<Separator orientation="vertical" className="mx-2" />
 			<img

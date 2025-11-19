@@ -45,7 +45,8 @@ export function AddFeedDialog() {
 
 	const { data: feeds, refetch: invalidateFeeds } = useQuery({
 		queryKey: ['feeds', user.id, integration?.id],
-		queryFn: async () => getFeeds()
+		queryFn: async () => getFeeds(),
+		staleTime: 2 * 60 * 1000 // 2 minutes
 	});
 
 	const submitHandler = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -85,7 +86,7 @@ export function AddFeedDialog() {
 				description: 'Feed added successfully!',
 				type: 'success'
 			});
-			setIsOpen(false);
+			closeModal(false);
 		} catch (error) {
 			console.error(error);
 			setErrors({ feedUrl: 'Failed to add feed' });
