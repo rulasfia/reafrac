@@ -29,6 +29,8 @@ function LandingPage() {
 								href="https://github.com/rulasfia/reafrac"
 								target="_blank"
 								rel="noopener noreferrer"
+								data-umami-event="outbound-link-click"
+								data-umami-event-url="https://github.com/rulasfia/reafrac"
 								className="inline-flex items-center gap-x-1.5 hover:underline"
 							>
 								GitHub
@@ -128,6 +130,8 @@ function LandingPage() {
 									href="https://github.com/rulasfia/reafrac#installation"
 									target="_blank"
 									rel="noopener noreferrer"
+									data-umami-event="outbound-link-click"
+									data-umami-event-url="https://github.com/rulasfia/reafrac#installation"
 									className="inline-flex items-center border-2 border-foreground bg-transparent px-6 py-2 text-foreground hover:bg-foreground hover:text-background"
 								>
 									Installation Guide
@@ -158,6 +162,8 @@ function LandingPage() {
 							href="https://github.com/rulasfia/reafrac"
 							target="_blank"
 							rel="noopener noreferrer"
+							data-umami-event="outbound-link-click"
+							data-umami-event-url="https://github.com/rulasfia/reafrac"
 							className="hover:underline"
 						>
 							GitHub
