@@ -82,6 +82,8 @@ function RouteComponent() {
 							href={entry.data.feed?.link}
 							className="text-primary hover:underline"
 							rel="noopener noreferrer"
+							data-umami-event="outbound-link-click"
+							data-umami-event-url={entry.data.feed?.link}
 						>
 							{entry.data.feed?.title}
 						</a>
@@ -131,7 +133,15 @@ function RouteComponent() {
 						<Button
 							variant="outline"
 							className="-ml-px w-fit cursor-pointer rounded-l-none"
-							render={<a href={entry.data.link} target="_blank" rel="noopener noreferrer" />}
+							render={
+								<a
+									href={entry.data.link}
+									target="_blank"
+									rel="noopener noreferrer"
+									data-umami-event="outbound-link-click"
+									data-umami-event-url={entry.data.link}
+								/>
+							}
 						>
 							Read Original Source
 							<ExternalLinkIcon />
