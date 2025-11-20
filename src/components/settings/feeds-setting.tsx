@@ -6,6 +6,8 @@ import { FeedItem } from './feed-item';
 import { toastManager } from '../ui/toast';
 import { Label } from '../ui/label';
 import { AddFeedDialog } from './add-feed-dialog';
+import { EditFeedDialog } from './edit-feed-dialog';
+import { useState } from 'react';
 
 export function FeedSetting() {
 	const { search } = useLocation();
@@ -17,8 +19,11 @@ export function FeedSetting() {
 
 	const { data: feeds, refetch: invalidateFeeds } = useQuery({
 		queryKey: ['feeds', user.id, integration?.id],
-		queryFn: async () => getFeeds()
+		queryFn: async () => getFeeds(),
+		staleTime: 2 * 60 * 1000 // 2 minutes
 	});
+
+	const [activeItem, setActiveItem] = useState<NonNullable<typeof feeds>[number] | null>(null);
 
 	const handleRemoveFeed = async (feedId: string) => {
 		try {
@@ -91,9 +96,17 @@ export function FeedSetting() {
 						key={feed.id}
 						item={feed}
 						onRemove={handleRemoveFeed}
-						onUpdate={handleUpdateFeed}
+						onUpdate={() => setActiveItem(feed)}
 					/>
 				))}
+
+				<EditFeedDialog
+					item={activeItem}
+					onClose={() => {
+						setActiveItem(null);
+						void invalidateFeeds();
+					}}
+				/>
 			</div>
 		</div>
 	);
