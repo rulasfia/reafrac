@@ -49,7 +49,7 @@ function RouteComponent() {
 	const onSaveToBookmark = async () => {
 		try {
 			if (!entry.data) return;
-			const newValue = !entry.data.starred;
+			const newValue = !entry.data.meta?.starred;
 			await saveEntryToBookmark({ data: { entryId: entry.data.id, saved: newValue } });
 			await qc.invalidateQueries({ queryKey: ['entry', search.entry] });
 			toastManager.add({
@@ -123,7 +123,7 @@ function RouteComponent() {
 							className="w-fit cursor-pointer rounded-r-none"
 							onClick={onSaveToBookmark}
 						>
-							{entry.data.starred ? (
+							{entry.data.meta?.starred ? (
 								<BookmarkIcon fill="var(--color-primary)" strokeWidth={1} />
 							) : (
 								<BookmarkIcon />

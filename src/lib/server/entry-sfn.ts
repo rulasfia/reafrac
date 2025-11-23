@@ -5,7 +5,7 @@ import { authFnMiddleware } from '../middleware/auth-middleware';
 import sanitizeHtml from 'sanitize-html';
 import { sentryMiddleware } from '../middleware/sentry-middleware';
 import * as Sentry from '@sentry/tanstackstart-react';
-import { entries, feeds } from '../db-schema';
+import { entries, feeds, userEntries } from '../db-schema';
 import { eq, and, desc, lt, count, inArray, gte } from 'drizzle-orm';
 import type { EntryMeta } from './types';
 import { db } from '../db-connection';
@@ -275,10 +275,20 @@ export const updateEntryStatusServerFn = createServerFn({ method: 'POST' })
 				span.setAttribute('entry_id', data.entryId);
 				span.setAttribute('user_id', context.user.id);
 
-				await db
-					.update(entries)
-					.set({ status: 'read' })
-					.where(and(eq(entries.id, data.entryId), eq(entries.userId, context.user.id)));
+				await Promise.all([
+					// DEPRECATED: update the old entries table with user info on it
+					// TODO: remove after full migrations
+					db
+						.update(entries)
+						.set({ status: 'read' })
+						.where(and(eq(entries.id, data.entryId), eq(entries.userId, context.user.id))),
+					db
+						.update(userEntries)
+						.set({ status: 'read' })
+						.where(
+							and(eq(userEntries.entryId, data.entryId), eq(userEntries.userId, context.user.id))
+						)
+				]);
 
 				span.setAttribute('status', 'success');
 				return true;
@@ -307,10 +317,20 @@ export const saveEntryToBookmarkServerFn = createServerFn({ method: 'POST' })
 					span.setAttribute('entry_id', data.entryId);
 					span.setAttribute('user_id', context.user.id);
 
-					await db
-						.update(entries)
-						.set({ starred: data.saved })
-						.where(and(eq(entries.id, data.entryId), eq(entries.userId, context.user.id)));
+					await Promise.all([
+						// DEPRECATED: update the old entries table with user info on it
+						// TODO: remove after full migrations
+						db
+							.update(entries)
+							.set({ starred: data.saved })
+							.where(and(eq(entries.id, data.entryId), eq(entries.userId, context.user.id))),
+						db
+							.update(userEntries)
+							.set({ starred: data.saved })
+							.where(
+								and(eq(userEntries.entryId, data.entryId), eq(userEntries.userId, context.user.id))
+							)
+					]);
 
 					span.setAttribute('status', 'success');
 					return true;
@@ -376,7 +396,10 @@ export const getEntriesServerFn = createServerFn({ method: 'GET' })
 				});
 
 				// Build query conditions
-				const conditions = [eq(entries.userId, context.user.id)];
+				const conditions = [
+					eq(userEntries.userId, context.user.id),
+					eq(userEntries.entryId, entries.id)
+				];
 
 				// Add filters based on input
 				if (data.feedId) {
@@ -384,11 +407,11 @@ export const getEntriesServerFn = createServerFn({ method: 'GET' })
 				}
 
 				if (data.status) {
-					conditions.push(eq(entries.status, data.status));
+					conditions.push(eq(userEntries.status, data.status));
 				}
 
 				if (data.starred !== undefined) {
-					conditions.push(eq(entries.starred, data.starred));
+					conditions.push(eq(userEntries.starred, data.starred));
 				}
 
 				// Add "today" filter - only show entries published after the specified timestamp
@@ -403,6 +426,7 @@ export const getEntriesServerFn = createServerFn({ method: 'GET' })
 				const totalCountResult = await db
 					.select({ count: count() })
 					.from(entries)
+					.leftJoin(userEntries, eq(entries.id, userEntries.entryId))
 					.where(baseWhereConditions)
 					.execute();
 
@@ -413,19 +437,22 @@ export const getEntriesServerFn = createServerFn({ method: 'GET' })
 				const whereConditions = and(...conditions);
 
 				// Query entries with load-more style pagination, including feed data
-				const userEntries = await db
+				const entryList = await db
 					.select({
 						// Entry fields
 						id: entries.id,
-						userId: entries.userId,
 						feedId: entries.feedId,
 						title: entries.title,
 						link: entries.link,
 						description: entries.description,
 						author: entries.author,
-						status: entries.status,
-						starred: entries.starred,
 						publishedAt: entries.publishedAt,
+						// user entry
+						meta: {
+							userId: userEntries.userId,
+							starred: userEntries.starred,
+							status: userEntries.status
+						},
 						// Feed fields
 						feed: {
 							id: feeds.id,
@@ -437,6 +464,7 @@ export const getEntriesServerFn = createServerFn({ method: 'GET' })
 					})
 					.from(entries)
 					.leftJoin(feeds, eq(entries.feedId, feeds.id))
+					.leftJoin(userEntries, eq(entries.id, userEntries.entryId))
 					.where(whereConditions)
 					.orderBy(desc(entries.publishedAt))
 					.limit(10) // Load 10 entries at a time
@@ -447,7 +475,7 @@ export const getEntriesServerFn = createServerFn({ method: 'GET' })
 				const itemsPerPage = 10;
 				const currentPage = Math.floor((data.offset || 0) / itemsPerPage) + 1;
 				const totalPages = Math.ceil(totalItems / itemsPerPage);
-				const hasNext = userEntries.length === itemsPerPage;
+				const hasNext = entryList.length === itemsPerPage;
 				const hasPrev = data.offset !== undefined && data.offset > 0;
 
 				const meta: EntryMeta = {
@@ -459,11 +487,11 @@ export const getEntriesServerFn = createServerFn({ method: 'GET' })
 				};
 
 				span.setAttribute('status', 'success');
-				span.setAttribute('entries_count', userEntries.length);
+				span.setAttribute('entries_count', entryList.length);
 				span.setAttribute('total_items', totalItems);
 				span.setAttribute('has_next', hasNext);
 
-				return { entries: userEntries, meta };
+				return { entries: entryList, meta };
 			} catch (error) {
 				span.setAttribute('status', 'error');
 				Sentry.captureException(error, {
@@ -492,18 +520,21 @@ export const getEntryServerFn = createServerFn({ method: 'GET' })
 					.select({
 						// Entry fields
 						id: entries.id,
-						userId: entries.userId,
 						feedId: entries.feedId,
 						title: entries.title,
 						link: entries.link,
 						description: entries.description,
 						author: entries.author,
 						content: entries.content,
-						status: entries.status,
-						starred: entries.starred,
 						publishedAt: entries.publishedAt,
 						thumbnail: entries.thumbnail,
 						thumbnailCaption: entries.thumbnailCaption,
+						// user entry
+						meta: {
+							userId: userEntries.userId,
+							starred: userEntries.starred,
+							status: userEntries.status
+						},
 						// Feed fields
 						feed: {
 							id: feeds.id,
@@ -519,7 +550,8 @@ export const getEntryServerFn = createServerFn({ method: 'GET' })
 					})
 					.from(entries)
 					.leftJoin(feeds, eq(entries.feedId, feeds.id))
-					.where(and(eq(entries.id, data.entryId), eq(entries.userId, context.user.id)))
+					.leftJoin(userEntries, eq(entries.id, userEntries.entryId))
+					.where(and(eq(entries.id, data.entryId), eq(userEntries.userId, context.user.id)))
 					.limit(1);
 
 				const entry = res[0];
