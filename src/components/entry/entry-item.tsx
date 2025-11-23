@@ -10,9 +10,18 @@ import { useSidebar } from '../ui/sidebar';
 type Props = {
 	entry: Omit<
 		Schema['Entry'],
-		'content' | 'createdAt' | 'updatedAt' | 'thumbnail' | 'thumbnailCaption'
+		| 'content'
+		| 'createdAt'
+		| 'updatedAt'
+		| 'thumbnail'
+		| 'thumbnailCaption'
+		| 'userId'
+		| 'starred'
+		| 'status'
 	> & {
 		feed: Pick<Schema['Feed'], 'id' | 'categoryId' | 'title' | 'icon' | 'link'> | null;
+	} & {
+		meta: Pick<Schema['UserEntry'], 'userId' | 'status' | 'starred'>;
 	};
 };
 
@@ -32,7 +41,7 @@ export function EntryItem({ entry }: Props) {
 
 	const onEntryClick = () => {
 		if (isMobile) toggleSidebar();
-		if (entry.status === 'unread') {
+		if (entry.meta.status === 'unread') {
 			mutate(entry.id);
 		}
 	};
@@ -48,8 +57,8 @@ export function EntryItem({ entry }: Props) {
 				search.entry === entry.id
 					? 'border-primary bg-background shadow-xs shadow-accent'
 					: 'hover:bg-foreground/5',
-				entry.status === 'read' && search.entry !== entry.id ? 'text-foreground/50' : '',
-				entry.status === 'read' && search.entry === entry.id ? 'text-foreground/80' : ''
+				entry.meta.status === 'read' && search.entry !== entry.id ? 'text-foreground/50' : '',
+				entry.meta.status === 'read' && search.entry === entry.id ? 'text-foreground/80' : ''
 			)}
 		>
 			<div className="mb-1 flex flex-row items-center gap-x-1">
@@ -63,7 +72,7 @@ export function EntryItem({ entry }: Props) {
 				<span className="text-xs text-foreground/75">{entry.feed?.title}</span>
 				<span>·</span>
 				<span className="text-xs text-foreground/75">{formatRelativeDate(entry.publishedAt)}</span>
-				{entry.starred ? (
+				{entry.meta.starred ? (
 					<>
 						<span>·</span>
 						<BookmarkIcon fill="var(--color-foreground)" className="size-4" />

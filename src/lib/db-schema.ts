@@ -83,7 +83,7 @@ export const categories = pgTable('categories', {
 		.$defaultFn(() => nanoid(12)),
 	userId: uuid('user_id')
 		.notNull()
-		.references(() => users.id, { onDelete: 'cascade' }),
+		.references(() => users.id, { onDelete: 'cascade' }), // TODO: delete
 	name: text('name').notNull(),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at')
@@ -98,7 +98,7 @@ export const feeds = pgTable('feeds', {
 		.$defaultFn(() => nanoid(12)),
 	userId: uuid('user_id')
 		.notNull()
-		.references(() => users.id, { onDelete: 'cascade' }),
+		.references(() => users.id, { onDelete: 'cascade' }), // TODO: delete
 	categoryId: text('category_id').references(() => categories.id, { onDelete: 'cascade' }),
 	title: text('title').notNull(),
 	link: text('link').notNull(),
@@ -122,7 +122,7 @@ export const entries = pgTable(
 		id: serial().primaryKey(),
 		userId: uuid('user_id')
 			.notNull()
-			.references(() => users.id, { onDelete: 'cascade' }),
+			.references(() => users.id, { onDelete: 'cascade' }), // TODO: delete
 		feedId: text('feed_id')
 			.notNull()
 			.references(() => feeds.id, { onDelete: 'cascade' }),
@@ -131,8 +131,8 @@ export const entries = pgTable(
 		description: text('description').notNull(),
 		author: text('author').notNull(),
 		content: text('content'),
-		status: text('status', { enum: ['unread', 'read'] }).default('unread'),
-		starred: boolean('starred').default(false),
+		status: text('status', { enum: ['unread', 'read'] }).default('unread'), // TODO: delete
+		starred: boolean('starred').default(false), // TODO: delete
 		publishedAt: timestamp('published_at').notNull(),
 		createdAt: timestamp('created_at').defaultNow().notNull(),
 		updatedAt: timestamp('updated_at')
@@ -142,8 +142,57 @@ export const entries = pgTable(
 		thumbnailCaption: text('thumbnail_caption')
 	},
 	(table) => [
-		// Prevent duplicate entries within the same user feed based on title
-		unique('uniqueUserFeedEntryTitle').on(table.userId, table.feedId, table.title)
+		// Prevent duplicate entries within the same feed based on title
+		unique('uniqueFeedEntryTitle').on(table.feedId, table.title)
+	]
+);
+
+// Junction table for user feed subscriptions
+export const userFeedSubscriptions = pgTable(
+	'user_feed_subscriptions',
+	{
+		id: uuid('id').defaultRandom().primaryKey(),
+		userId: uuid('user_id')
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' }),
+		feedId: text('feed_id')
+			.notNull()
+			.references(() => feeds.id, { onDelete: 'cascade' }),
+		subscribedAt: timestamp('subscribed_at').defaultNow().notNull(),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at')
+			.$onUpdate(() => /* @__PURE__ */ new Date())
+			.notNull()
+	},
+	(table) => [
+		// Prevent duplicate subscriptions
+		unique('uniqueUserFeedSubscription').on(table.userId, table.feedId)
+	]
+);
+
+// Junction table for user-specific entry states (read status, starred)
+export const userEntries = pgTable(
+	'user_entries',
+	{
+		id: uuid('id').defaultRandom().primaryKey(),
+		userId: uuid('user_id')
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' }),
+		entryId: serial('entry_id')
+			.notNull()
+			.references(() => entries.id, { onDelete: 'cascade' }),
+		status: text('status', { enum: ['unread', 'read'] })
+			.default('unread')
+			.notNull(),
+		starred: boolean('starred').default(false).notNull(),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at')
+			.$onUpdate(() => /* @__PURE__ */ new Date())
+			.notNull()
+	},
+	(table) => [
+		// Prevent duplicate user-entry relationships
+		unique('uniqueUserEntry').on(table.userId, table.entryId)
 	]
 );
 
@@ -156,4 +205,6 @@ export type Schema = {
 	Category: typeof categories.$inferSelect;
 	Feed: typeof feeds.$inferSelect;
 	Entry: typeof entries.$inferSelect;
+	UserFeedSubscription: typeof userFeedSubscriptions.$inferSelect;
+	UserEntry: typeof userEntries.$inferSelect;
 };
