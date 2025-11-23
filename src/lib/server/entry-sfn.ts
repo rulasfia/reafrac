@@ -5,7 +5,7 @@ import { authFnMiddleware } from '../middleware/auth-middleware';
 import sanitizeHtml from 'sanitize-html';
 import { sentryMiddleware } from '../middleware/sentry-middleware';
 import * as Sentry from '@sentry/tanstackstart-react';
-import { entries, feeds, userEntries } from '../db-schema';
+import { entries, feeds, userEntries, userFeedSubscriptions } from '../db-schema';
 import { eq, and, desc, lt, count, inArray, gte } from 'drizzle-orm';
 import type { EntryMeta } from './types';
 import { db } from '../db-connection';
@@ -65,13 +65,15 @@ async function refetchFeedEntries(
 			// Get feeds to refetch, but only those that haven't been fetched recently (unless forceRefetch is true)
 			const fiveMinutesAgo = new Date(Date.now() - REFETCH_CONFIG.MIN_REFETCH_INTERVAL);
 
+			// Get feeds that the user is subscribed to
 			const feedsToRefetch = feedIds
 				? await db
 						.select()
 						.from(feeds)
+						.innerJoin(userFeedSubscriptions, eq(feeds.id, userFeedSubscriptions.feedId))
 						.where(
 							and(
-								eq(feeds.userId, userId),
+								eq(userFeedSubscriptions.userId, userId),
 								inArray(feeds.id, feedIds),
 								// Only if feed hasn't been fetched in the last 5 minutes, unless forceRefetch is true
 								forceRefetch ? undefined : lt(feeds.lastFetchedAt, fiveMinutesAgo)
@@ -80,9 +82,10 @@ async function refetchFeedEntries(
 				: await db
 						.select()
 						.from(feeds)
+						.innerJoin(userFeedSubscriptions, eq(feeds.id, userFeedSubscriptions.feedId))
 						.where(
 							and(
-								eq(feeds.userId, userId),
+								eq(userFeedSubscriptions.userId, userId),
 								forceRefetch ? undefined : lt(feeds.lastFetchedAt, fiveMinutesAgo)
 							)
 						);
@@ -100,17 +103,14 @@ async function refetchFeedEntries(
 
 			span.setAttribute('feeds_to_refetch_count', feedsToRefetch.length);
 
-			// Get all existing entries at once for better efficiency
+			// Get all existing entries at once for better efficiency (entries are now global, not per-user)
 			const allExistingEntries = await db
 				.select({ title: entries.title, link: entries.link, feedId: entries.feedId })
 				.from(entries)
 				.where(
-					and(
-						eq(entries.userId, userId),
-						inArray(
-							entries.feedId,
-							feedsToRefetch.map((f) => f.id)
-						)
+					inArray(
+						entries.feedId,
+						feedsToRefetch.map((f) => f.feeds.id)
 					)
 				);
 
@@ -147,7 +147,8 @@ async function refetchFeedEntries(
 			}
 
 			for (const batch of batches) {
-				const batchPromises = batch.map(async (feed) => {
+				const batchPromises = batch.map(async (feedRow) => {
+					const feed = feedRow.feeds; // Extract feed from the join result
 					try {
 						// Extract feed data with caching and timeout
 						const feedData = await Sentry.startSpan(
@@ -193,8 +194,9 @@ async function refetchFeedEntries(
 
 						if (newEntries.length > 0) {
 							// Prepare entry values for insertion
+							// TODO: After migration, remove userId from entries table to make it truly global
 							const entryValues = newEntries.map((entry) => ({
-								userId,
+								userId, // Keep for now - will be removed after full migration
 								feedId: feed.id,
 								title: entry.title,
 								description: entry.description,
@@ -206,8 +208,21 @@ async function refetchFeedEntries(
 								thumbnailCaption: entry.thumbnail?.text ?? entry.title
 							}));
 
-							// Insert new entries
-							await db.insert(entries).values(entryValues);
+							// Insert new entries and get the inserted IDs
+							const insertedEntries = await db
+								.insert(entries)
+								.values(entryValues)
+								.returning({ id: entries.id });
+
+							// Create user entries for the user so they can access these entries
+							await db.insert(userEntries).values(
+								insertedEntries.map((insertedEntry) => ({
+									userId,
+									entryId: insertedEntry.id,
+									status: 'unread' as const,
+									starred: false
+								}))
+							);
 
 							span.setAttribute(`feed_${feed.id}_inserted_count`, entryValues.length);
 						}
@@ -216,7 +231,7 @@ async function refetchFeedEntries(
 						await db
 							.update(feeds)
 							.set({ lastFetchedAt: new Date() })
-							.where(and(eq(feeds.id, feed.id), eq(feeds.userId, userId)));
+							.where(eq(feeds.id, feed.id));
 
 						return { feedId: feed.id, inserted: insertedCount };
 					} catch (error) {
@@ -275,20 +290,13 @@ export const updateEntryStatusServerFn = createServerFn({ method: 'POST' })
 				span.setAttribute('entry_id', data.entryId);
 				span.setAttribute('user_id', context.user.id);
 
-				await Promise.all([
-					// DEPRECATED: update the old entries table with user info on it
-					// TODO: remove after full migrations
-					db
-						.update(entries)
-						.set({ status: 'read' })
-						.where(and(eq(entries.id, data.entryId), eq(entries.userId, context.user.id))),
-					db
-						.update(userEntries)
-						.set({ status: 'read' })
-						.where(
-							and(eq(userEntries.entryId, data.entryId), eq(userEntries.userId, context.user.id))
-						)
-				]);
+				// Update user entry status in the userEntries table
+				await db
+					.update(userEntries)
+					.set({ status: 'read' as const })
+					.where(
+						and(eq(userEntries.entryId, data.entryId), eq(userEntries.userId, context.user.id))
+					);
 
 				span.setAttribute('status', 'success');
 				return true;
@@ -317,20 +325,13 @@ export const saveEntryToBookmarkServerFn = createServerFn({ method: 'POST' })
 					span.setAttribute('entry_id', data.entryId);
 					span.setAttribute('user_id', context.user.id);
 
-					await Promise.all([
-						// DEPRECATED: update the old entries table with user info on it
-						// TODO: remove after full migrations
-						db
-							.update(entries)
-							.set({ starred: data.saved })
-							.where(and(eq(entries.id, data.entryId), eq(entries.userId, context.user.id))),
-						db
-							.update(userEntries)
-							.set({ starred: data.saved })
-							.where(
-								and(eq(userEntries.entryId, data.entryId), eq(userEntries.userId, context.user.id))
-							)
-					]);
+					// Update user entry starred status in the userEntries table
+					await db
+						.update(userEntries)
+						.set({ starred: data.saved })
+						.where(
+							and(eq(userEntries.entryId, data.entryId), eq(userEntries.userId, context.user.id))
+						);
 
 					span.setAttribute('status', 'success');
 					return true;
@@ -395,10 +396,11 @@ export const getEntriesServerFn = createServerFn({ method: 'GET' })
 					}
 				});
 
-				// Build query conditions
+				// Build query conditions - ensure user only sees entries from feeds they're subscribed to
+				// Using inner joins guarantees we only get entries that have user entries
 				const conditions = [
 					eq(userEntries.userId, context.user.id),
-					eq(userEntries.entryId, entries.id)
+					eq(userFeedSubscriptions.userId, context.user.id)
 				];
 
 				// Add filters based on input
@@ -426,7 +428,8 @@ export const getEntriesServerFn = createServerFn({ method: 'GET' })
 				const totalCountResult = await db
 					.select({ count: count() })
 					.from(entries)
-					.leftJoin(userEntries, eq(entries.id, userEntries.entryId))
+					.innerJoin(userEntries, eq(entries.id, userEntries.entryId))
+					.innerJoin(userFeedSubscriptions, eq(entries.feedId, userFeedSubscriptions.feedId))
 					.where(baseWhereConditions)
 					.execute();
 
@@ -447,7 +450,7 @@ export const getEntriesServerFn = createServerFn({ method: 'GET' })
 						description: entries.description,
 						author: entries.author,
 						publishedAt: entries.publishedAt,
-						// user entry
+						// user entry - guaranteed to exist due to inner join
 						meta: {
 							userId: userEntries.userId,
 							starred: userEntries.starred,
@@ -463,8 +466,9 @@ export const getEntriesServerFn = createServerFn({ method: 'GET' })
 						}
 					})
 					.from(entries)
+					.innerJoin(userEntries, eq(entries.id, userEntries.entryId))
+					.innerJoin(userFeedSubscriptions, eq(entries.feedId, userFeedSubscriptions.feedId))
 					.leftJoin(feeds, eq(entries.feedId, feeds.id))
-					.leftJoin(userEntries, eq(entries.id, userEntries.entryId))
 					.where(whereConditions)
 					.orderBy(desc(entries.publishedAt))
 					.limit(10) // Load 10 entries at a time
@@ -538,7 +542,6 @@ export const getEntryServerFn = createServerFn({ method: 'GET' })
 						// Feed fields
 						feed: {
 							id: feeds.id,
-							userId: feeds.userId,
 							categoryId: feeds.categoryId,
 							title: feeds.title,
 							link: feeds.link,
@@ -549,8 +552,8 @@ export const getEntryServerFn = createServerFn({ method: 'GET' })
 						}
 					})
 					.from(entries)
+					.innerJoin(userEntries, eq(entries.id, userEntries.entryId))
 					.leftJoin(feeds, eq(entries.feedId, feeds.id))
-					.leftJoin(userEntries, eq(entries.id, userEntries.entryId))
 					.where(and(eq(entries.id, data.entryId), eq(userEntries.userId, context.user.id)))
 					.limit(1);
 
