@@ -1,6 +1,6 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { reactStartCookies } from 'better-auth/react-start';
+import { tanstackStartCookies } from 'better-auth/tanstack-start';
 import { username } from 'better-auth/plugins';
 import { db } from './db-connection';
 import * as schema from './db-schema';
@@ -27,11 +27,14 @@ export const auth = betterAuth({
 		schema
 	}),
 	advanced: {
-		database: { generateId: false }
+		database: { generateId: 'uuid' }
 	},
 	emailAndPassword: {
 		enabled: true
 	},
 	socialProviders,
-	plugins: [username(), reactStartCookies()]
+	plugins: [username(), tanstackStartCookies()],
+	experimental: {
+		joins: true
+	}
 });
