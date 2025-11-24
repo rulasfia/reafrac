@@ -81,9 +81,6 @@ export const categories = pgTable('categories', {
 	id: text('id')
 		.primaryKey()
 		.$defaultFn(() => nanoid(12)),
-	userId: uuid('user_id')
-		.notNull()
-		.references(() => users.id, { onDelete: 'cascade' }), // TODO: delete
 	name: text('name').notNull(),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at')
@@ -96,9 +93,6 @@ export const feeds = pgTable('feeds', {
 	id: text('id')
 		.primaryKey()
 		.$defaultFn(() => nanoid(12)),
-	userId: uuid('user_id')
-		.notNull()
-		.references(() => users.id, { onDelete: 'cascade' }), // TODO: delete
 	categoryId: text('category_id').references(() => categories.id, { onDelete: 'cascade' }),
 	title: text('title').notNull(),
 	link: text('link').notNull(),
@@ -120,9 +114,6 @@ export const entries = pgTable(
 	{
 		// we use auto increment int here for even smaller size
 		id: serial().primaryKey(),
-		userId: uuid('user_id')
-			.notNull()
-			.references(() => users.id, { onDelete: 'cascade' }), // TODO: delete
 		feedId: text('feed_id')
 			.notNull()
 			.references(() => feeds.id, { onDelete: 'cascade' }),
@@ -131,8 +122,6 @@ export const entries = pgTable(
 		description: text('description').notNull(),
 		author: text('author').notNull(),
 		content: text('content'),
-		status: text('status', { enum: ['unread', 'read'] }).default('unread'), // TODO: delete
-		starred: boolean('starred').default(false), // TODO: delete
 		publishedAt: timestamp('published_at').notNull(),
 		createdAt: timestamp('created_at').defaultNow().notNull(),
 		updatedAt: timestamp('updated_at')

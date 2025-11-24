@@ -83,8 +83,6 @@ export const getFeedsServerFn = createServerFn({ method: 'GET' })
 							const newFeed = await db
 								.insert(feeds)
 								.values({
-									// TODO: Remove userId after full migration
-									userId: context.user.id,
 									title: f.title,
 									description: f.title,
 									link: f.feed_url,
@@ -321,8 +319,6 @@ export const addFeedServerFn = createServerFn({ method: 'GET' })
 					const newFeed = await db
 						.insert(feeds)
 						.values({
-							// TODO: Remove userId after full migration
-							userId: context.user.id,
 							title: validated.title,
 							description: validated.description,
 							link: data.feedUrl,
@@ -368,8 +364,6 @@ export const addFeedServerFn = createServerFn({ method: 'GET' })
 				if (existingFeed.length === 0 && validated.entries.length > 0) {
 					// Insert entries in batches if there are many entries
 					const entryValues = validated.entries.map((entry) => ({
-						// TODO: Remove userId after full migration
-						userId: context.user.id,
 						feedId: feed.id,
 						title: entry.title,
 						description: entry.description,

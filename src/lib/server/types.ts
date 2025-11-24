@@ -28,7 +28,7 @@ export interface FeedEntry {
 	feed_id: number;
 	title: string;
 	url: string;
-	enclosures: Record<string, any>[] | null;
+	enclosures: Record<string, unknown>[] | null;
 	comments_url: string | null;
 	published_at: string;
 	author: string;
