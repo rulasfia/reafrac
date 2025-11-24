@@ -135,7 +135,11 @@ function RouteComponent() {
 							className="-ml-px w-fit cursor-pointer rounded-l-none"
 							render={
 								<a
-									href={entry.data.link}
+									href={
+										entry.data.feed.meta.urlPrefix
+											? `${entry.data.feed.meta.urlPrefix}${entry.data.link}`
+											: entry.data.link
+									}
 									target="_blank"
 									rel="noopener noreferrer"
 									data-umami-event="outbound-link-click"

@@ -6,280 +6,9 @@ import sanitizeHtml from 'sanitize-html';
 import { sentryMiddleware } from '../middleware/sentry-middleware';
 import * as Sentry from '@sentry/tanstackstart-react';
 import { entries, feeds, userEntries, userFeedSubscriptions } from '../db-schema';
-import { eq, and, desc, lt, count, inArray, gte } from 'drizzle-orm';
+import { eq, and, desc, count, gte } from 'drizzle-orm';
 import type { EntryMeta } from './types';
 import { db } from '../db-connection';
-import { extractFeed } from '../utils/feed-utils';
-import { ParsedFeed } from '../schemas/feed-schemas';
-import { SimpleCache } from '../cache';
-
-// Feed cache using SimpleCache with stale-while-revalidate support
-const feedCache = new SimpleCache<ParsedFeed>(2 * 60 * 1000); // 2 minutes TTL
-
-// Configuration for feed refetching
-const REFETCH_CONFIG = {
-	// Only refetch feeds that haven't been updated in the last 5 minutes
-	MIN_REFETCH_INTERVAL: 5 * 60 * 1000, // 5 minutes
-	// Cache feed data for 2 minutes
-	FETCH_CACHE_TTL: 2 * 60 * 1000, // 2 minutes
-	// Maximum number of feeds to refetch in parallel
-	MAX_CONCURRENT_FETCHES: 5,
-	// Timeout for individual feed fetches
-	FETCH_TIMEOUT: 10000 // 10 seconds
-};
-
-// Helper function to get cached feed data or fetch new data
-async function getCachedFeedData(feedUrl: string): Promise<ParsedFeed> {
-	return feedCache.getOrFetchWithStale(
-		feedUrl,
-		async () => {
-			return await Promise.race([
-				extractFeed(feedUrl),
-				new Promise<never>((_, reject) =>
-					setTimeout(() => reject(new Error('Feed fetch timeout')), REFETCH_CONFIG.FETCH_TIMEOUT)
-				)
-			]);
-		},
-		{
-			ttl: REFETCH_CONFIG.FETCH_CACHE_TTL,
-			staleTtl: REFETCH_CONFIG.FETCH_CACHE_TTL * 2, // Allow 2x TTL for stale data
-			onStaleUsed: (_data) => {
-				// Optional: log when stale data is used
-				console.log(`Using stale feed data for ${feedUrl}`);
-			}
-		}
-	);
-}
-
-// Optimized helper function to refetch entries from feeds and insert only new entries
-async function refetchFeedEntries(
-	userId: string,
-	feedIds?: string[],
-	forceRefetch: boolean = false
-): Promise<void> {
-	return Sentry.startSpan({ op: 'function', name: 'refetchFeedEntries' }, async (span) => {
-		try {
-			span.setAttribute('user_id', userId);
-			span.setAttribute('feed_ids_count', feedIds?.length || 0);
-
-			// Get feeds to refetch, but only those that haven't been fetched recently (unless forceRefetch is true)
-			const fiveMinutesAgo = new Date(Date.now() - REFETCH_CONFIG.MIN_REFETCH_INTERVAL);
-
-			// Get feeds that the user is subscribed to
-			const feedsToRefetch = feedIds
-				? await db
-						.select()
-						.from(feeds)
-						.innerJoin(userFeedSubscriptions, eq(feeds.id, userFeedSubscriptions.feedId))
-						.where(
-							and(
-								eq(userFeedSubscriptions.userId, userId),
-								inArray(feeds.id, feedIds),
-								// Only if feed hasn't been fetched in the last 5 minutes, unless forceRefetch is true
-								forceRefetch ? undefined : lt(feeds.lastFetchedAt, fiveMinutesAgo)
-							)
-						)
-				: await db
-						.select()
-						.from(feeds)
-						.innerJoin(userFeedSubscriptions, eq(feeds.id, userFeedSubscriptions.feedId))
-						.where(
-							and(
-								eq(userFeedSubscriptions.userId, userId),
-								forceRefetch ? undefined : lt(feeds.lastFetchedAt, fiveMinutesAgo)
-							)
-						);
-
-			if (forceRefetch) {
-				console.log('Manually refetching feeds by user request');
-			}
-
-			if (feedsToRefetch.length === 0) {
-				span.setAttribute('status', 'skipped');
-				span.setAttribute('reason', 'no_feeds_need_refetch');
-				console.log('No feeds need refetching');
-				return;
-			}
-
-			span.setAttribute('feeds_to_refetch_count', feedsToRefetch.length);
-
-			// Get all existing entries at once for better efficiency (entries are now global, not per-user)
-			const allExistingEntries = await db
-				.select({ title: entries.title, link: entries.link, feedId: entries.feedId })
-				.from(entries)
-				.where(
-					inArray(
-						entries.feedId,
-						feedsToRefetch.map((f) => f.feeds.id)
-					)
-				);
-
-			console.log(`Found ${allExistingEntries.length} existing entries`); // Debugging
-
-			// Group existing entries by feedId for faster lookup
-			// Track titles and links separately for duplicate detection (skip if ANY match)
-			const existingEntriesByFeed = new Map<string, { titles: Set<string>; links: Set<string> }>();
-			for (const entry of allExistingEntries) {
-				if (!existingEntriesByFeed.has(entry.feedId)) {
-					existingEntriesByFeed.set(entry.feedId, { titles: new Set(), links: new Set() });
-				}
-				const existing = existingEntriesByFeed.get(entry.feedId)!;
-				if (entry.title) {
-					existing.titles.add(entry.title);
-				}
-				if (entry.link) {
-					existing.links.add(entry.link);
-				}
-			}
-
-			// Process feeds in batches to limit concurrent requests
-			const batches = [];
-			for (let i = 0; i < feedsToRefetch.length; i += REFETCH_CONFIG.MAX_CONCURRENT_FETCHES) {
-				batches.push(feedsToRefetch.slice(i, i + REFETCH_CONFIG.MAX_CONCURRENT_FETCHES));
-			}
-
-			let totalInserted = 0;
-
-			if (batches.length === 0) {
-				console.log('No feeds to refetch');
-			} else {
-				console.log(`Refetching ${feedsToRefetch.length} feeds in ${batches.length} batches`);
-			}
-
-			for (const batch of batches) {
-				const batchPromises = batch.map(async (feedRow) => {
-					const feed = feedRow.feeds; // Extract feed from the join result
-					try {
-						// Extract feed data with caching and timeout
-						const feedData = await Sentry.startSpan(
-							{ op: 'feed.extract', name: `Extract feed: ${feed.title}` },
-							async () => {
-								try {
-									return await getCachedFeedData(feed.link);
-								} catch (error) {
-									console.error(`Error extracting feed ${feed.title}:`, error);
-									throw error;
-								}
-							}
-						);
-
-						if (!feedData?.entries?.length) {
-							return { feedId: feed.id, inserted: 0 };
-						}
-
-						span.setAttribute(`feed_${feed.id}_entries_count`, feedData.entries.length);
-
-						// Get existing entries for this specific feed
-						const existingEntries = existingEntriesByFeed.get(feed.id) || {
-							titles: new Set(),
-							links: new Set()
-						};
-
-						// Filter out entries that already exist based on title OR link matching
-						const newEntries = feedData.entries.filter((entry) => {
-							if (!entry.title) return false;
-
-							// Skip if title already exists OR link already exists
-							const titleExists = entry.title ? existingEntries.titles.has(entry.title) : false;
-							const linkExists = entry.link ? existingEntries.links.has(entry.link) : false;
-
-							return !titleExists && !linkExists;
-						});
-
-						span.setAttribute(`feed_${feed.id}_new_entries_count`, newEntries.length);
-
-						console.log(`Found ${newEntries.length} new entries for feed ${feed.title}`);
-
-						const insertedCount = newEntries.length;
-
-						if (newEntries.length > 0) {
-							// Prepare entry values for insertion
-							// TODO: After migration, remove userId from entries table to make it truly global
-							const entryValues = newEntries.map((entry) => ({
-								userId, // Keep for now - will be removed after full migration
-								feedId: feed.id,
-								title: entry.title,
-								description: entry.description,
-								link: entry.link,
-								publishedAt: new Date(entry.published || Date.now()),
-								author: typeof entry.author === 'string' ? entry.author : '',
-								content: entry.content,
-								thumbnail: entry.thumbnail?.url,
-								thumbnailCaption: entry.thumbnail?.text ?? entry.title
-							}));
-
-							// Insert new entries and get the inserted IDs
-							const insertedEntries = await db
-								.insert(entries)
-								.values(entryValues)
-								.returning({ id: entries.id });
-
-							// Create user entries for the user so they can access these entries
-							await db.insert(userEntries).values(
-								insertedEntries.map((insertedEntry) => ({
-									userId,
-									entryId: insertedEntry.id,
-									status: 'unread' as const,
-									starred: false
-								}))
-							);
-
-							span.setAttribute(`feed_${feed.id}_inserted_count`, entryValues.length);
-						}
-
-						// Update the feed's lastFetchedAt timestamp after successful fetch
-						await db
-							.update(feeds)
-							.set({ lastFetchedAt: new Date() })
-							.where(eq(feeds.id, feed.id));
-
-						return { feedId: feed.id, inserted: insertedCount };
-					} catch (error) {
-						// Log error for individual feed but continue processing other feeds
-						Sentry.captureException(error, {
-							tags: { function: 'refetchFeedEntries', feedId: feed.id },
-							extra: {
-								userId,
-								feedId: feed.id,
-								feedUrl: feed.link,
-								errorMessage: error instanceof Error ? error.message : 'Unknown error'
-							}
-						});
-						return {
-							feedId: feed.id,
-							inserted: 0,
-							error: error instanceof Error ? error.message : 'Unknown error'
-						};
-					}
-				});
-
-				const batchResults = await Promise.allSettled(batchPromises);
-
-				// Count successful insertions
-				for (const result of batchResults) {
-					if (result.status === 'fulfilled') {
-						totalInserted += result.value.inserted;
-					}
-				}
-			}
-
-			span.setAttribute('total_inserted', totalInserted);
-
-			span.setAttribute('status', 'success');
-		} catch (error) {
-			span.setAttribute('status', 'error');
-			Sentry.captureException(error, {
-				tags: { function: 'refetchFeedEntries' },
-				extra: {
-					userId,
-					feedIds: feedIds,
-					errorMessage: error instanceof Error ? error.message : 'Unknown error'
-				}
-			});
-			throw error;
-		}
-	});
-}
 
 export const updateEntryStatusServerFn = createServerFn({ method: 'POST' })
 	.middleware([sentryMiddleware, authFnMiddleware])
@@ -376,11 +105,11 @@ export const getEntriesServerFn = createServerFn({ method: 'GET' })
 				// Only refetch for specific feed if feedId is provided, otherwise refetch all feeds
 				Sentry.startSpan({ op: 'function', name: 'refetchBeforeGetEntries' }, async () => {
 					try {
-						await refetchFeedEntries(
-							context.user.id,
-							data.feedId ? [data.feedId] : undefined,
-							data.forceRefetch
-						);
+						// await refetchFeedEntries(
+						// 	context.user.id,
+						// 	data.feedId ? [data.feedId] : undefined,
+						// 	data.forceRefetch
+						// );
 					} catch (error) {
 						console.error('Error refetching feed entries:', error);
 						// Don't let refetch errors block the main request - just log them
@@ -538,22 +267,10 @@ export const getEntryServerFn = createServerFn({ method: 'GET' })
 							userId: userEntries.userId,
 							starred: userEntries.starred,
 							status: userEntries.status
-						},
-						// Feed fields
-						feed: {
-							id: feeds.id,
-							categoryId: feeds.categoryId,
-							title: feeds.title,
-							link: feeds.link,
-							icon: feeds.icon,
-							description: feeds.description,
-							language: feeds.language,
-							generator: feeds.generator
 						}
 					})
 					.from(entries)
 					.innerJoin(userEntries, eq(entries.id, userEntries.entryId))
-					.leftJoin(feeds, eq(entries.feedId, feeds.id))
 					.where(and(eq(entries.id, data.entryId), eq(userEntries.userId, context.user.id)))
 					.limit(1);
 
@@ -561,6 +278,30 @@ export const getEntryServerFn = createServerFn({ method: 'GET' })
 				if (!entry) {
 					throw new Error('Entry not found');
 				}
+				const feed = await db
+					.select({
+						id: feeds.id,
+						title: feeds.title,
+						description: feeds.description,
+						link: feeds.link,
+						icon: feeds.icon,
+						siteUrl: feeds.siteUrl,
+						language: feeds.language,
+						generator: feeds.generator,
+						publishedAt: feeds.publishedAt,
+						lastFetchedAt: feeds.lastFetchedAt,
+						createdAt: feeds.createdAt,
+						updatedAt: feeds.updatedAt,
+						meta: {
+							urlPrefix: userFeedSubscriptions.urlPrefix,
+							title: userFeedSubscriptions.title,
+							icon: userFeedSubscriptions.icon
+						}
+					})
+					.from(feeds)
+					.innerJoin(userFeedSubscriptions, eq(feeds.id, userFeedSubscriptions.feedId))
+					.where(and(eq(feeds.id, entry.feedId), eq(userFeedSubscriptions.userId, context.user.id)))
+					.limit(1);
 
 				//  sanitize HTML in the entry.content
 				const sanitizedContent = sanitizeHtml(
@@ -573,7 +314,7 @@ export const getEntryServerFn = createServerFn({ method: 'GET' })
 
 				span.setAttribute('status', 'success');
 				span.setAttribute('content_length', sanitizedContent.length);
-				return { ...entry, content: sanitizedContent };
+				return { ...entry, content: sanitizedContent, feed: feed[0] };
 			} catch (error) {
 				span.setAttribute('status', 'error');
 				Sentry.captureException(error, {

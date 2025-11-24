@@ -158,6 +158,9 @@ export const userFeedSubscriptions = pgTable(
 		feedId: text('feed_id')
 			.notNull()
 			.references(() => feeds.id, { onDelete: 'cascade' }),
+		urlPrefix: text('url_prefix'),
+		title: text('title'),
+		icon: text('icon'),
 		subscribedAt: timestamp('subscribed_at').defaultNow().notNull(),
 		createdAt: timestamp('created_at').defaultNow().notNull(),
 		updatedAt: timestamp('updated_at')
