@@ -14,7 +14,7 @@ import { toastManager } from '../ui/toast';
 import { startTransition, useEffect, useState } from 'react';
 import type { Schema } from '@/lib/db-schema';
 import { Form } from '../ui/form';
-import { Field, FieldError, FieldLabel } from '../ui/field';
+import { Field, FieldDescription, FieldError, FieldLabel } from '../ui/field';
 import { Input } from '../ui/input';
 import { z } from 'zod/mini';
 import { useServerFn } from '@tanstack/react-start';
@@ -23,7 +23,7 @@ import { Spinner } from '../ui/spinner';
 
 const editFeedSchema = z.object({
 	title: z.string({ error: 'Invalid title' }),
-	feedUrl: z.url({ error: 'Invalid URL' }),
+	urlPrefix: z.string({ error: 'Invalid URL Prefix' }),
 	icon: z
 		.url({ error: 'Invalid icon URL' })
 		.check(
@@ -42,7 +42,11 @@ const editFeedSchema = z.object({
 type Errors = Record<string, string | string[]>;
 
 interface Props {
-	item: Schema['Feed'] | null;
+	item:
+		| (Schema['Feed'] & {
+				meta: Pick<Schema['UserFeedSubscription'], 'icon' | 'urlPrefix' | 'title'>;
+		  })
+		| null;
 	onUpdate?: (data: { feedId: string; title?: string; url?: string }) => Promise<void>;
 	onClose?: () => void;
 }
@@ -69,11 +73,11 @@ export function EditFeedDialog({ item, onClose }: Props) {
 			setErrors({});
 			const formData = new FormData(event.currentTarget);
 			// Prompt for new title
+			const urlPrefix = formData.get('urlPrefix') as string;
 			const title = formData.get('title') as string;
-			const feedUrl = formData.get('feedUrl') as string;
 			const icon = formData.get('icon') as string;
 
-			const result = editFeedSchema.safeParse({ title, feedUrl, icon });
+			const result = editFeedSchema.safeParse({ title, urlPrefix, icon });
 			if (!result.success) {
 				const { fieldErrors } = z.flattenError(result.error);
 				setErrors(fieldErrors);
@@ -84,8 +88,8 @@ export function EditFeedDialog({ item, onClose }: Props) {
 			const updateData = {
 				feedId: item.id,
 				title: result.data.title.trim(),
-				url: result.data.feedUrl.trim(),
-				icon: result.data.icon.trim()
+				icon: result.data.icon.trim(),
+				urlPrefix: result.data.urlPrefix.trim()
 			};
 
 			setIsEditing(true);
@@ -135,20 +139,46 @@ export function EditFeedDialog({ item, onClose }: Props) {
 					>
 						<Field name="title">
 							<FieldLabel>Title</FieldLabel>
-							<Input defaultValue={item?.title} name="title" placeholder="Feed Title" type="text" />
+							<Input
+								defaultValue={item.meta.title || item?.title}
+								name="title"
+								placeholder="Feed Title"
+								type="text"
+							/>
 							<FieldError />
 						</Field>
 
 						<Field name="feedUrl">
 							<FieldLabel>Feed URL</FieldLabel>
-							<Input defaultValue={item?.link} name="feedUrl" placeholder="Feed URL" type="url" />
+							<Input
+								disabled
+								defaultValue={item?.link}
+								name="feedUrl"
+								placeholder="Feed URL"
+								type="url"
+							/>
+							<FieldError />
+						</Field>
+
+						<Field name="urlPrefix">
+							<FieldLabel>URL Prefix</FieldLabel>
+							<Input
+								name="urlPrefix"
+								defaultValue={item.meta.urlPrefix ?? undefined}
+								placeholder="https://prefix.url/"
+								type="text"
+							/>
+							<FieldDescription>
+								When you click 'Read Original Source' link, it will go to:{' '}
+								<span className="font-mono wrap-break-word">{`https://prefix.url/https://original.url`}</span>
+							</FieldDescription>
 							<FieldError />
 						</Field>
 
 						<Field name="icon">
 							<FieldLabel>Icon URL</FieldLabel>
 							<Input
-								defaultValue={item?.icon}
+								defaultValue={item.meta.icon || item?.icon}
 								className="w-full"
 								placeholder="Icon URL"
 								type="text"

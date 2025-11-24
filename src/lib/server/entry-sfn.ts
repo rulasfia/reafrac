@@ -228,10 +228,7 @@ async function refetchFeedEntries(
 						}
 
 						// Update the feed's lastFetchedAt timestamp after successful fetch
-						await db
-							.update(feeds)
-							.set({ lastFetchedAt: new Date() })
-							.where(eq(feeds.id, feed.id));
+						await db.update(feeds).set({ lastFetchedAt: new Date() }).where(eq(feeds.id, feed.id));
 
 						return { feedId: feed.id, inserted: insertedCount };
 					} catch (error) {
@@ -538,22 +535,10 @@ export const getEntryServerFn = createServerFn({ method: 'GET' })
 							userId: userEntries.userId,
 							starred: userEntries.starred,
 							status: userEntries.status
-						},
-						// Feed fields
-						feed: {
-							id: feeds.id,
-							categoryId: feeds.categoryId,
-							title: feeds.title,
-							link: feeds.link,
-							icon: feeds.icon,
-							description: feeds.description,
-							language: feeds.language,
-							generator: feeds.generator
 						}
 					})
 					.from(entries)
 					.innerJoin(userEntries, eq(entries.id, userEntries.entryId))
-					.leftJoin(feeds, eq(entries.feedId, feeds.id))
 					.where(and(eq(entries.id, data.entryId), eq(userEntries.userId, context.user.id)))
 					.limit(1);
 
@@ -561,6 +546,30 @@ export const getEntryServerFn = createServerFn({ method: 'GET' })
 				if (!entry) {
 					throw new Error('Entry not found');
 				}
+				const feed = await db
+					.select({
+						id: feeds.id,
+						title: feeds.title,
+						description: feeds.description,
+						link: feeds.link,
+						icon: feeds.icon,
+						siteUrl: feeds.siteUrl,
+						language: feeds.language,
+						generator: feeds.generator,
+						publishedAt: feeds.publishedAt,
+						lastFetchedAt: feeds.lastFetchedAt,
+						createdAt: feeds.createdAt,
+						updatedAt: feeds.updatedAt,
+						meta: {
+							urlPrefix: userFeedSubscriptions.urlPrefix,
+							title: userFeedSubscriptions.title,
+							icon: userFeedSubscriptions.icon
+						}
+					})
+					.from(feeds)
+					.innerJoin(userFeedSubscriptions, eq(feeds.id, userFeedSubscriptions.feedId))
+					.where(and(eq(feeds.id, entry.feedId), eq(userFeedSubscriptions.userId, context.user.id)))
+					.limit(1);
 
 				//  sanitize HTML in the entry.content
 				const sanitizedContent = sanitizeHtml(
@@ -573,7 +582,7 @@ export const getEntryServerFn = createServerFn({ method: 'GET' })
 
 				span.setAttribute('status', 'success');
 				span.setAttribute('content_length', sanitizedContent.length);
-				return { ...entry, content: sanitizedContent };
+				return { ...entry, content: sanitizedContent, feed: feed[0] };
 			} catch (error) {
 				span.setAttribute('status', 'error');
 				Sentry.captureException(error, {

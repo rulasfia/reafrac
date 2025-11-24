@@ -1,0 +1,1 @@
+ALTER TABLE "user_feed_subscriptions" ADD COLUMN "url_prefix" text;

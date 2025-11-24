@@ -5,7 +5,6 @@ import { Button } from '../ui/button';
 import { Spinner } from '../ui/spinner';
 import { Separator } from '../ui/separator';
 import { CircleMinusIcon, SquarePenIcon } from 'lucide-react';
-import { EditFeedDialog } from './edit-feed-dialog';
 
 interface FeedItemProps {
 	item: Schema['Feed'];

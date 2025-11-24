@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getFeedsServerFn, removeFeedServerFn, updateFeedServerFn } from '@/lib/server/feed-sfn';
+import { getFeedsServerFn, removeFeedServerFn } from '@/lib/server/feed-sfn';
 import { useLoaderData, useLocation } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
 import { FeedItem } from './feed-item';
@@ -15,7 +15,6 @@ export function FeedSetting() {
 	const qc = useQueryClient();
 	const getFeeds = useServerFn(getFeedsServerFn);
 	const removeFeed = useServerFn(removeFeedServerFn);
-	const updateFeed = useServerFn(updateFeedServerFn);
 
 	const { data: feeds, refetch: invalidateFeeds } = useQuery({
 		queryKey: ['feeds', user.id, integration?.id],
@@ -44,30 +43,6 @@ export function FeedSetting() {
 			toastManager.add({
 				title: 'Error',
 				description: 'Failed to remove feed',
-				type: 'error'
-			});
-		}
-	};
-
-	const handleUpdateFeed = async (data: { feedId: string; title?: string; url?: string }) => {
-		try {
-			await updateFeed({ data });
-			await invalidateFeeds();
-			// don't await, let it start in the bg
-			qc.invalidateQueries({
-				queryKey: ['entries', integration?.id, search.page]
-			});
-
-			toastManager.add({
-				title: 'Success',
-				description: 'Feed updated successfully',
-				type: 'success'
-			});
-		} catch (error) {
-			console.error(error);
-			toastManager.add({
-				title: 'Error',
-				description: 'Failed to update feed',
 				type: 'error'
 			});
 		}
