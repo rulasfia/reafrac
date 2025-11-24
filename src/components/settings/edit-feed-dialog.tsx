@@ -23,7 +23,7 @@ import { Spinner } from '../ui/spinner';
 
 const editFeedSchema = z.object({
 	title: z.string({ error: 'Invalid title' }),
-	urlPrefix: z.string({ error: 'Invalid URL Prefix' }),
+	urlPrefix: z.optional(z.string({ error: 'Invalid URL Prefix' })),
 	icon: z
 		.url({ error: 'Invalid icon URL' })
 		.check(
@@ -73,7 +73,7 @@ export function EditFeedDialog({ item, onClose }: Props) {
 			setErrors({});
 			const formData = new FormData(event.currentTarget);
 			// Prompt for new title
-			const urlPrefix = formData.get('urlPrefix') as string;
+			const urlPrefix = (formData.get('urlPrefix') as string) ?? undefined;
 			const title = formData.get('title') as string;
 			const icon = formData.get('icon') as string;
 
@@ -89,7 +89,7 @@ export function EditFeedDialog({ item, onClose }: Props) {
 				feedId: item.id,
 				title: result.data.title.trim(),
 				icon: result.data.icon.trim(),
-				urlPrefix: result.data.urlPrefix.trim()
+				urlPrefix: result.data.urlPrefix?.trim()
 			};
 
 			setIsEditing(true);
