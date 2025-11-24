@@ -43,7 +43,7 @@ type Errors = Record<string, string | string[]>;
 
 interface Props {
 	item:
-		| (Schema['Feed'] & {
+		| (Omit<Schema['Feed'], 'userId' | 'categoryId'> & {
 				meta: Pick<Schema['UserFeedSubscription'], 'icon' | 'urlPrefix' | 'title'>;
 		  })
 		| null;
