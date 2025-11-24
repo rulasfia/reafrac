@@ -66,7 +66,7 @@ function RouteComponent() {
 
 		const date = new Date().getDate();
 		const uid = nanoid(4);
-		const username = `${name.split(' ')[0].toLowerCase()}-${date}${uid}`;
+		const username = `${name.split(' ')[0].toLowerCase()}_${date}${uid}`;
 
 		await authClient.signUp.email(
 			{ email, password, name, username },

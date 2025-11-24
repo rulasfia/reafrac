@@ -5,10 +5,11 @@ import { Button } from '../ui/button';
 import { Spinner } from '../ui/spinner';
 import { Separator } from '../ui/separator';
 import { CircleMinusIcon, SquarePenIcon } from 'lucide-react';
-import { EditFeedDialog } from './edit-feed-dialog';
 
 interface FeedItemProps {
-	item: Schema['Feed'];
+	item: Omit<Schema['Feed'], 'userId' | 'categoryId'> & {
+		meta: Pick<Schema['UserFeedSubscription'], 'title' | 'icon' | 'urlPrefix'>;
+	};
 	onRemove?: (feedId: string) => Promise<void>;
 	onUpdate?: () => void;
 }
@@ -35,6 +36,16 @@ export function FeedItem({ item, onRemove, onUpdate }: FeedItemProps) {
 		}
 	};
 
+	const getFeedIcon = () => {
+		if (item.meta.icon) {
+			return item.meta.icon;
+		} else if (item.icon) {
+			return item.icon;
+		} else {
+			return '/favicon.ico';
+		}
+	};
+
 	return (
 		<div className="flex flex-row items-center gap-x-2">
 			<Button
@@ -52,7 +63,7 @@ export function FeedItem({ item, onRemove, onUpdate }: FeedItemProps) {
 			<img
 				width={18}
 				height={18}
-				src={item.icon === '' ? '/favicon.ico' : item.icon}
+				src={getFeedIcon()}
 				alt={item.title}
 				className="size-5 rounded-xs border border-border"
 			/>

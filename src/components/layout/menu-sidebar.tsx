@@ -46,6 +46,16 @@ export function MenuSidebar() {
 		staleTime: 2 * 60 * 1000 // 2 minutes
 	});
 
+	const getFeedIcon = (item: Awaited<ReturnType<typeof getFeeds>>[number]) => {
+		if (item.meta.icon) {
+			return item.meta.icon;
+		} else if (item.icon) {
+			return item.icon;
+		} else {
+			return '/favicon.ico';
+		}
+	};
+
 	return (
 		<div className="mr col-span-1 flex h-full flex-col overflow-y-auto border-r bg-muted lg:col-span-2 dark:bg-accent">
 			<SidebarHeader>
@@ -112,11 +122,11 @@ export function MenuSidebar() {
 											<img
 												width={16}
 												height={16}
-												src={item.icon === '' ? '/favicon.ico' : item.icon}
-												alt={item.title}
+												src={getFeedIcon(item)}
+												alt={item.meta.title || item.title}
 												className="size-4 rounded-xs border border-transparent"
 											/>
-											<span className="hidden lg:block">{item.title}</span>
+											<span className="hidden lg:block">{item.meta.title || item.title}</span>
 										</Link>
 									</SidebarMenuButton>
 								</SidebarMenuItem>

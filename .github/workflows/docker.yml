@@ -79,7 +79,7 @@ jobs:
         run: |
           curl \
             -u ${{ secrets.NTFY_CRED }} \
-            -H "Title: Reafrac Workflow Completed!" \
+            -H "Title: Github Workflow Completed!" \
             -H "Content-Type: text/plain" \
             -d $'Repo: ${{ github.repository }}\nCommit: ${{ github.sha }}\nRef: ${{ github.ref }}\nStatus: ${{ job.status}}' \
             ${{ secrets.NTFY_URL }}
