@@ -417,7 +417,7 @@ export const addFeedServerFn = createServerFn({ method: 'GET' })
 const UpdateFeedSchema = z.object({
 	feedId: z.string(),
 	title: z.optional(z.string()),
-	urlPrefix: z.optional(z.url()),
+	urlPrefix: z.optional(z.string()),
 	icon: z.optional(
 		z
 			.url()

@@ -67,7 +67,7 @@ export function FeedItem({ item, onRemove, onUpdate }: FeedItemProps) {
 				alt={item.title}
 				className="size-5 rounded-xs border border-border"
 			/>
-			<span>{item.title}</span>
+			<span>{item.meta.title || item.title}</span>
 		</div>
 	);
 }
