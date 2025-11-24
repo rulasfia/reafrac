@@ -20,5 +20,6 @@ if (!queryClient) {
 
 export const db = drizzle<typeof schema>({
 	client: queryClient,
-	casing: 'snake_case'
+	casing: 'snake_case',
+	schema
 });

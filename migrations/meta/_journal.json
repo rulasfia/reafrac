@@ -71,6 +71,20 @@
       "when": 1763910427852,
       "tag": "0009_brown_post",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1763956118729,
+      "tag": "0010_brown_agent_zero",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1763957044834,
+      "tag": "0011_chemical_northstar",
+      "breakpoints": true
     }
   ]
 }

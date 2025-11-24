@@ -1,4 +1,14 @@
-import { pgTable, text, timestamp, boolean, uuid, serial, unique } from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
+import {
+	pgTable,
+	index,
+	text,
+	timestamp,
+	boolean,
+	uuid,
+	serial,
+	unique
+} from 'drizzle-orm/pg-core';
 import { nanoid } from 'nanoid';
 
 export const users = pgTable('users', {
@@ -16,52 +26,83 @@ export const users = pgTable('users', {
 	displayUsername: text('display_username')
 });
 
-export const sessions = pgTable('sessions', {
-	id: uuid('id').defaultRandom().primaryKey(),
-	expiresAt: timestamp('expires_at').notNull(),
-	token: text('token').notNull().unique(),
-	createdAt: timestamp('created_at').defaultNow().notNull(),
-	updatedAt: timestamp('updated_at')
-		.$onUpdate(() => /* @__PURE__ */ new Date())
-		.notNull(),
-	ipAddress: text('ip_address'),
-	userAgent: text('user_agent'),
-	userId: uuid('user_id')
-		.notNull()
-		.references(() => users.id, { onDelete: 'cascade' })
-});
+export const sessions = pgTable(
+	'sessions',
+	{
+		id: uuid('id').defaultRandom().primaryKey(),
+		expiresAt: timestamp('expires_at').notNull(),
+		token: text('token').notNull().unique(),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at')
+			.$onUpdate(() => /* @__PURE__ */ new Date())
+			.notNull(),
+		ipAddress: text('ip_address'),
+		userAgent: text('user_agent'),
+		userId: uuid('user_id')
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' })
+	},
+	(table) => [index('sessions_userId_idx').on(table.userId)]
+);
 
-export const accounts = pgTable('accounts', {
-	id: uuid('id').defaultRandom().primaryKey(),
-	accountId: text('account_id').notNull(),
-	providerId: text('provider_id').notNull(),
-	userId: uuid('user_id')
-		.notNull()
-		.references(() => users.id, { onDelete: 'cascade' }),
-	accessToken: text('access_token'),
-	refreshToken: text('refresh_token'),
-	idToken: text('id_token'),
-	accessTokenExpiresAt: timestamp('access_token_expires_at'),
-	refreshTokenExpiresAt: timestamp('refresh_token_expires_at'),
-	scope: text('scope'),
-	password: text('password'),
-	createdAt: timestamp('created_at').defaultNow().notNull(),
-	updatedAt: timestamp('updated_at')
-		.$onUpdate(() => /* @__PURE__ */ new Date())
-		.notNull()
-});
+export const accounts = pgTable(
+	'accounts',
+	{
+		id: uuid('id').defaultRandom().primaryKey(),
+		accountId: text('account_id').notNull(),
+		providerId: text('provider_id').notNull(),
+		userId: uuid('user_id')
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' }),
+		accessToken: text('access_token'),
+		refreshToken: text('refresh_token'),
+		idToken: text('id_token'),
+		accessTokenExpiresAt: timestamp('access_token_expires_at'),
+		refreshTokenExpiresAt: timestamp('refresh_token_expires_at'),
+		scope: text('scope'),
+		password: text('password'),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at')
+			.$onUpdate(() => /* @__PURE__ */ new Date())
+			.notNull()
+	},
+	(table) => [index('accounts_userId_idx').on(table.userId)]
+);
 
-export const verifications = pgTable('verifications', {
-	id: uuid('id').defaultRandom().primaryKey(),
-	identifier: text('identifier').notNull(),
-	value: text('value').notNull(),
-	expiresAt: timestamp('expires_at').notNull(),
-	createdAt: timestamp('created_at').defaultNow().notNull(),
-	updatedAt: timestamp('updated_at')
-		.defaultNow()
-		.$onUpdate(() => /* @__PURE__ */ new Date())
-		.notNull()
-});
+export const verifications = pgTable(
+	'verifications',
+	{
+		id: uuid('id').defaultRandom().primaryKey(),
+		identifier: text('identifier').notNull(),
+		value: text('value').notNull(),
+		expiresAt: timestamp('expires_at').notNull(),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at')
+			.defaultNow()
+			.$onUpdate(() => /* @__PURE__ */ new Date())
+			.notNull()
+	},
+	(table) => [index('verifications_identifier_idx').on(table.identifier)]
+);
+
+export const userRelations = relations(users, ({ many }) => ({
+	sessions: many(sessions),
+	accounts: many(accounts)
+}));
+
+export const sessionRelations = relations(sessions, ({ one }) => ({
+	users: one(users, {
+		fields: [sessions.userId],
+		references: [users.id]
+	})
+}));
+
+export const accountRelations = relations(accounts, ({ one }) => ({
+	users: one(users, {
+		fields: [accounts.userId],
+		references: [users.id]
+	})
+}));
 
 export const fluxConnections = pgTable('flux_connections', {
 	id: uuid('id').defaultRandom().primaryKey(),
@@ -81,9 +122,6 @@ export const categories = pgTable('categories', {
 	id: text('id')
 		.primaryKey()
 		.$defaultFn(() => nanoid(12)),
-	userId: uuid('user_id')
-		.notNull()
-		.references(() => users.id, { onDelete: 'cascade' }), // TODO: delete
 	name: text('name').notNull(),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at')
@@ -96,9 +134,6 @@ export const feeds = pgTable('feeds', {
 	id: text('id')
 		.primaryKey()
 		.$defaultFn(() => nanoid(12)),
-	userId: uuid('user_id')
-		.notNull()
-		.references(() => users.id, { onDelete: 'cascade' }), // TODO: delete
 	categoryId: text('category_id').references(() => categories.id, { onDelete: 'cascade' }),
 	title: text('title').notNull(),
 	link: text('link').notNull(),
@@ -120,9 +155,6 @@ export const entries = pgTable(
 	{
 		// we use auto increment int here for even smaller size
 		id: serial().primaryKey(),
-		userId: uuid('user_id')
-			.notNull()
-			.references(() => users.id, { onDelete: 'cascade' }), // TODO: delete
 		feedId: text('feed_id')
 			.notNull()
 			.references(() => feeds.id, { onDelete: 'cascade' }),
@@ -131,8 +163,6 @@ export const entries = pgTable(
 		description: text('description').notNull(),
 		author: text('author').notNull(),
 		content: text('content'),
-		status: text('status', { enum: ['unread', 'read'] }).default('unread'), // TODO: delete
-		starred: boolean('starred').default(false), // TODO: delete
 		publishedAt: timestamp('published_at').notNull(),
 		createdAt: timestamp('created_at').defaultNow().notNull(),
 		updatedAt: timestamp('updated_at')

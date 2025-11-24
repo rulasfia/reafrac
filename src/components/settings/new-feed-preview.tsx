@@ -4,7 +4,11 @@ import type { Schema } from '@/lib/db-schema';
 
 type Props = {
 	feed: (ParsedFeed & { feedUrl: string }) | null;
-	feeds: Schema['Feed'][];
+	feeds: Array<
+		Omit<Schema['Feed'], 'userId' | 'categoryId'> & {
+			meta: Pick<Schema['UserFeedSubscription'], 'icon' | 'urlPrefix' | 'title'>;
+		}
+	>;
 };
 
 const STARTER_FEED = [

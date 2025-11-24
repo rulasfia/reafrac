@@ -26,9 +26,6 @@ export const categories = pgTable('categories', {
 	id: text('id')
 		.primaryKey()
 		.$defaultFn(() => nanoid(12)),
-	userId: uuid('user_id')
-		.notNull()
-		.references(() => users.id, { onDelete: 'cascade' }), // TODO: delete
 	name: text('name').notNull(),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at')
@@ -41,9 +38,6 @@ export const feeds = pgTable('feeds', {
 	id: text('id')
 		.primaryKey()
 		.$defaultFn(() => nanoid(12)),
-	userId: uuid('user_id')
-		.notNull()
-		.references(() => users.id, { onDelete: 'cascade' }), // TODO: delete
 	categoryId: text('category_id').references(() => categories.id, { onDelete: 'cascade' }),
 	title: text('title').notNull(),
 	link: text('link').notNull(),
@@ -65,9 +59,6 @@ export const entries = pgTable(
 	{
 		// we use auto increment int here for even smaller size
 		id: serial().primaryKey(),
-		userId: uuid('user_id')
-			.notNull()
-			.references(() => users.id, { onDelete: 'cascade' }), // TODO: delete
 		feedId: text('feed_id')
 			.notNull()
 			.references(() => feeds.id, { onDelete: 'cascade' }),
@@ -76,8 +67,6 @@ export const entries = pgTable(
 		description: text('description').notNull(),
 		author: text('author').notNull(),
 		content: text('content'),
-		status: text('status', { enum: ['unread', 'read'] }).default('unread'), // TODO: delete
-		starred: boolean('starred').default(false), // TODO: delete
 		publishedAt: timestamp('published_at').notNull(),
 		createdAt: timestamp('created_at').defaultNow().notNull(),
 		updatedAt: timestamp('updated_at')
@@ -270,7 +259,9 @@ export async function extractFeed(url: string) {
 				// TODO: fallback thumbnail parsing in the content
 			}
 
-			console.log({ thumbnail });
+			if (thumbnail?.url) {
+				console.log(`thumbnail - ${thumbnail.url}`);
+			}
 
 			return { author, content, thumbnail };
 		}
@@ -288,7 +279,7 @@ async function refetchFeeds() {
 	try {
 		const feedsToRefetch = await db.select().from(feeds).limit(50); // Limit to prevent overwhelming the system
 
-		console.log(`Found ${feedsToRefetch.length} feeds to refetch`);
+		console.log(`>>> Found ${feedsToRefetch.length} feeds to refetch`);
 
 		for (const feed of feedsToRefetch) {
 			try {
@@ -335,14 +326,13 @@ async function refetchFeeds() {
 						continue;
 					}
 
-					console.log(`Processing ${newEntries.length} new entries for feed ${feed.id}`);
+					console.log(`>>> Processing ${newEntries.length} new entries for feed ${feed.id}`);
 
 					// Insert new entries
 					const insertedEntries = await db
 						.insert(entries)
 						.values(
 							newEntries.map((entry) => ({
-								userId: '',
 								feedId: feed.id,
 								title: entry.title,
 								description: entry.description,
@@ -373,7 +363,7 @@ async function refetchFeeds() {
 
 					if (userEntriesValues.length > 0) {
 						await db.insert(userEntries).values(userEntriesValues);
-						console.log(`Created ${userEntriesValues.length} user entries`);
+						console.log(`>>> Created ${userEntriesValues.length} user entries`);
 					}
 				}
 
