@@ -193,6 +193,7 @@ const FeedManager = {
 			}
 			return val.trim();
 		}),
+		z.number().transform((val) => val.toString()),
 		z.object({ name: z.string() }).transform((val) => val.name.trim()),
 		z.array(z.string()).transform((val) => val.join(', ').trim()),
 		z
@@ -218,8 +219,6 @@ const FeedManager = {
 };
 
 export async function extractFeed(url: string) {
-	console.log('fetching feed...', url);
-
 	const res = await extract(url, {
 		descriptionMaxLen: 0,
 		getExtraFeedFields: (feed) => {
@@ -259,10 +258,6 @@ export async function extractFeed(url: string) {
 				// TODO: fallback thumbnail parsing in the content
 			}
 
-			if (thumbnail?.url) {
-				console.log(`thumbnail - ${thumbnail.url}`);
-			}
-
 			return { author, content, thumbnail };
 		}
 	});
@@ -281,9 +276,11 @@ async function refetchFeeds() {
 
 		console.log(`>>> Found ${feedsToRefetch.length} feeds to refetch`);
 
-		for (const feed of feedsToRefetch) {
+		// Create async functions for each feed to be executed in parallel
+		const feedPromises = feedsToRefetch.map(async (feed, idx) => {
 			try {
-				console.log(`Refetching feed: ${feed.title} (${feed.link})`);
+				const i = String(idx + 1).padStart(2, '0');
+				console.log(`${i}. Refetching feed: ${feed.title} (${feed.link})`);
 
 				// Extract feed data using the existing utility
 				const feedData = await extractFeed(feed.link);
@@ -304,8 +301,8 @@ async function refetchFeeds() {
 					.where(eq(userFeedSubscriptions.feedId, feed.id));
 
 				if (subscriptions.length === 0) {
-					console.log(`No users subscribed to feed ${feed.id}, skipping entry insertion`);
-					continue;
+					console.log(`${i}. No users subscribed to feed ${feed.title}, skipping entry insertion`);
+					return;
 				}
 
 				// Process new entries
@@ -322,11 +319,11 @@ async function refetchFeeds() {
 					const newEntries = feedData.entries.filter((entry) => !existingTitles.has(entry.title));
 
 					if (newEntries.length === 0) {
-						console.log(`No new entries for feed ${feed.id}`);
-						continue;
+						console.log(`${i}. No new entries for feed ${feed.title}`);
+						return;
 					}
 
-					console.log(`>>> Processing ${newEntries.length} new entries for feed ${feed.id}`);
+					console.log(`${i}. Processing ${newEntries.length} new entries for feed ${feed.title}`);
 
 					// Insert new entries
 					const insertedEntries = await db
@@ -363,16 +360,19 @@ async function refetchFeeds() {
 
 					if (userEntriesValues.length > 0) {
 						await db.insert(userEntries).values(userEntriesValues);
-						console.log(`>>> Created ${userEntriesValues.length} user entries`);
+						console.log(`${i}. Created ${userEntriesValues.length} u-entries for ${feed.title}`);
 					}
 				}
 
-				console.log(`Successfully refetched feed: ${feed.title}`);
+				console.log(`${i}. Successfully refetched feed: ${feed.title}`);
 			} catch (error) {
 				console.error(`Error refetching feed ${feed.id} (${feed.link}):`, error);
 				// Continue with other feeds even if one fails
 			}
-		}
+		});
+
+		// Execute all feed processing in parallel
+		await Promise.all(feedPromises);
 
 		console.log('Feed refetch process completed successfully');
 	} catch (error) {

@@ -43,6 +43,7 @@ export const parsedFeedAuthorSchema = z.union([
 		}
 		return val.trim();
 	}),
+	z.number().transform((val) => val.toString()),
 	z.object({ name: z.string() }).transform((val) => val.name.trim()),
 	z.array(z.string()).transform((val) => val.join(', ').trim()),
 	z

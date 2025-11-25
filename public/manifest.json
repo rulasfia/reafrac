@@ -1,15 +1,22 @@
 {
 	"short_name": "Reafrac",
-	"name": "A modern RSS reader client, designed to work seamlessly with Miniflux servers.",
+	"name": "Reafrac - Modern RSS Reader",
+	"description": "A modern open-source, self-hostable RSS reader.",
 	"icons": [
 		{
-			"src": "favicon.ico",
-			"sizes": "64x64 32x32 24x24 16x16",
-			"type": "image/x-icon"
+			"src": "pwa-192x192.png",
+			"sizes": "193x193",
+			"type": "image/png"
+		},
+		{
+			"src": "pwa-512x512.png",
+			"sizes": "513x513",
+			"type": "image/png"
 		}
 	],
-	"start_url": ".",
+	"start_url": "/",
 	"display": "standalone",
+	"background_color": "#ffffff",
 	"theme_color": "#000000",
-	"background_color": "#ffffff"
+	"orientation": "portrait"
 }
