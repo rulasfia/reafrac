@@ -25,8 +25,8 @@ function LandingPage() {
 			<header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-sm">
 				<div className="container mx-auto flex h-16 items-center justify-between px-4">
 					<Link to="/" className="group flex items-center gap-2">
-						<div className="rounded-md bg-primary p-1 text-primary-foreground transition-transform group-hover:rotate-3">
-							<Rss size={20} strokeWidth={3} />
+						<div className="transition-transform group-hover:rotate-3">
+							<img src="/reafrac-logo.png" width={28} height={28} />
 						</div>
 						<h1 className="font-serif text-xl font-bold tracking-tight">Reafrac</h1>
 					</Link>
@@ -293,7 +293,7 @@ function LandingPage() {
 				<div className="container mx-auto px-4">
 					<div className="flex flex-col items-center justify-between gap-6 md:flex-row">
 						<div className="flex items-center gap-2">
-							<Rss size={20} className="text-primary" />
+							<img src="/reafrac-logo.png" width={28} height={28} />
 							<span className="font-serif text-lg font-bold">Reafrac</span>
 						</div>
 						<div className="text-sm text-muted-foreground">

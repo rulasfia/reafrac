@@ -24,7 +24,7 @@ const config = defineConfig({
 				short_name: 'Reafrac',
 				name: 'Reafrac - Modern RSS Reader',
 				description: 'A modern open-source, self-hostable RSS reader.',
-				start_url: '/',
+				start_url: '/reader',
 				display: 'standalone',
 				background_color: '#ffffff',
 				theme_color: '#000000',
