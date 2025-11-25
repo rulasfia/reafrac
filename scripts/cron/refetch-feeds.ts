@@ -279,7 +279,8 @@ async function refetchFeeds() {
 		// Create async functions for each feed to be executed in parallel
 		const feedPromises = feedsToRefetch.map(async (feed, idx) => {
 			try {
-				console.log(`${idx}. Refetching feed: ${feed.title} (${feed.link})`);
+				const i = String(idx + 1).padStart(2, '0');
+				console.log(`${i}. Refetching feed: ${feed.title} (${feed.link})`);
 
 				// Extract feed data using the existing utility
 				const feedData = await extractFeed(feed.link);
@@ -300,9 +301,7 @@ async function refetchFeeds() {
 					.where(eq(userFeedSubscriptions.feedId, feed.id));
 
 				if (subscriptions.length === 0) {
-					console.log(
-						`${idx}.. No users subscribed to feed ${feed.title}, skipping entry insertion`
-					);
+					console.log(`${i}. No users subscribed to feed ${feed.title}, skipping entry insertion`);
 					return;
 				}
 
@@ -320,11 +319,11 @@ async function refetchFeeds() {
 					const newEntries = feedData.entries.filter((entry) => !existingTitles.has(entry.title));
 
 					if (newEntries.length === 0) {
-						console.log(`${idx}. No new entries for feed ${feed.title}`);
+						console.log(`${i}. No new entries for feed ${feed.title}`);
 						return;
 					}
 
-					console.log(`${idx}. Processing ${newEntries.length} new entries for feed ${feed.title}`);
+					console.log(`${i}. Processing ${newEntries.length} new entries for feed ${feed.title}`);
 
 					// Insert new entries
 					const insertedEntries = await db
@@ -361,11 +360,11 @@ async function refetchFeeds() {
 
 					if (userEntriesValues.length > 0) {
 						await db.insert(userEntries).values(userEntriesValues);
-						console.log(`${idx}. Created ${userEntriesValues.length} u-entries for ${feed.title}`);
+						console.log(`${i}. Created ${userEntriesValues.length} u-entries for ${feed.title}`);
 					}
 				}
 
-				console.log(`${idx}. Successfully refetched feed: ${feed.title}`);
+				console.log(`${i}. Successfully refetched feed: ${feed.title}`);
 			} catch (error) {
 				console.error(`Error refetching feed ${feed.id} (${feed.link}):`, error);
 				// Continue with other feeds even if one fails
