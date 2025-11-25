@@ -13,6 +13,7 @@ import { ToastProvider } from '@/components/ui/toast';
 import { ThemeProvider } from '@/components/theme-provider';
 import { QueryProvider } from '@/components/query-provider';
 import { DevTools } from '@/components/devtools';
+import { PWARegister } from '@/components/pwa-register';
 import appCss from '../styles.css?url';
 import { getAppConfigServerFn } from '@/lib/server/app-sfn';
 
@@ -31,10 +32,25 @@ export const Route = wrapCreateRootRouteWithSentry(createRootRouteWithContext)<{
 			},
 			{
 				name: 'description',
-				content: 'A modern RSS reader client, designed to work seamlessly with Miniflux servers.'
-			}
+				content: 'A modern open-source, self-hostable RSS reader.'
+			},
+			{ name: 'theme-color', content: '#000000' },
+			{ name: 'apple-mobile-web-app-capable', content: 'yes' },
+			{ name: 'apple-mobile-web-app-status-bar-style', content: 'default' },
+			{ name: 'apple-mobile-web-app-title', content: 'Reafrac' },
+			{ name: 'application-name', content: 'Reafrac' },
+			{ name: 'msapplication-TileColor', content: '#000000' },
+			{ name: 'msapplication-config', content: '/browserconfig.xml' }
 		],
-		links: [{ rel: 'stylesheet', href: appCss }]
+		links: [
+			{ rel: 'stylesheet', href: appCss },
+			{ rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png' },
+			{ rel: 'icon', href: '/favicon.ico' },
+			{ rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32x32.png' },
+			{ rel: 'icon', type: 'image/png', sizes: '16x16', href: '/favicon-16x16.png' },
+			{ rel: 'manifest', href: '/manifest.json' },
+			{ rel: 'mask-icon', href: '/safari-pinned-tab.svg', color: '#000000' }
+		]
 	}),
 	scripts: () =>
 		import.meta.env.PROD
@@ -77,6 +93,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 					<QueryProvider>
 						<ToastProvider>{children}</ToastProvider>
 						<DevTools />
+						<PWARegister />
 						<Scripts />
 					</QueryProvider>
 				</body>
