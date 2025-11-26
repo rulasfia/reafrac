@@ -70,7 +70,6 @@ WORKDIR /app
 COPY --from=builder /app/apps/web/dist ./dist
 COPY --from=builder /app/apps/web/server.ts ./
 COPY --from=builder /app/apps/web/package.json ./
-COPY --from=builder /app/package.json  ./
 COPY --from=builder /app/bun.lock  ./
 COPY --from=builder /app/turbo.json  ./
 
@@ -91,4 +90,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 ENV PORT=3000
 
 # Run server
-CMD ["bun", "run", "start", "--filter=@reafrac/web"]
+CMD ["bun", "run", "-r", "./dist/server/instrument.server.mjs", "server.ts"]
