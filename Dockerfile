@@ -16,6 +16,8 @@ WORKDIR /app
 # Copy package files
 COPY package.json bun.lock* turbo.json ./
 COPY apps/web/package.json ./apps/web/
+COPY apps/feed-updater/package.json ./apps/feed-updater/
+COPY apps/content-proxy/package.json ./apps/content-proxy/
 COPY packages/database/package.json ./packages/database/
 COPY packages/feed-utils/package.json ./packages/feed-utils/
 COPY packages/external-script/package.json ./packages/external-script/
@@ -24,7 +26,13 @@ COPY packages/external-script/package.json ./packages/external-script/
 RUN bun install --frozen-lockfile
 
 # Copy source code
-COPY . .
+COPY tsconfig.base.json tsconfig.json ./
+COPY apps/web/ ./apps/web/
+COPY apps/feed-updater/ ./apps/feed-updater/
+COPY apps/content-proxy/ ./apps/content-proxy/
+COPY packages/database/ ./packages/database/
+COPY packages/feed-utils/ ./packages/feed-utils/
+COPY packages/external-script/ ./packages/external-script/
 
 # Build application
 ENV NODE_ENV=production
@@ -39,6 +47,8 @@ WORKDIR /app
 
 COPY package.json bun.lock* turbo.json ./
 COPY apps/web/package.json ./apps/web/
+COPY apps/feed-updater/package.json ./apps/feed-updater/
+COPY apps/content-proxy/package.json ./apps/content-proxy/
 COPY packages/database/package.json ./packages/database/
 COPY packages/feed-utils/package.json ./packages/feed-utils/
 COPY packages/external-script/package.json ./packages/external-script/
@@ -60,6 +70,7 @@ WORKDIR /app
 COPY --from=builder /app/apps/web/dist ./dist
 COPY --from=builder /app/apps/web/server.ts ./
 COPY --from=builder /app/apps/web/package.json ./
+COPY --from=builder /app/package.json  ./
 COPY --from=builder /app/bun.lock  ./
 COPY --from=builder /app/turbo.json  ./
 
@@ -80,4 +91,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 ENV PORT=3000
 
 # Run server
-CMD ["bun", "run", "start" "--filter=@reafrac/web"]
+CMD ["bun", "run", "start", "--filter=@reafrac/web"]
