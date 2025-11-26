@@ -1,1 +1,0 @@
-ALTER TABLE "entries" ADD CONSTRAINT "uniqueUserFeedEntryTitle" UNIQUE("user_id","feed_id","title");
