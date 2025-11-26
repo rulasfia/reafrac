@@ -12,7 +12,7 @@ export async function refetchFeeds() {
 		console.log(`>>> Found ${feedsToRefetch.length} feeds to refetch`);
 
 		// Create async functions for each feed to be executed in parallel
-		const feedPromises = feedsToRefetch.map(async (feed, idx) => {
+		const feedTasks = feedsToRefetch.map((feed, idx) => async () => {
 			try {
 				const i = String(idx + 1).padStart(2, '0');
 				console.log(`${i}. Refetching feed: ${feed.title} (${feed.link})`);
@@ -113,12 +113,12 @@ export async function refetchFeeds() {
 			}
 		});
 
-		// Execute all feed processing in parallel
-		const BATCH_SIZE = 10;
+		// Execute feed processing in parallel with a concurrency limit
+		const FEED_CONCURRENCY = 10;
 		let finishedFeedCount = 0;
 
-		for (let i = 0; i < feedPromises.length; i += BATCH_SIZE) {
-			const chunk = feedPromises.slice(i, i + BATCH_SIZE);
+		for (let i = 0; i < feedTasks.length; i += FEED_CONCURRENCY) {
+			const chunk = feedTasks.slice(i, i + FEED_CONCURRENCY).map((task) => task());
 			await Promise.all(chunk);
 			finishedFeedCount += chunk.length;
 		}
