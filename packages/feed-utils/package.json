@@ -1,0 +1,23 @@
+{
+	"name": "@reafrac/feed-utils",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"main": "./src/index.ts",
+	"types": "./src/index.ts",
+	"scripts": {
+		"build": "tsc",
+		"test": "vitest run",
+		"lint": "oxlint",
+		"tsc": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@extractus/feed-extractor": "^7.1.7",
+		"zod": "^4.1.12"
+	},
+	"devDependencies": {
+		"oxlint": "^1.25.0",
+		"typescript": "^5.7.2",
+		"vitest": "^3.0.5"
+	}
+}

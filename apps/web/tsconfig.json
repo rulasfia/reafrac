@@ -1,0 +1,15 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"types": ["vite/client", "bun"],
+		"baseUrl": ".",
+		"paths": {
+			"@/*": ["./src/*"],
+			"@reafrac/database": ["../../packages/database/src"],
+			"@reafrac/feed-utils": ["../../packages/feed-utils/src"],
+			"@reafrac/external-script": ["../../packages/external-script/src"]
+		}
+	},
+	"include": ["**/*.ts", "**/*.tsx"],
+	"exclude": ["node_modules", "dist"]
+}
