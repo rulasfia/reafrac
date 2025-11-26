@@ -69,7 +69,7 @@ export async function refetchFeeds() {
 								title: entry.title,
 								description: entry.description,
 								link: entry.link,
-								publishedAt: new Date(entry.published || Date.now()),
+								publishedAt: entry.published ? new Date(entry.published) : new Date(),
 								author: typeof entry.author === 'string' ? entry.author : '',
 								content: entry.content,
 								thumbnail: entry.thumbnail?.url,
@@ -80,22 +80,29 @@ export async function refetchFeeds() {
 
 					// Create user entries for all subscribed users
 					const userIds = subscriptions.map((sub) => sub.userId);
-					const userEntriesValues = [];
+
+					// Batch inserts to avoid memory/query size issues
+					const BATCH_SIZE = 1000;
+					let totalCreated = 0;
 
 					for (const entry of insertedEntries) {
-						for (const userId of userIds) {
-							userEntriesValues.push({
-								userId,
-								entryId: entry.id,
-								status: 'unread' as const,
-								starred: false
-							});
+						const batch = userIds.map((userId) => ({
+							userId,
+							entryId: entry.id,
+							status: 'unread' as const,
+							starred: false
+						}));
+
+						// Insert in chunks
+						for (let j = 0; j < batch.length; j += BATCH_SIZE) {
+							const chunk = batch.slice(j, j + BATCH_SIZE);
+							await db.insert(userEntries).values(chunk);
+							totalCreated += chunk.length;
 						}
 					}
 
-					if (userEntriesValues.length > 0) {
-						await db.insert(userEntries).values(userEntriesValues);
-						console.log(`${i}. Created ${userEntriesValues.length} u-entries for ${feed.title}`);
+					if (totalCreated > 0) {
+						console.log(`${i}. Created ${totalCreated} u-entries for ${feed.title}`);
 					}
 				}
 
@@ -107,9 +114,18 @@ export async function refetchFeeds() {
 		});
 
 		// Execute all feed processing in parallel
-		await Promise.all(feedPromises);
+		const BATCH_SIZE = 10;
+		let finishedFeedCount = 0;
 
-		console.log('Feed refetch process completed successfully');
+		for (let i = 0; i < feedPromises.length; i += BATCH_SIZE) {
+			const chunk = feedPromises.slice(i, i + BATCH_SIZE);
+			await Promise.all(chunk);
+			finishedFeedCount += chunk.length;
+		}
+
+		if (finishedFeedCount > 0) {
+			console.log(`Feed refetch process completed successfully: ${finishedFeedCount} `);
+		}
 	} catch (error) {
 		console.error('Error in feed refetch process:', error);
 		throw error;
