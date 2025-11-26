@@ -12,6 +12,16 @@
         "turbo": "^2.4.0",
       },
     },
+    "apps/content-proxy": {
+      "name": "@reafrac/content-proxy",
+      "version": "0.0.0",
+      "dependencies": {
+        "@reafrac/external-script": "workspace:*",
+      },
+      "devDependencies": {
+        "typescript": "^5.7.2",
+      },
+    },
     "apps/feed-updater": {
       "name": "@reafrac/feed-updater",
       "version": "0.0.0",
@@ -674,6 +684,8 @@
     "@radix-ui/react-visually-hidden": ["@radix-ui/react-visually-hidden@1.2.3", "", { "dependencies": { "@radix-ui/react-primitive": "2.1.3" }, "peerDependencies": { "@types/react": "*", "@types/react-dom": "*", "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc", "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc" }, "optionalPeers": ["@types/react", "@types/react-dom"] }, "sha512-pzJq12tEaaIhqjbzpCuv/OypJY/BPavOofm+dbab+MHLajy277+1lLm6JFcGgF5eskJ6mquGirhXY2GD/8u8Ug=="],
 
     "@radix-ui/rect": ["@radix-ui/rect@1.1.1", "", {}, "sha512-HPwpGIzkl28mWyZqG52jiqDJ12waP11Pa1lGoiyUkIEuMLBP0oeK/C89esbXrxsky5we7dfd8U58nm0SgAWpVw=="],
+
+    "@reafrac/content-proxy": ["@reafrac/content-proxy@workspace:apps/content-proxy"],
 
     "@reafrac/database": ["@reafrac/database@workspace:packages/database"],
 

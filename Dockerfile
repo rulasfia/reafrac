@@ -14,7 +14,7 @@ RUN ln -sf python3 /usr/bin/python
 WORKDIR /app
 
 # Copy package files
-COPY package.json bun.lock* ./
+COPY package.json bun.lock* turbo.json ./
 COPY apps/web/package.json ./apps/web/
 COPY packages/database/package.json ./packages/database/
 COPY packages/feed-utils/package.json ./packages/feed-utils/
@@ -37,7 +37,7 @@ RUN ln -sf python3 /usr/bin/python
 
 WORKDIR /app
 
-COPY package.json bun.lock* ./
+COPY package.json bun.lock* turbo.json ./
 COPY apps/web/package.json ./apps/web/
 COPY packages/database/package.json ./packages/database/
 COPY packages/feed-utils/package.json ./packages/feed-utils/
@@ -60,7 +60,8 @@ WORKDIR /app
 COPY --from=builder /app/apps/web/dist ./dist
 COPY --from=builder /app/apps/web/server.ts ./
 COPY --from=builder /app/apps/web/package.json ./
-COPY --from=builder /app/bun.lock ./
+COPY --from=builder /app/bun.lock  ./
+COPY --from=builder /app/turbo.json  ./
 
 # Copy node_modules from dependencies stage
 COPY --from=dependencies /app/node_modules ./node_modules
@@ -79,4 +80,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 ENV PORT=3000
 
 # Run server
-CMD ["bun", "run", "start"]
+CMD ["bun", "run", "start" "--filter=@reafrac/web"]
