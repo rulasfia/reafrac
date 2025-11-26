@@ -31,13 +31,13 @@ bun run tsc
 ### Web App Specific (apps/web)
 ```bash
 # Start web development server only
-turbo run dev --filter=@reafrac/web
+bun run dev --filter=@reafrac/web
 
 # Build web app only
-turbo run build --filter=@reafrac/web
+bun run build --filter=@reafrac/web
 
 # Run web app tests
-turbo run test --filter=@reafrac/web
+bun run test --filter=@reafrac/web
 ```
 
 ### Database Operations
@@ -61,7 +61,7 @@ bun run db:browse
 bun run start --filter=@reafrac/feed-updater
 
 # Start content proxy service
-turbo run start --filter=@reafrac/content-proxy
+bun run start --filter=@reafrac/content-proxy
 ```
 
 ### Docker Development
