@@ -4,10 +4,10 @@ FROM oven/bun:1.3-alpine AS base
 # Stage 1: Build stage
 FROM base AS builder
 
-# 1. Install Python 3 and the tools node-gyp needs
+# 1. Install Python 3 and tools node-gyp needs
 RUN apk add --no-cache python3 make g++ postgresql-dev curl
 
-# 2. (Optional but recommended) create the canonical “python” symlink
+# 2. (Optional but recommended) create canonical "python" symlink
 RUN ln -sf python3 /usr/bin/python
 
 # Set working directory
@@ -15,6 +15,10 @@ WORKDIR /app
 
 # Copy package files
 COPY package.json bun.lock* ./
+COPY apps/web/package.json ./apps/web/
+COPY packages/database/package.json ./packages/database/
+COPY packages/feed-utils/package.json ./packages/feed-utils/
+COPY packages/external-script/package.json ./packages/external-script/
 
 # Install dependencies (including devDependencies for build)
 RUN bun install --frozen-lockfile
@@ -22,7 +26,7 @@ RUN bun install --frozen-lockfile
 # Copy source code
 COPY . .
 
-# Build the application
+# Build application
 ENV NODE_ENV=production
 RUN bun run build
 
@@ -34,6 +38,10 @@ RUN ln -sf python3 /usr/bin/python
 WORKDIR /app
 
 COPY package.json bun.lock* ./
+COPY apps/web/package.json ./apps/web/
+COPY packages/database/package.json ./packages/database/
+COPY packages/feed-utils/package.json ./packages/feed-utils/
+COPY packages/external-script/package.json ./packages/external-script/
 
 RUN bun install --frozen-lockfile --production
 
@@ -49,19 +57,19 @@ ENV NODE_ENV=production
 WORKDIR /app
 
 # Copy built application from builder stage
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/server.ts ./
-COPY --from=builder /app/package.json ./
+COPY --from=builder /app/apps/web/dist ./dist
+COPY --from=builder /app/apps/web/server.ts ./
+COPY --from=builder /app/apps/web/package.json ./
 COPY --from=builder /app/bun.lock ./
 # required for migrations
-COPY --from=builder /app/drizzle-prod.config.js ./
-COPY --from=builder /app/src/lib/db-schema.ts ./
-COPY --from=builder /app/migrations ./migrations
+COPY --from=builder /app/packages/database/drizzle-prod.config.js ./
+COPY --from=builder /app/packages/database/src/schema.ts ./
+COPY --from=builder /app/packages/database/migrations ./migrations
 
 # Copy node_modules from dependencies stage
 COPY --from=dependencies /app/node_modules ./node_modules
 
-# Switch to non-root user (bun user already exists in the image)
+# Switch to non-root user (bun user already exists in image)
 USER bun
 
 # Expose port
@@ -74,5 +82,5 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 # Set default environment variables
 ENV PORT=3000
 
-# Run the server
+# Run server
 CMD ["bun", "run", "start"]

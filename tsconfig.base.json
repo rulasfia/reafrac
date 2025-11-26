@@ -6,6 +6,7 @@
 		"jsx": "react-jsx",
 		"module": "ESNext",
 		"lib": ["ES2022", "DOM", "DOM.Iterable"],
+		"types": ["vite/client", "bun"],
 
 		/* Bundler mode */
 		"moduleResolution": "bundler",
@@ -22,7 +23,10 @@
 		"noUncheckedSideEffectImports": true,
 		"baseUrl": ".",
 		"paths": {
-			"@/*": ["./src/*"]
+			"@/*": ["./src/*"],
+			"@reafrac/database": ["./packages/database/src"],
+			"@reafrac/feed-utils": ["./packages/feed-utils/src"],
+			"@reafrac/external-script": ["./packages/external-script/src"]
 		}
 	}
 }
