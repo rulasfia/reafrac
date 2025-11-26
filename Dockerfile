@@ -61,10 +61,6 @@ COPY --from=builder /app/apps/web/dist ./dist
 COPY --from=builder /app/apps/web/server.ts ./
 COPY --from=builder /app/apps/web/package.json ./
 COPY --from=builder /app/bun.lock ./
-# required for migrations
-COPY --from=builder /app/packages/database/drizzle-prod.config.js ./
-COPY --from=builder /app/packages/database/src/schema.ts ./
-COPY --from=builder /app/packages/database/migrations ./migrations
 
 # Copy node_modules from dependencies stage
 COPY --from=dependencies /app/node_modules ./node_modules
