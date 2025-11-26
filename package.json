@@ -17,9 +17,7 @@
 		"db:browse": "turbo run db:browse --filter=@reafrac/database",
 		"db:push": "turbo run db:push --filter=@reafrac/database",
 		"db:generate": "turbo run db:generate --filter=@reafrac/database",
-		"db:migrate": "turbo run db:migrate --filter=@reafrac/database",
-		"refetch-feeds": "turbo run refetch-feeds --filter=@reafrac/external-script",
-		"migrate-to-shared": "turbo run migrate-to-shared --filter=@reafrac/external-script"
+		"db:migrate": "turbo run db:migrate --filter=@reafrac/database"
 	},
 	"devDependencies": {
 		"@prettier/plugin-oxc": "^0.0.4",

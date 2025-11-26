@@ -1,1 +1,1 @@
-export * from './cron/refetch-feeds';
+export * from './feed/refetch-feeds';
