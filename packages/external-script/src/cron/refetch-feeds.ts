@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import { extractFeed } from '@reafrac/feed-utils';
 
 // Main function to refetch feeds and update entries
-async function refetchFeeds() {
+export async function refetchFeeds() {
 	console.log('Starting feed refetch process...');
 
 	try {
@@ -115,16 +115,3 @@ async function refetchFeeds() {
 		throw error;
 	}
 }
-
-// Run the function
-(function main() {
-	refetchFeeds()
-		.then(() => {
-			console.log('Script completed successfully');
-			process.exit(0);
-		})
-		.catch((error) => {
-			console.error('Script failed:', error);
-			process.exit(1);
-		});
-})();

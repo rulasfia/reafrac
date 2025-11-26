@@ -12,6 +12,16 @@
         "turbo": "^2.4.0",
       },
     },
+    "apps/feed-updater": {
+      "name": "@reafrac/feed-updater",
+      "version": "0.0.0",
+      "dependencies": {
+        "@reafrac/external-script": "workspace:*",
+      },
+      "devDependencies": {
+        "typescript": "^5.7.2",
+      },
+    },
     "apps/web": {
       "name": "@reafrac/web",
       "dependencies": {
@@ -668,6 +678,8 @@
     "@reafrac/database": ["@reafrac/database@workspace:packages/database"],
 
     "@reafrac/external-script": ["@reafrac/external-script@workspace:packages/external-script"],
+
+    "@reafrac/feed-updater": ["@reafrac/feed-updater@workspace:apps/feed-updater"],
 
     "@reafrac/feed-utils": ["@reafrac/feed-utils@workspace:packages/feed-utils"],
 
