@@ -1,8 +1,11 @@
-name: Build and Push Docker Image
+name: Build and Push Docker Image (Development)
 
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - '.changeset/**' # Don't run on changeset-only changes
+      - 'CHANGELOG.md' # Don't run on changelog changes
   workflow_dispatch: # Allow manual triggering
 
 env:
@@ -20,7 +23,24 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Check if this is a changeset-only commit
+        id: check-files
+        run: |
+          # Get list of changed files
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+          echo "Changed files: $CHANGED_FILES"
+
+          # Check if all changes are in .changeset or CHANGELOG.md
+          if echo "$CHANGED_FILES" | grep -v -E '^\.changeset/|^CHANGELOG\.md$' > /dev/null; then
+            echo "has_code_changes=true" >> $GITHUB_OUTPUT
+            echo "Code changes detected, building Docker image"
+          else
+            echo "has_code_changes=false" >> $GITHUB_OUTPUT
+            echo "Only changeset/changelog changes, skipping Docker build"
+          fi
+
       - name: Set up Docker Buildx
+        if: steps.check-files.outputs.has_code_changes == 'true'
         uses: docker/setup-buildx-action@v3
 
       - name: Log in to Container Registry
@@ -37,18 +57,16 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=ref,event=branch
-            type=ref,event=pr
             type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=dev-latest,enable={{is_default_branch}}
 
       - name: Build and push Docker image
         id: build
+        if: steps.check-files.outputs.has_code_changes == 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile
+          file: ./apps/web/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -57,13 +75,15 @@ jobs:
           platforms: linux/amd64
 
       - name: Generate SBOM
+        if: steps.check-files.outputs.has_code_changes == 'true'
         uses: anchore/sbom-action@v0
         with:
-          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:dev-latest
           format: spdx-json
           output-file: sbom.spdx.json
 
       - name: Upload SBOM
+        if: steps.check-files.outputs.has_code_changes == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: sbom
@@ -79,12 +99,12 @@ jobs:
         run: |
           curl \
             -u ${{ secrets.NTFY_CRED }} \
-            -H "Title: Github Workflow Completed!" \
+            -H "Title: 🐳 Docker Image Updated" \
             -H "Content-Type: text/plain" \
-            -d $'Repo: ${{ github.repository }}\nCommit: ${{ github.sha }}\nRef: ${{ github.ref }}\nStatus: ${{ job.status}}' \
+            -d $'Repo: ${{ github.repository }}\nCommit: ${{ github.sha }}\nImage: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:dev-latest\nStatus: ${{ job.status}}' \
             ${{ secrets.NTFY_URL }}
 
       - name: Deploy Notification
         run: |
-          echo "🚀 Docker image pushed successfully!"
-          echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+          echo "🚀 Development Docker image pushed successfully!"
+          echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:dev-latest"

@@ -17,9 +17,13 @@
 		"db:browse": "turbo run db:browse --filter=@reafrac/database",
 		"db:push": "turbo run db:push --filter=@reafrac/database",
 		"db:generate": "turbo run db:generate --filter=@reafrac/database",
-		"db:migrate": "turbo run db:migrate --filter=@reafrac/database"
+		"db:migrate": "turbo run db:migrate --filter=@reafrac/database",
+		"changeset": "changeset",
+		"version-packages": "changeset version",
+		"release": "turbo run build && changeset publish"
 	},
 	"devDependencies": {
+		"@changesets/cli": "^2.29.8",
 		"@prettier/plugin-oxc": "^0.0.4",
 		"@types/bun": "^1.3.3",
 		"oxlint": "^1.25.0",

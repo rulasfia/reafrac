@@ -34,8 +34,12 @@ COPY packages/database/ ./packages/database/
 COPY packages/feed-utils/ ./packages/feed-utils/
 COPY packages/external-script/ ./packages/external-script/
 
-# Build application
+# Build application with version injection
+ARG BUILD_VERSION
+ARG BUILD_DATE
+ARG VITE_APP_VERSION
 ENV NODE_ENV=production
+ENV VITE_APP_VERSION=${VITE_APP_VERSION:-dev}
 RUN bun run build
 
 FROM base AS dependencies
