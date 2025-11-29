@@ -103,6 +103,6 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 }
 
 function NotFoundComponent(props: NotFoundRouteProps) {
-	console.log({ NotFoundComponentProps: props.data });
+	console.log({ NotFoundProps: props });
 	return <p>This setting page doesn't exist!</p>;
 }
