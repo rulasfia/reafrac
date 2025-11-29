@@ -26,8 +26,15 @@ jobs:
       - name: Check if this is a changeset-only commit
         id: check-files
         run: |
-          # Get list of changed files
-          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+          # Get list of changed files from the current commit vs previous
+          # Handle cases where HEAD~1 doesn't exist (first commit, etc.)
+          if git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
+            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+          else
+            # For first commit or when HEAD~1 doesn't exist, check all files
+            CHANGED_FILES=$(git ls-files)
+          fi
+
           echo "Changed files: $CHANGED_FILES"
 
           # Check if all changes are in .changeset or CHANGELOG.md

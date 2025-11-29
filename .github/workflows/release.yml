@@ -37,9 +37,12 @@ jobs:
       - name: Check for Changesets
         id: check-changesets
         run: |
-          if [ -n "$(git diff --name-only HEAD~1 HEAD | grep '.changeset')" ] || [ -d ".changeset" ] && [ "$(ls -A .changeset | grep -v 'README.md\|config.json' | wc -l)" -gt 0 ]; then
+          # Check if there are any changeset files (excluding README and config)
+          if [ -d ".changeset" ] && [ "$(find .changeset -name "*.md" -not -name "README.md" | wc -l)" -gt 0 ]; then
             echo "has_changesets=true" >> $GITHUB_OUTPUT
             echo "Changesets found, proceeding with release workflow"
+            echo "Changeset files:"
+            find .changeset -name "*.md" -not -name "README.md"
           else
             echo "has_changesets=false" >> $GITHUB_OUTPUT
             echo "No changesets found, skipping release"
