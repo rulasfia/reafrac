@@ -3,9 +3,10 @@
 	"changelog": "@changesets/cli/changelog",
 	"commit": false,
 	"fixed": [],
-	"linked": [["@reafrac/database", "@reafrac/feed-utils", "@reafrac/external-script"]],
+	"linked": [
+		["@reafrac/database", "@reafrac/feed-utils", "@reafrac/external-script", "@reafrac/web"]
+	],
 	"access": "restricted",
 	"baseBranch": "main",
-	"updateInternalDependencies": "patch",
-	"ignore": ["@reafrac/web"]
+	"updateInternalDependencies": "patch"
 }
