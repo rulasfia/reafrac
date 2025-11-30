@@ -34,31 +34,11 @@ jobs:
       - name: Install Dependencies
         run: bun install --frozen-lockfile
 
-      - name: Check for Changesets
-        id: check-changesets
-        run: |
-          # Check if there are any changeset files (excluding README and config)
-          if [ -d ".changeset" ] && [ "$(find .changeset -name "*.md" -not -name "README.md" | wc -l)" -gt 0 ]; then
-            echo "has_changesets=true" >> $GITHUB_OUTPUT
-            echo "Changesets found, proceeding with release workflow"
-            echo "Changeset files:"
-            find .changeset -name "*.md" -not -name "README.md"
-          else
-            echo "has_changesets=false" >> $GITHUB_OUTPUT
-            echo "No changesets found, skipping release"
-          fi
-
-      - name: Skip Release if No Changesets
-        if: steps.check-changesets.outputs.has_changesets == 'false'
-        run: |
-          echo "No changesets to process - exiting"
-          exit 0
-
       - name: Create Release Pull Request or Publish
         id: changesets
-        if: steps.check-changesets.outputs.has_changesets == 'true'
         uses: changesets/action@v1
         with:
+          version: bun run version-packages
           publish: bun release
           commit: 'chore: release packages'
           title: 'Version Packages'
