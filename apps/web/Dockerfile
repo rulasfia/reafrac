@@ -40,7 +40,7 @@ ARG BUILD_DATE
 ARG VITE_APP_VERSION
 ENV NODE_ENV=production
 ENV VITE_APP_VERSION=${VITE_APP_VERSION:-dev}
-RUN bun run build
+RUN bun run build --filter=@reafrac/web --filter=@reafrac/database --filter=@reafrac/feed-utils
 
 FROM base AS dependencies
 
