@@ -49,21 +49,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check if Versions Were Updated
+      - name: Check if Web App Version Was Updated
         id: version-check
         run: |
-          # Check if version property in package.json was updated in this commit
-          VERSION_CHANGED=false
-          for file in $(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -E "package\.json$" || true); do
-            if git diff ${{ github.event.before }} ${{ github.sha }} -- "$file" | grep -E '^\+.*"version"' | grep -q '"version"'; then
-              VERSION_CHANGED=true
-              echo "📦 Version updated in: $file"
-              break
-            fi
-          done
-
-          if [ "$VERSION_CHANGED" = "true" ]; then
+          # Check if version property in apps/web/package.json was updated in this commit
+          if git diff ${{ github.event.before }} ${{ github.sha }} -- "apps/web/package.json" | grep -E '^\+.*"version"' | grep -q '"version"'; then
             echo "versions-updated=true" >> $GITHUB_OUTPUT
+            echo "📦 Web app version updated"
           else
             echo "versions-updated=false" >> $GITHUB_OUTPUT
           fi
