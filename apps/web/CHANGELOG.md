@@ -1,5 +1,11 @@
 # @reafrac/web
 
+## 0.4.0
+
+### Minor Changes
+
+- 301b9d8: Dymaic title when viewing entry content
+
 ## 0.3.0
 
 ### Minor Changes
