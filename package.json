@@ -19,7 +19,8 @@
 		"db:generate": "turbo run db:generate --filter=@reafrac/database",
 		"db:migrate": "turbo run db:migrate --filter=@reafrac/database",
 		"changeset": "changeset",
-		"version-packages": "changeset version"
+		"version-packages": "changeset version",
+		"release": "git push --follow-tags"
 	},
 	"devDependencies": {
 		"@changesets/cli": "^2.29.7",
