@@ -132,9 +132,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            ${{ needs.release.outputs.build-type == 'release' && 'type=semver,pattern={{version}}' || '' }}
-            ${{ needs.release.outputs.build-type == 'release' && 'type=semver,pattern={{major}}.{{minor}}' || '' }}
-            ${{ needs.release.outputs.build-type == 'release' && 'type=semver,pattern={{major}}' || '' }}
+            ${{ needs.release.outputs.build-type == 'release' && format('type=raw,value={0}', needs.release.outputs.version) || '' }}
             ${{ needs.release.outputs.build-type == 'release' && 'type=raw,value=latest,enable={{is_default_branch}}' || '' }}
             ${{ needs.release.outputs.build-type == 'staging' && 'type=ref,event=branch' || '' }}
             ${{ needs.release.outputs.build-type == 'staging' && 'type=sha,prefix={{branch}}-' || '' }}
