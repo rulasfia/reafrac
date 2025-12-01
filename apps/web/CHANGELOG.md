@@ -1,5 +1,11 @@
 # @reafrac/web
 
+## 0.3.0
+
+### Minor Changes
+
+- b94f3a6: Remove today filter from sidebar
+
 ## 0.2.0
 
 ### Minor Changes
