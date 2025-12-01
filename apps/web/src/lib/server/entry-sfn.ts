@@ -5,9 +5,9 @@ import { authFnMiddleware } from '../middleware/auth-middleware';
 import sanitizeHtml from 'sanitize-html';
 import { sentryMiddleware } from '../middleware/sentry-middleware';
 import * as Sentry from '@sentry/tanstackstart-react';
-import { eq, and, desc, count, gte } from 'drizzle-orm';
 import type { EntryMeta } from './types';
 import { db, entries, feeds, userEntries, userFeedSubscriptions } from '@reafrac/database';
+import { eq, and, desc, count, gte } from '@reafrac/database';
 
 export const updateEntryStatusServerFn = createServerFn({ method: 'POST' })
 	.middleware([sentryMiddleware, authFnMiddleware])
