@@ -1,5 +1,12 @@
 # @reafrac/external-script
 
+## 0.5.0
+
+### Patch Changes
+
+- Updated dependencies [e7d13f9]
+  - @reafrac/database@0.5.0
+
 ## 0.1.0
 
 ### Patch Changes
