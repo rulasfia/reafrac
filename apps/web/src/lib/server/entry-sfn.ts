@@ -199,12 +199,12 @@ export const getEntriesServerFn = createServerFn({ method: 'GET' })
 					.leftJoin(feeds, eq(entries.feedId, feeds.id))
 					.where(whereConditions)
 					.orderBy(desc(entries.publishedAt))
-					.limit(10) // Load 10 entries at a time
+					.limit(15) // Load 15 entries at a time
 					.offset(data.offset || 0) // Skip entries based on offset
 					.execute();
 
 				// Calculate pagination metadata
-				const itemsPerPage = 10;
+				const itemsPerPage = 15;
 				const currentPage = Math.floor((data.offset || 0) / itemsPerPage) + 1;
 				const totalPages = Math.ceil(totalItems / itemsPerPage);
 				const hasNext = entryList.length === itemsPerPage;

@@ -10,7 +10,7 @@ import { Spinner } from '../ui/spinner';
 import { BadgeInfoIcon, RotateCwIcon, TriangleAlertIcon } from 'lucide-react';
 import { EntryItem } from '../entry/entry-item';
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 15;
 
 export function ContentSidebar() {
 	const { search } = useLocation();
