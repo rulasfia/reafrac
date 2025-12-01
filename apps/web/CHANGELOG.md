@@ -1,5 +1,16 @@
 # @reafrac/web
 
+## 0.5.0
+
+### Minor Changes
+
+- 453a70f: change default entries page size to 15
+
+### Patch Changes
+
+- Updated dependencies [e7d13f9]
+  - @reafrac/database@0.5.0
+
 ## 0.4.0
 
 ### Minor Changes
