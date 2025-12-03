@@ -1,12 +1,9 @@
 {
-	"name": "@reafrac/feed-updater",
+	"name": "@reafrac/content-proxy",
 	"version": "0.0.2",
 	"private": true,
 	"type": "module",
-	"scripts": {
-		"build": "bun build ./src/index.ts --outdir ./dist --target bun",
-		"start": "bun run src/index.ts"
-	},
+	"scripts": {},
 	"dependencies": {
 		"@reafrac/external-script": "workspace:*"
 	},

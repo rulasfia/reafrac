@@ -9,17 +9,24 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VersionRouteImport } from './routes/version'
 import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as ReaderRouteImport } from './routes/reader'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ReaderIndexRouteImport } from './routes/reader/index'
 import { Route as ReaderSettingsRouteImport } from './routes/reader/settings'
+import { Route as ApiVersionRouteImport } from './routes/api/version'
 import { Route as ReaderSettingsIntegrationsRouteImport } from './routes/reader/settings/integrations'
 import { Route as ReaderSettingsFeedsRouteImport } from './routes/reader/settings/feeds'
 import { Route as ReaderSettingsAccountRouteImport } from './routes/reader/settings/account'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
+const VersionRoute = VersionRouteImport.update({
+  id: '/version',
+  path: '/version',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignUpRoute = SignUpRouteImport.update({
   id: '/sign-up',
   path: '/sign-up',
@@ -50,6 +57,11 @@ const ReaderSettingsRoute = ReaderSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => ReaderRoute,
 } as any)
+const ApiVersionRoute = ApiVersionRouteImport.update({
+  id: '/api/version',
+  path: '/api/version',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ReaderSettingsIntegrationsRoute =
   ReaderSettingsIntegrationsRouteImport.update({
     id: '/integrations',
@@ -77,6 +89,8 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/reader': typeof ReaderRouteWithChildren
   '/sign-up': typeof SignUpRoute
+  '/version': typeof VersionRoute
+  '/api/version': typeof ApiVersionRoute
   '/reader/settings': typeof ReaderSettingsRouteWithChildren
   '/reader/': typeof ReaderIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -88,6 +102,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/sign-up': typeof SignUpRoute
+  '/version': typeof VersionRoute
+  '/api/version': typeof ApiVersionRoute
   '/reader/settings': typeof ReaderSettingsRouteWithChildren
   '/reader': typeof ReaderIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -101,6 +117,8 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/reader': typeof ReaderRouteWithChildren
   '/sign-up': typeof SignUpRoute
+  '/version': typeof VersionRoute
+  '/api/version': typeof ApiVersionRoute
   '/reader/settings': typeof ReaderSettingsRouteWithChildren
   '/reader/': typeof ReaderIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -115,6 +133,8 @@ export interface FileRouteTypes {
     | '/login'
     | '/reader'
     | '/sign-up'
+    | '/version'
+    | '/api/version'
     | '/reader/settings'
     | '/reader/'
     | '/api/auth/$'
@@ -126,6 +146,8 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/sign-up'
+    | '/version'
+    | '/api/version'
     | '/reader/settings'
     | '/reader'
     | '/api/auth/$'
@@ -138,6 +160,8 @@ export interface FileRouteTypes {
     | '/login'
     | '/reader'
     | '/sign-up'
+    | '/version'
+    | '/api/version'
     | '/reader/settings'
     | '/reader/'
     | '/api/auth/$'
@@ -151,11 +175,20 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ReaderRoute: typeof ReaderRouteWithChildren
   SignUpRoute: typeof SignUpRoute
+  VersionRoute: typeof VersionRoute
+  ApiVersionRoute: typeof ApiVersionRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/version': {
+      id: '/version'
+      path: '/version'
+      fullPath: '/version'
+      preLoaderRoute: typeof VersionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sign-up': {
       id: '/sign-up'
       path: '/sign-up'
@@ -197,6 +230,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/reader/settings'
       preLoaderRoute: typeof ReaderSettingsRouteImport
       parentRoute: typeof ReaderRoute
+    }
+    '/api/version': {
+      id: '/api/version'
+      path: '/api/version'
+      fullPath: '/api/version'
+      preLoaderRoute: typeof ApiVersionRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/reader/settings/integrations': {
       id: '/reader/settings/integrations'
@@ -263,6 +303,8 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ReaderRoute: ReaderRouteWithChildren,
   SignUpRoute: SignUpRoute,
+  VersionRoute: VersionRoute,
+  ApiVersionRoute: ApiVersionRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport

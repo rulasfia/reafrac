@@ -1,0 +1,12 @@
+{
+	"$schema": "https://unpkg.com/@changesets/config@3.1.2/schema.json",
+	"changelog": "@changesets/cli/changelog",
+	"commit": false,
+	"fixed": [],
+	"linked": [
+		["@reafrac/database", "@reafrac/feed-utils", "@reafrac/external-script", "@reafrac/web"]
+	],
+	"access": "restricted",
+	"baseBranch": "main",
+	"updateInternalDependencies": "patch"
+}

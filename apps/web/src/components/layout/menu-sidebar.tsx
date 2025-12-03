@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import {
 	BookmarkIcon,
-	CalendarIcon,
 	ChevronRightIcon,
 	InboxIcon,
 	ListIcon,
@@ -30,7 +29,6 @@ import { Button } from '../ui/button';
 export const MENU_ITEMS = [
 	{ label: 'All Posts', icon: <ListIcon />, href: '/reader', page: 'all-posts' },
 	{ label: 'Unread', icon: <InboxIcon />, href: '/reader', page: 'unread' },
-	{ label: 'Today', icon: <CalendarIcon />, href: '/reader', page: 'today' },
 	{ label: 'Saved', icon: <BookmarkIcon />, href: '/reader', page: 'saved' }
 ] as const;
 

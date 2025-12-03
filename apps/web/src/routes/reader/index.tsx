@@ -64,6 +64,7 @@ function RouteComponent() {
 
 	return (
 		<div className="container mx-auto grid max-w-[65ch] grid-cols-1 justify-center gap-y-1 pb-16 lg:pb-0 xl:max-w-2xl xl:min-w-xl">
+			{entry.data ? <title>{entry.data?.title}</title> : null}
 			<EntryHeader />
 			<FloatingMenuButton />
 

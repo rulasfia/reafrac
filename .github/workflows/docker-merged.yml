@@ -1,0 +1,218 @@
+name: Build and Push Docker Images
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # Allow manual triggering
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Handle changeset versioning and release PR creation
+  release:
+    name: Handle Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      pull-requests: write
+    outputs:
+      build-type: ${{ steps.determine-build.outputs.build-type }}
+      version: ${{ steps.determine-build.outputs.version }}
+      published: ${{ steps.changesets.outputs.published }}
+      has-changesets: ${{ steps.changesets.outputs.hasChangesets }}
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: 1.3.1
+
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Create Release Pull Request or Publish
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          version: bun run version-packages
+          commit: 'chore: release packages'
+          title: 'Version Packages'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check if Web App Version Was Updated
+        id: version-check
+        run: |
+          # Check if version property in apps/web/package.json was updated in this commit
+          if git diff ${{ github.event.before }} ${{ github.sha }} -- "apps/web/package.json" | grep -E '^\+.*"version"' | grep -q '"version"'; then
+            echo "versions-updated=true" >> $GITHUB_OUTPUT
+            echo "📦 Web app version updated"
+          else
+            echo "versions-updated=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Tag and Release
+        if: steps.version-check.outputs.versions-updated == 'true'
+        run: |
+          VERSION=$(node -p "require('./apps/web/package.json').version")
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git tag -a "v$VERSION" -m "Release v$VERSION"
+          git push origin "v$VERSION"
+          gh release create "v$VERSION" --generate-notes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Determine Build Type
+        id: determine-build
+        run: |
+          if [ "${{ steps.version-check.outputs.versions-updated }}" == "true" ] || [ "${{ startsWith(github.ref, 'refs/tags/') }}" == "true" ]; then
+            if [ "${{ steps.version-check.outputs.versions-updated }}" == "true" ]; then
+              VERSION=$(node -p "require('./apps/web/package.json').version")
+            else
+              VERSION=${GITHUB_REF#refs/tags/v}
+            fi
+            echo "build-type=release" >> $GITHUB_OUTPUT
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            echo "🚀 Release build triggered: $VERSION"
+          else
+            # Check if this is a changeset-only commit (capture all files in push)
+            CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} 2>/dev/null || git ls-files)
+            if echo "$CHANGED_FILES" | grep -v -E '^\.changeset/|^CHANGELOG\.md$' > /dev/null; then
+              echo "build-type=staging" >> $GITHUB_OUTPUT
+              echo "version=" >> $GITHUB_OUTPUT
+              echo "🐳 Staging build triggered"
+            else
+              echo "build-type=none" >> $GITHUB_OUTPUT
+              echo "version=" >> $GITHUB_OUTPUT
+              echo "⏭️ No build needed (changeset-only changes)"
+            fi
+          fi
+
+  # Build Docker images (staging or release)
+  build-docker:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: release
+    if: needs.release.outputs.build-type != 'none'
+    permissions:
+      contents: read
+      packages: write
+    env:
+      TARGET_IMAGE_TAG: ${{ needs.release.outputs.build-type == 'release' && 'latest' || 'dev-latest' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            ${{ needs.release.outputs.build-type == 'release' && format('type=raw,value={0}', needs.release.outputs.version) || '' }}
+            ${{ needs.release.outputs.build-type == 'release' && 'type=raw,value=latest,enable={{is_default_branch}}' || '' }}
+            ${{ needs.release.outputs.build-type == 'staging' && 'type=ref,event=branch' || '' }}
+            ${{ needs.release.outputs.build-type == 'staging' && 'type=sha,prefix={{branch}}-' || '' }}
+            ${{ needs.release.outputs.build-type == 'staging' && 'type=raw,value=dev-latest,enable={{is_default_branch}}' || '' }}
+
+      - name: Set Environment Variables
+        run: |
+          if [ "${{ needs.release.outputs.build-type }}" == "release" ]; then
+            VERSION="${{ needs.release.outputs.version }}"
+            echo "BUILD_VERSION=$VERSION" >> $GITHUB_ENV
+            echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
+            echo "VITE_APP_VERSION=$VERSION" >> $GITHUB_ENV
+            echo "🏷️ Building release version: $VERSION"
+          else
+            echo "🐳 Building staging image"
+          fi
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./apps/web/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            ${{ needs.release.outputs.build-type == 'release' && format('BUILD_VERSION={0}', env.BUILD_VERSION) || '' }}
+            ${{ needs.release.outputs.build-type == 'release' && format('BUILD_DATE={0}', env.BUILD_DATE) || '' }}
+            ${{ needs.release.outputs.build-type == 'release' && format('VITE_APP_VERSION={0}', env.VITE_APP_VERSION) || '' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.TARGET_IMAGE_TAG }}
+          format: spdx-json
+          output-file: sbom.spdx.json
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ needs.release.outputs.build-type }}
+          path: sbom.spdx.json
+
+  # Send notifications
+  deploy-notification:
+    name: Send Notification
+    needs: [release, build-docker]
+    runs-on: ubuntu-latest
+    if: always() && needs.release.outputs.build-type != 'none'
+
+    steps:
+      - name: Release Notification
+        if: needs.release.outputs.build-type == 'release'
+        run: |
+          curl \
+            -u ${{ secrets.NTFY_CRED }} \
+            -H "Title: 🚀 New Version Released!" \
+            -H "Content-Type: text/plain" \
+            -d $'Repo: ${{ github.repository }}\nVersion: ${{ needs.release.outputs.version }}\nCommit: ${{ github.sha }}\nDocker Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.release.outputs.version }}' \
+            ${{ secrets.NTFY_URL }}
+
+      - name: Staging Notification
+        if: needs.release.outputs.build-type == 'staging'
+        run: |
+          curl \
+            -u ${{ secrets.NTFY_CRED }} \
+            -H "Title: 🐳 Docker Image Updated" \
+            -H "Content-Type: text/plain" \
+            -d $'Repo: ${{ github.repository }}\nCommit: ${{ github.sha }}\nImage: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:dev-latest\nStatus: ${{ needs.build-docker.result }}' \
+            ${{ secrets.NTFY_URL }}
+
+      - name: Deploy Notification Summary
+        run: |
+          if [ "${{ needs.release.outputs.build-type }}" == "release" ]; then
+            echo "🚀 Release Docker image pushed successfully!"
+            echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.release.outputs.version }}"
+          else
+            echo "🐳 Development Docker image pushed successfully!"
+            echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:dev-latest"
+          fi

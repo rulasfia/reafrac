@@ -7,7 +7,7 @@ import { toastManager } from '@/components/ui/toast';
 import { authClient } from '@/lib/auth-client';
 import { kickAuthedUserServerFn } from '@/lib/server/auth-sfn';
 import { createFileRoute, Link, useLoaderData, useNavigate } from '@tanstack/react-router';
-import { nanoid } from 'nanoid';
+import { customAlphabet } from 'nanoid';
 import { useState } from 'react';
 import { z } from 'zod/mini';
 
@@ -17,6 +17,9 @@ export const Route = createFileRoute('/sign-up')({
 		await kickAuthedUserServerFn();
 	}
 });
+
+const alphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+const nanoid = customAlphabet(alphabet, 4);
 
 const registerSchema = z.object({
 	name: z.string(),

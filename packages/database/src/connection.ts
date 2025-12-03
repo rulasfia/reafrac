@@ -1,5 +1,5 @@
-import { drizzle } from 'drizzle-orm/node-postgres';
-import pg from 'pg';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
 import * as schema from './schema';
 
 const DB_URL = process.env.DATABASE_URL;
@@ -11,17 +11,14 @@ if (process.env.NODE_ENV?.toLowerCase() !== 'production') {
 	console.info('DB_URL', DB_URL);
 }
 
-let queryClient: pg.Pool | null = null;
+let client: postgres.Sql | null = null;
 
-if (!queryClient) {
-	queryClient = new pg.Pool({
-		connectionString: DB_URL,
-		max: 10
-	});
+if (!client) {
+	client = postgres(DB_URL);
 }
 
 export const db = drizzle<typeof schema>({
-	client: queryClient,
 	casing: 'snake_case',
+	client,
 	schema
 });
