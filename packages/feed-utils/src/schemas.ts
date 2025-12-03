@@ -2,10 +2,7 @@ import { z } from 'zod';
 
 export const parsedFeedSchema = z.object({
 	title: z.string(),
-	description: z.union([
-		z.string(),
-		z.object({ '#text': z.string() }).transform((val) => val['#text'].trim())
-	]),
+	description: z.union([z.string(), z.object({ '#text': z.string() })]),
 	link: z.url(),
 	published: z.string(),
 	icon: z.string().default(''),
@@ -28,6 +25,14 @@ export const parsedFeedSchema = z.object({
 				.nullable()
 		})
 	)
+});
+
+export const parsedAndTransformFeedSchema = z.object({
+	...parsedFeedSchema.shape,
+	description: z.union([
+		z.string(),
+		z.object({ '#text': z.string() }).transform((val) => val['#text'].trim())
+	])
 });
 
 export const parsedFeedIconSchema = z.union([
@@ -67,4 +72,4 @@ export const parsedFeedThumbnailSchema = z.union([
 		.transform((val) => ({ url: val['media:thumbnail']['@_url'] }))
 ]);
 
-export type ParsedFeed = z.infer<typeof parsedFeedSchema>;
+export type ParsedFeed = z.infer<typeof parsedAndTransformFeedSchema>;
