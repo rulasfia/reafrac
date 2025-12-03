@@ -1,7 +1,8 @@
 import { db, feeds, entries, userFeedSubscriptions, userEntries } from '@reafrac/database';
 import { eq } from 'drizzle-orm';
-import { extractFeed } from '@reafrac/feed-utils';
+import { extractFeed, ParsedFeed } from '@reafrac/feed-utils';
 
+const proxyUrl = process.env.PROXY_URL;
 // Main function to refetch feeds and update entries
 export async function refetchFeeds() {
 	console.log('Starting feed refetch process...');
@@ -17,8 +18,19 @@ export async function refetchFeeds() {
 				const i = String(idx + 1).padStart(2, '0');
 				console.log(`${i}. Refetching feed: ${feed.title} (${feed.link})`);
 
-				// Extract feed data using the existing utility
-				const feedData = await extractFeed(feed.link);
+				let feedData: ParsedFeed | undefined = undefined;
+				if (proxyUrl) {
+					// if user has set proxy settings, use it to extract feed
+					const httpResponse = await fetch(`${proxyUrl}/extract-feed`, {
+						method: 'POST',
+						body: JSON.stringify({ url: feed.link })
+					});
+
+					feedData = (await httpResponse.json()) as ParsedFeed;
+				} else {
+					// otherwise, do the feed extraction in this server
+					feedData = await extractFeed(feed.link);
+				}
 
 				// Update feed's last fetched timestamp
 				await db
