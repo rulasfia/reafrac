@@ -1,12 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import {
-	BookmarkIcon,
-	ChevronRightIcon,
-	InboxIcon,
-	ListIcon,
-	PlusIcon,
-	SettingsIcon
-} from 'lucide-react';
+import { ChevronRightIcon, PlusIcon, SettingsIcon } from 'lucide-react';
 import {
 	SidebarContent,
 	SidebarFooter,
@@ -25,12 +18,7 @@ import { Link, useLoaderData, useLocation } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
 import { getFeedsServerFn } from '@/lib/server/feed-sfn';
 import { Button } from '../ui/button';
-
-export const MENU_ITEMS = [
-	{ label: 'All Posts', icon: <ListIcon />, href: '/reader', page: 'all-posts' },
-	{ label: 'Unread', icon: <InboxIcon />, href: '/reader', page: 'unread' },
-	{ label: 'Saved', icon: <BookmarkIcon />, href: '/reader', page: 'saved' }
-] as const;
+import { MENU_ITEMS } from './constants';
 
 export function MenuSidebar() {
 	const { isMobile, toggleSidebar } = useSidebar();
