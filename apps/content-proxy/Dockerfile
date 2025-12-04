@@ -17,7 +17,7 @@ COPY packages/feed-utils/package.json ./packages/feed-utils/
 COPY packages/external-script/package.json ./packages/external-script/
 
 # Install dependencies (including devDependencies for build)
-RUN bun install --frozen-lockfile
+RUN bun install --linker isolated --frozen-lockfile --filter '!@reafrac/web'
 
 # Copy source code
 COPY tsconfig.base.json tsconfig.json ./
