@@ -1,5 +1,11 @@
 # @reafrac/web
 
+## 1.1.0
+
+### Minor Changes
+
+- 45db68d: update build config for web and proxy
+
 ## 1.0.0
 
 ### Minor Changes
