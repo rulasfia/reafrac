@@ -1,5 +1,17 @@
 # @reafrac/external-script
 
+## 1.0.0
+
+### Minor Changes
+
+- abd5292: rename feed parser schema & create different schema with parser
+  add option to set proxy url
+
+### Patch Changes
+
+- Updated dependencies [abd5292]
+  - @reafrac/feed-utils@1.0.0
+
 ## 0.5.0
 
 ### Patch Changes

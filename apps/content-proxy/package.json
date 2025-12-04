@@ -1,6 +1,6 @@
 {
 	"name": "@reafrac/content-proxy",
-	"version": "0.0.2",
+	"version": "0.1.0",
 	"type": "module",
 	"module": "src/index.js",
 	"scripts": {
