@@ -1,5 +1,16 @@
 # @reafrac/web
 
+## 1.0.0
+
+### Minor Changes
+
+- abd5292: add option for external proxy via env variable
+
+### Patch Changes
+
+- Updated dependencies [abd5292]
+  - @reafrac/feed-utils@1.0.0
+
 ## 0.5.0
 
 ### Minor Changes
