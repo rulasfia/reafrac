@@ -4,7 +4,7 @@ import { SidebarContent, SidebarHeader } from '../ui/sidebar';
 import { useServerFn } from '@tanstack/react-start';
 import { getEntriesServerFn } from '@/lib/server/entry-sfn';
 import { getFeedServerFn, getFeedsServerFn } from '@/lib/server/feed-sfn';
-import { MENU_ITEMS } from './menu-sidebar';
+import { MENU_ITEMS } from './constants';
 import { Button } from '../ui/button';
 import { Spinner } from '../ui/spinner';
 import { BadgeInfoIcon, RotateCwIcon, TriangleAlertIcon } from 'lucide-react';

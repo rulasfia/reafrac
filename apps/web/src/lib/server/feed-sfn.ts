@@ -6,7 +6,7 @@ import { ofetch } from 'ofetch';
 import type { Feed as FluxFeed } from './types';
 import { sentryMiddleware } from '../middleware/sentry-middleware';
 import * as Sentry from '@sentry/tanstackstart-react';
-import { extractFeed } from '@reafrac/feed-utils';
+import { extractFeed, type ParsedFeed } from '@reafrac/feed-utils';
 import { eq, and, asc, inArray } from '@reafrac/database';
 import {
 	db,
@@ -229,6 +229,54 @@ export const getFeedServerFn = createServerFn({ method: 'GET' })
 		});
 	});
 
+export const extractFeedServerFn = createServerFn({ method: 'GET' })
+	.middleware([sentryMiddleware, authFnMiddleware])
+	.inputValidator(z.object({ feedUrl: z.string() }))
+	.handler(async ({ data, context }) => {
+		return Sentry.startSpan({ op: 'server_function', name: 'extractFeed' }, async (span) => {
+			try {
+				span.setAttribute('user_id', context.user.id);
+				span.setAttribute('feed_url', data.feedUrl);
+
+				// check if user has proxy setup
+				const proxyUrl = process.env.PROXY_URL;
+				span.setAttribute('proxy_url', proxyUrl);
+
+				let validated: ParsedFeed | undefined = undefined;
+				if (proxyUrl) {
+					// if user has set proxy settings, use it to extract feed
+					const httpResponse = await ofetch<ParsedFeed>('/extract-feed', {
+						baseURL: proxyUrl,
+						timeout: 4000, // 4 seconds
+						method: 'POST',
+						body: { url: data.feedUrl }
+					});
+
+					validated = httpResponse;
+				} else {
+					// otherwise, do the feed extraction in this server
+					validated = await extractFeed(data.feedUrl);
+				}
+
+				if (!validated) {
+					throw new Error('Failed to extract feed');
+				}
+
+				return validated;
+			} catch (error) {
+				span.setAttribute('status', 'error');
+				Sentry.captureException(error, {
+					tags: { function: 'extractFeed', feedUrl: data.feedUrl },
+					extra: {
+						userId: context.user.id,
+						errorMessage: error instanceof Error ? error.message : 'Unknown error'
+					}
+				});
+				throw error;
+			}
+		});
+	});
+
 export const previewFeedServerFn = createServerFn({ method: 'GET' })
 	.middleware([sentryMiddleware, authFnMiddleware])
 	.inputValidator(z.object({ feedUrl: z.string() }))
@@ -238,8 +286,10 @@ export const previewFeedServerFn = createServerFn({ method: 'GET' })
 				span.setAttribute('user_id', context.user.id);
 				span.setAttribute('feed_url', data.feedUrl);
 
+				// Extract feed using the extractFeed server function
+				const validated = await extractFeedServerFn({ data: { feedUrl: data.feedUrl } });
+
 				// Extract feed using the centralized extractFeed function
-				const validated = await extractFeed(data.feedUrl);
 				span.setAttribute('entries_count', validated.entries.length);
 				span.setAttribute('feed_title', validated.title);
 
@@ -289,8 +339,9 @@ export const addFeedServerFn = createServerFn({ method: 'GET' })
 				span.setAttribute('user_id', context.user.id);
 				span.setAttribute('feed_url', data.feedUrl);
 
-				// Extract feed using the centralized extractFeed function
-				const validated = await extractFeed(data.feedUrl);
+				// Extract feed using the extractFeed server function
+				const validated = await extractFeedServerFn({ data: { feedUrl: data.feedUrl } });
+
 				span.setAttribute('entries_count', validated.entries.length);
 				span.setAttribute('feed_title', validated.title);
 
