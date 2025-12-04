@@ -6,5 +6,10 @@ export const Route = createFileRoute('/reader/settings/integrations')({
 });
 
 function RouteComponent() {
-	return <MinifluxIntegrationSetting />;
+	return (
+		<>
+			<MinifluxIntegrationSetting />
+			{/*<ExternalProxySettings />*/}
+		</>
+	);
 }

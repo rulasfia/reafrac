@@ -12,7 +12,7 @@ import {
 } from '../ui/dialog';
 import { toastManager } from '../ui/toast';
 import { startTransition, useEffect, useState } from 'react';
-import type { Schema } from '@/lib/db-schema';
+import type { Schema } from '@reafrac/database';
 import { Form } from '../ui/form';
 import { Field, FieldDescription, FieldError, FieldLabel } from '../ui/field';
 import { Input } from '../ui/input';
@@ -55,7 +55,6 @@ export function EditFeedDialog({ item, onClose }: Props) {
 	const qc = useQueryClient();
 	const [isOpen, setIsOpen] = useState(false);
 	const [errors, setErrors] = useState<Errors>({});
-	const handleClearErrors = (next: Errors) => setErrors(next);
 	const [isEditing, setIsEditing] = useState(false);
 
 	const updateFeed = useServerFn(updateFeedServerFn);
@@ -131,12 +130,7 @@ export function EditFeedDialog({ item, onClose }: Props) {
 					<DialogDescription>Edit feed properties.</DialogDescription>
 				</DialogHeader>
 				{item ? (
-					<Form
-						id="editFeedForm"
-						onSubmit={editFeedHandler}
-						errors={errors}
-						onClearErrors={handleClearErrors}
-					>
+					<Form id="editFeedForm" onSubmit={editFeedHandler} errors={errors}>
 						<Field name="title">
 							<FieldLabel>Title</FieldLabel>
 							<Input

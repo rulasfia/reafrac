@@ -1,9 +1,9 @@
 import { extract, FeedData } from '@extractus/feed-extractor';
 import {
+	parsedAndTransformFeedSchema,
 	parsedFeedAuthorSchema,
 	parsedFeedContentSchema,
 	parsedFeedIconSchema,
-	parsedFeedSchema,
 	parsedFeedThumbnailSchema
 } from './schemas';
 
@@ -51,7 +51,7 @@ export async function extractFeed(url: string) {
 		}
 	});
 
-	const validated = parsedFeedSchema.parse(res);
+	const validated = parsedAndTransformFeedSchema.parse(res);
 	return validated;
 }
 

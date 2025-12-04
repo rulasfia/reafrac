@@ -5,6 +5,7 @@ import viteTsConfigPaths from 'vite-tsconfig-paths';
 import tailwindcss from '@tailwindcss/vite';
 
 const config = defineConfig({
+	clearScreen: false,
 	server: { port: 3000 },
 	define: {
 		__APP_VERSION__: JSON.stringify(process.env.VITE_APP_VERSION || 'dev'),
