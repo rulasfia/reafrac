@@ -49,7 +49,6 @@ export const updateUserPreferenceServerFn = createServerFn()
 
 					// check if the user has preference savedo
 					const existing = await getUserPreferenceServerFn();
-					console.log({ existing });
 
 					let preference: NonNullable<typeof existing>[] = [];
 					if (existing) {

@@ -74,7 +74,6 @@ export function ExternalProxySettings() {
 		} catch (error) {
 			console.error('Failed to validate proxy settings:', error);
 			setErrors({ url: "Can't connect to proxy server!" });
-			throw error;
 		} finally {
 			setIsLoading(false);
 		}
@@ -105,9 +104,8 @@ export function ExternalProxySettings() {
 				type: 'success'
 			});
 		} catch (error) {
-			console.error('Failed to validate proxy settings:', error);
+			console.error('Failed to save proxy settings:', error);
 			setErrors({ url: "Can't connect to proxy server!" });
-			throw error;
 		} finally {
 			setIsLoading(false);
 		}
@@ -130,6 +128,7 @@ export function ExternalProxySettings() {
 					<FieldLabel>Proxy URL</FieldLabel>
 					<Input
 						name="url"
+						onChange={() => setIsValidated(false)}
 						defaultValue={data?.proxyUrl ?? ''}
 						placeholder={'https://proxy.domain.com'}
 						type="url"

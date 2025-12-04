@@ -23,8 +23,13 @@ export async function refetchFeeds() {
 					// if user has set proxy settings, use it to extract feed
 					const httpResponse = await fetch(`${proxyUrl}/extract-feed`, {
 						method: 'POST',
-						body: JSON.stringify({ url: feed.link })
+						body: JSON.stringify({ url: feed.link }),
+						headers: { 'Content-Type': 'application/json' }
 					});
+
+					if (!httpResponse.ok) {
+						throw new Error(`Proxy returned ${httpResponse.status}`);
+					}
 
 					feedData = (await httpResponse.json()) as ParsedFeed;
 				} else {
