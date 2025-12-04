@@ -1,5 +1,11 @@
 # @reafrac/content-proxy
 
+## 0.2.0
+
+### Minor Changes
+
+- 45db68d: update build config for web and proxy
+
 ## 0.1.0
 
 ### Minor Changes
