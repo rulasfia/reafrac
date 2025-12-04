@@ -17,7 +17,7 @@ COPY packages/feed-utils/package.json ./packages/feed-utils/
 COPY packages/external-script/package.json ./packages/external-script/
 
 # Install dependencies (including devDependencies for build)
-RUN bun install --frozen-lockfile
+RUN bun install --linker hoisted --frozen-lockfile
 
 # Copy source code
 COPY tsconfig.base.json tsconfig.json ./
@@ -48,7 +48,7 @@ COPY packages/database/package.json ./packages/database/
 COPY packages/feed-utils/package.json ./packages/feed-utils/
 COPY packages/external-script/package.json ./packages/external-script/
 
-RUN bun install --frozen-lockfile --production
+RUN bun install --linker hoisted --frozen-lockfile --production
 
 # Stage 2: Production stage
 FROM base AS runner
