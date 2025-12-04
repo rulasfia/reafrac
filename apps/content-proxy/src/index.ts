@@ -1,12 +1,11 @@
 import { extractFeed, parsedFeedSchema } from '@reafrac/feed-utils';
 import { Elysia } from 'elysia';
-import { openapi, fromTypes } from '@elysiajs/openapi';
+import { openapi } from '@elysiajs/openapi';
 import { z } from 'zod';
 
 const app = new Elysia()
 	.use(
 		openapi({
-			references: fromTypes(),
 			mapJsonSchema: { zod: z.toJSONSchema }
 		})
 	)
@@ -22,8 +21,7 @@ const app = new Elysia()
 	.post(
 		'/extract-feed',
 		async ({ body }) => {
-			console.log({ body });
-			console.info('Extract feed received!');
+			console.log('extracting feed: ', body.url);
 			const validated = await extractFeed(body.url);
 
 			return validated;
