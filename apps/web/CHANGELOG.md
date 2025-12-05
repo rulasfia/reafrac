@@ -1,5 +1,11 @@
 # @reafrac/web
 
+## 1.2.0
+
+### Minor Changes
+
+- 420e906: update sw & reader fetch flow
+
 ## 1.1.0
 
 ### Minor Changes
