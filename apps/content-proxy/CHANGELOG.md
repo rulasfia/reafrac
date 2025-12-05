@@ -1,5 +1,17 @@
 # @reafrac/content-proxy
 
+## 0.3.0
+
+### Minor Changes
+
+- dcac4a4: add new api for article-extraction
+
+### Patch Changes
+
+- Updated dependencies [dcac4a4]
+  - @reafrac/feed-utils@1.3.0
+  - @reafrac/external-script@1.3.0
+
 ## 0.2.0
 
 ### Minor Changes
