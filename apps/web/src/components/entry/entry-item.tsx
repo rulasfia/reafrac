@@ -1,9 +1,9 @@
-import { Link, useLoaderData, useLocation } from '@tanstack/react-router';
+import { Link, useLocation } from '@tanstack/react-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { cn, formatRelativeDate } from '@/lib/utils';
 import { updateEntryStatusServerFn } from '@/lib/server/entry-sfn';
 import { useServerFn } from '@tanstack/react-start';
-import type { Schema } from '@/lib/db-schema';
+import type { Schema } from '@reafrac/database';
 import { BookmarkIcon } from 'lucide-react';
 import { useSidebar } from '../ui/sidebar';
 
@@ -28,14 +28,13 @@ type Props = {
 export function EntryItem({ entry }: Props) {
 	const { search } = useLocation();
 	const { toggleSidebar, isMobile } = useSidebar();
-	const { integration } = useLoaderData({ from: '/reader' });
 	const qc = useQueryClient();
 	const updateEntryStatus = useServerFn(updateEntryStatusServerFn);
 
 	const { mutate } = useMutation({
 		mutationFn: (id: number) => updateEntryStatus({ data: { entryId: id } }),
 		onSuccess: () => {
-			qc.invalidateQueries({ queryKey: ['entries', integration?.id] });
+			qc.invalidateQueries({ queryKey: ['entries'] });
 		}
 	});
 
