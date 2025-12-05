@@ -15,7 +15,7 @@
     },
     "apps/content-proxy": {
       "name": "@reafrac/content-proxy",
-      "version": "0.0.2",
+      "version": "0.2.0",
       "dependencies": {
         "@bogeychan/elysia-logger": "^0.1.10",
         "@elysiajs/openapi": "^1.4.11",
@@ -31,7 +31,7 @@
     },
     "apps/feed-updater": {
       "name": "@reafrac/feed-updater",
-      "version": "0.0.2",
+      "version": "0.0.3",
       "dependencies": {
         "@reafrac/external-script": "workspace:*",
       },
@@ -41,7 +41,7 @@
     },
     "apps/web": {
       "name": "@reafrac/web",
-      "version": "0.6.0",
+      "version": "1.2.0",
       "dependencies": {
         "@base-ui-components/react": "^1.0.0-beta.4",
         "@extractus/article-extractor": "^8.0.20",
@@ -122,7 +122,7 @@
     },
     "packages/external-script": {
       "name": "@reafrac/external-script",
-      "version": "0.5.0",
+      "version": "1.0.0",
       "dependencies": {
         "@reafrac/database": "workspace:*",
         "@reafrac/feed-utils": "workspace:*",
@@ -138,8 +138,9 @@
     },
     "packages/feed-utils": {
       "name": "@reafrac/feed-utils",
-      "version": "0.1.0",
+      "version": "1.0.0",
       "dependencies": {
+        "@extractus/article-extractor": "^8.0.20",
         "@extractus/feed-extractor": "^7.1.7",
         "zod": "^4.1.12",
       },
