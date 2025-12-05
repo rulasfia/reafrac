@@ -1,4 +1,4 @@
-import { extract, FeedData } from '@extractus/feed-extractor';
+import { extract as feedExtractor, type FeedData } from '@extractus/feed-extractor';
 import {
 	parsedAndTransformFeedSchema,
 	parsedFeedAuthorSchema,
@@ -8,7 +8,7 @@ import {
 } from './schemas';
 
 export async function extractFeed(url: string) {
-	const res = await extract(url, {
+	const res = await feedExtractor(url, {
 		descriptionMaxLen: 0,
 		getExtraFeedFields: (feed) => {
 			// parse website icon
@@ -57,3 +57,6 @@ export async function extractFeed(url: string) {
 
 export * from './schemas';
 export type { FeedData };
+
+// re-export article extractor
+export { extract as extractArticle, type ArticleData } from '@extractus/article-extractor';
