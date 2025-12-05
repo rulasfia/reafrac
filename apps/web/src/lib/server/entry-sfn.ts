@@ -402,9 +402,18 @@ export const getEntryContentServerFn = createServerFn({ method: 'GET' })
 
 				// TODO: if extraction success, store in the shared entry tables (db) for caching
 
+				// Sanitize the extracted HTML content before sending it to the client
+				const sanitizedContent = sanitizeHtml(
+					res.content?.replace(/:{3,}/g, '').replace(/\\(?!\w)/g, '') ?? '',
+					{
+						allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img']),
+						allowProtocolRelative: false
+					}
+				);
+
 				span.setAttribute('status', 'success');
-				span.setAttribute('content_extracted', !!res.content);
-				return res;
+				span.setAttribute('content_extracted', !!sanitizedContent);
+				return { ...res, content: sanitizedContent };
 			} catch (error) {
 				span.setAttribute('status', 'error');
 				Sentry.captureException(error, {
