@@ -1,5 +1,16 @@
 # @reafrac/web
 
+## 1.3.0
+
+### Minor Changes
+
+- 8cf02a6: working content extraction feature
+
+### Patch Changes
+
+- Updated dependencies [dcac4a4]
+  - @reafrac/feed-utils@1.3.0
+
 ## 1.2.0
 
 ### Minor Changes

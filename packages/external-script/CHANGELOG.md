@@ -1,5 +1,12 @@
 # @reafrac/external-script
 
+## 1.3.0
+
+### Patch Changes
+
+- Updated dependencies [dcac4a4]
+  - @reafrac/feed-utils@1.3.0
+
 ## 1.0.0
 
 ### Minor Changes
