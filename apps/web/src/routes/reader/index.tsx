@@ -15,7 +15,6 @@ import { Separator } from '@/components/ui/separator';
 import { FloatingMenuButton } from '@/components/entry/floating-menu-button';
 import { EntryHeader } from '@/components/entry/entry-header';
 import { useEffect } from 'react';
-import { n } from 'node_modules/better-auth/dist/index-BGHbvBl4.d.mts';
 
 export const Route = createFileRoute('/reader/')({
 	component: RouteComponent,
@@ -50,6 +49,7 @@ function RouteComponent() {
 		queryFn: async () =>
 			getEntryContent({
 				data: {
+					entryId: entry.data?.id ?? 0,
 					entryUrl: entry.data?.link ?? '',
 					prefixUrl: entry.data?.feed.meta.urlPrefix ?? undefined
 				}

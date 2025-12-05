@@ -384,7 +384,9 @@ export const getEntryServerFn = createServerFn({ method: 'GET' })
 
 export const getEntryContentServerFn = createServerFn({ method: 'GET' })
 	.middleware([sentryMiddleware, authFnMiddleware])
-	.inputValidator(z.object({ entryUrl: z.url(), prefixUrl: z.url().optional() }))
+	.inputValidator(
+		z.object({ entryId: z.number(), entryUrl: z.url(), prefixUrl: z.url().optional() })
+	)
 	.handler(async ({ data }) => {
 		return Sentry.startSpan({ op: 'server_function', name: 'getEntryContent' }, async (span) => {
 			try {
@@ -397,6 +399,8 @@ export const getEntryContentServerFn = createServerFn({ method: 'GET' })
 				if (!res) {
 					throw new Error('Failed to extract entry content');
 				}
+
+				// TODO: if extraction success, store in the shared entry tables (db) for caching
 
 				span.setAttribute('status', 'success');
 				span.setAttribute('content_extracted', !!res.content);
