@@ -15,7 +15,7 @@
 		"@reafrac/external-script": "workspace:*",
 		"@reafrac/feed-utils": "workspace:*",
 		"elysia": "~1.4.16",
-		"zod": "^4.1.13"
+		"zod": "^4.1.12"
 	},
 	"devDependencies": {
 		"@types/bun": "^1.3.3",

@@ -245,9 +245,10 @@ export const extractFeedServerFn = createServerFn({ method: 'GET' })
 				let validated: ParsedFeed | undefined = undefined;
 				if (proxyUrl) {
 					// if user has set proxy settings, use it to extract feed
+					// TODO: if extraction via proxy failed, fallback to extraction in this server
 					const httpResponse = await ofetch<ParsedFeed>('/extract-feed', {
 						baseURL: proxyUrl,
-						timeout: 4000, // 4 seconds
+						timeout: 5000, // 5 seconds
 						method: 'POST',
 						body: { url: data.feedUrl }
 					});

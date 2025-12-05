@@ -16,6 +16,7 @@ Reafrac is a clean, fast reading companion that keeps your feeds organized and e
 This project is a Turborepo monorepo with the following structure:
 
 - **apps/web** - Main web application
+- **apps/content-proxy** - Optional proxy that can be deployed separately
 - **packages/database** - Shared database schema and connection
 - **packages/feed-utils** - RSS feed parsing utilities
 - **packages/external-script** - Cron jobs and migration scripts

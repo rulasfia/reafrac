@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useServerFn } from '@tanstack/react-start';
 import {
@@ -14,6 +14,7 @@ import { toastManager } from '@/components/ui/toast';
 import { Separator } from '@/components/ui/separator';
 import { FloatingMenuButton } from '@/components/entry/floating-menu-button';
 import { EntryHeader } from '@/components/entry/entry-header';
+import { useEffect } from 'react';
 
 export const Route = createFileRoute('/reader/')({
 	component: RouteComponent,
@@ -27,6 +28,7 @@ export const Route = createFileRoute('/reader/')({
 });
 
 function RouteComponent() {
+	const navigate = useNavigate({ from: Route.fullPath });
 	const search = Route.useSearch();
 	const qc = useQueryClient();
 	const getEntry = useServerFn(getEntryServerFn);
@@ -40,11 +42,35 @@ function RouteComponent() {
 	});
 
 	const content = useQuery({
-		enabled: false,
+		enabled: search.view === 'expanded' && entry.status === 'success',
 		staleTime: Infinity,
+		retry: false,
 		queryKey: ['entry-content', search.entry],
-		queryFn: async () => getEntryContent({ data: { entryUrl: entry.data?.link ?? '' } })
+		queryFn: async () =>
+			getEntryContent({
+				data: {
+					entryId: entry.data?.id ?? 0,
+					entryUrl: entry.data?.link ?? '',
+					prefixUrl: entry.data?.feed.meta.urlPrefix ?? undefined
+				}
+			})
 	});
+
+	// handle full content extraction error in the ui
+	useEffect(() => {
+		if (content.status === 'error') {
+			toastManager.add({
+				title: 'Failed to get full article content!',
+				description: 'Please visit the original website to view the full article.',
+				type: 'error'
+			});
+			navigate({
+				search: (prev) => {
+					return { ...prev, view: 'summary' };
+				}
+			});
+		}
+	}, [content.status, navigate]);
 
 	const onSaveToBookmark = async () => {
 		try {
@@ -131,6 +157,23 @@ function RouteComponent() {
 							)}
 							Save
 						</Button>
+
+						<Button
+							variant="outline"
+							className="-ml-px w-fit cursor-pointer rounded-none"
+							render={
+								<Link
+									to="/reader"
+									search={{ ...search, view: search.view === 'expanded' ? undefined : 'expanded' }}
+								/>
+							}
+						>
+							{search.view === 'expanded' && content.status === 'success'
+								? 'Back to Summary'
+								: 'Read Full Article'}
+							{content.isLoading ? <Spinner /> : null}
+						</Button>
+
 						<Button
 							variant="outline"
 							className="-ml-px w-fit cursor-pointer rounded-l-none"
@@ -171,7 +214,8 @@ function RouteComponent() {
 						dangerouslySetInnerHTML={{
 							__html:
 								search.view === 'expanded' && content.status === 'success'
-									? (content.data?.content ?? 'Not Available!')
+									? // isReadingFullContent && content.status === 'success'
+										(content.data?.content ?? 'Not Available!')
 									: entry.data?.content || entry.data?.description
 						}}
 					/>
