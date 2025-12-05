@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { PlusIcon, SearchIcon } from 'lucide-react';
 import { Form } from '../ui/form';
@@ -17,12 +16,14 @@ import { z } from 'zod/mini';
 import { startTransition, useState } from 'react';
 import { useServerFn } from '@tanstack/react-start';
 import { useLoaderData } from '@tanstack/react-router';
-import { addFeedServerFn, getFeedsServerFn, previewFeedServerFn } from '@/lib/server/feed-sfn';
+import { addFeedServerFn, previewFeedServerFn } from '@/lib/server/feed-sfn';
 import { Spinner } from '../ui/spinner';
 import { Input } from '../ui/input';
 import { toastManager } from '../ui/toast';
 import { NewFeedPreview } from './new-feed-preview';
 import type { ParsedFeed } from '@reafrac/feed-utils';
+import { userFeedQueryOptions } from '@/lib/queries/feed-query';
+import { useQuery } from '@tanstack/react-query';
 
 const addFeedSchema = z.object({
 	feedUrl: z.url({ error: 'Invalid URL' })
@@ -31,8 +32,7 @@ const addFeedSchema = z.object({
 type Errors = Record<string, string | string[]>;
 
 export function AddFeedDialog() {
-	const { user, integration } = useLoaderData({ from: '/reader' });
-	const getFeeds = useServerFn(getFeedsServerFn);
+	const { user } = useLoaderData({ from: '/reader' });
 	const previewFeed = useServerFn(previewFeedServerFn);
 	const addFeed = useServerFn(addFeedServerFn);
 
@@ -41,13 +41,8 @@ export function AddFeedDialog() {
 	const [isSearching, setIsSearching] = useState(false);
 	const [isAdding, setIsAdding] = useState(false);
 	const [errors, setErrors] = useState<Errors>({});
-	const handleClearErrors = (next: Errors) => setErrors(next);
 
-	const { data: feeds, refetch: invalidateFeeds } = useQuery({
-		queryKey: ['feeds', user.id, integration?.id],
-		queryFn: async () => getFeeds(),
-		staleTime: 2 * 60 * 1000 // 2 minutes
-	});
+	const { data: feeds, refetch: invalidateFeeds } = useQuery(userFeedQueryOptions(user.id));
 
 	const submitHandler = async (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
@@ -118,12 +113,7 @@ export function AddFeedDialog() {
 						Follow RSS feed, Reddit, Youtube Channel, Newsletters, Podcasts, and more.
 					</DialogDescription>
 				</DialogHeader>
-				<Form
-					id="feedForm"
-					onSubmit={submitHandler}
-					errors={errors}
-					onClearErrors={handleClearErrors}
-				>
+				<Form id="feedForm" onSubmit={submitHandler} errors={errors}>
 					<Field name="feedUrl">
 						<FieldLabel>Feed URL</FieldLabel>
 						<div className="flex w-full flex-col items-end gap-2 sm:flex-row sm:items-center">

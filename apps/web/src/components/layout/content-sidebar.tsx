@@ -3,21 +3,21 @@ import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-quer
 import { SidebarContent, SidebarHeader } from '../ui/sidebar';
 import { useServerFn } from '@tanstack/react-start';
 import { getEntriesServerFn } from '@/lib/server/entry-sfn';
-import { getFeedServerFn, getFeedsServerFn } from '@/lib/server/feed-sfn';
+import { getFeedServerFn } from '@/lib/server/feed-sfn';
 import { MENU_ITEMS } from './constants';
 import { Button } from '../ui/button';
 import { Spinner } from '../ui/spinner';
 import { BadgeInfoIcon, RotateCwIcon, TriangleAlertIcon } from 'lucide-react';
 import { EntryItem } from '../entry/entry-item';
+import { userFeedQueryOptions } from '@/lib/queries/feed-query';
 
 const PAGE_SIZE = 15;
 
 export function ContentSidebar() {
 	const { search } = useLocation();
-	const { user, integration } = useLoaderData({ from: '/reader' });
+	const { user } = useLoaderData({ from: '/reader' });
 	const getEntries = useServerFn(getEntriesServerFn);
 	const getFeed = useServerFn(getFeedServerFn);
-	const getFeeds = useServerFn(getFeedsServerFn);
 	const queryClient = useQueryClient();
 	const feedId = MENU_ITEMS.find((x) => x.page === search.page) ? undefined : search.page;
 
@@ -39,7 +39,7 @@ export function ContentSidebar() {
 	}
 
 	const entries = useInfiniteQuery({
-		queryKey: ['entries', integration?.id, search.page],
+		queryKey: ['entries', search.page],
 		queryFn: async ({ pageParam = 0 }) => {
 			const { after, starred, status } = formatQueryParams(search);
 
@@ -65,14 +65,10 @@ export function ContentSidebar() {
 		// Trigger a force refetch by directly calling the server function with forceRefetch: true
 		await getEntries({ data: { feedId, offset: 0, after, starred, status, forceRefetch: true } });
 		// After force refetch, invalidate the query to refresh the UI
-		await queryClient.invalidateQueries({ queryKey: ['entries', integration?.id, search.page] });
+		await queryClient.invalidateQueries({ queryKey: ['entries', search.page] });
 	};
 
-	const feeds = useQuery({
-		queryKey: ['feeds', user.id, integration?.id],
-		queryFn: async () => getFeeds(),
-		staleTime: 2 * 60 * 1000 // 2 minutes
-	});
+	const feeds = useQuery(userFeedQueryOptions(user.id));
 
 	const feed = useQuery({
 		enabled: !!feedId,

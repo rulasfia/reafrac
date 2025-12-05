@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getFeedsServerFn, removeFeedServerFn } from '@/lib/server/feed-sfn';
+import { removeFeedServerFn } from '@/lib/server/feed-sfn';
 import { useLoaderData, useLocation } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
 import { FeedItem } from './feed-item';
@@ -8,19 +8,15 @@ import { Label } from '../ui/label';
 import { AddFeedDialog } from './add-feed-dialog';
 import { EditFeedDialog } from './edit-feed-dialog';
 import { useState } from 'react';
+import { userFeedQueryOptions } from '@/lib/queries/feed-query';
 
 export function FeedSetting() {
 	const { search } = useLocation();
-	const { user, integration } = useLoaderData({ from: '/reader' });
+	const { user } = useLoaderData({ from: '/reader' });
 	const qc = useQueryClient();
-	const getFeeds = useServerFn(getFeedsServerFn);
 	const removeFeed = useServerFn(removeFeedServerFn);
 
-	const { data: feeds, refetch: invalidateFeeds } = useQuery({
-		queryKey: ['feeds', user.id, integration?.id],
-		queryFn: async () => getFeeds(),
-		staleTime: 2 * 60 * 1000 // 2 minutes
-	});
+	const { data: feeds, refetch: invalidateFeeds } = useQuery(userFeedQueryOptions(user.id));
 
 	const [activeItem, setActiveItem] = useState<NonNullable<typeof feeds>[number] | null>(null);
 
@@ -30,7 +26,7 @@ export function FeedSetting() {
 			await invalidateFeeds();
 			// don't await, let it start in the bg
 			qc.invalidateQueries({
-				queryKey: ['entries', integration?.id, search.page]
+				queryKey: ['entries', search.page]
 			});
 
 			toastManager.add({

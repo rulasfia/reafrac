@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
 import { ChevronRightIcon, PlusIcon, SettingsIcon } from 'lucide-react';
 import {
 	SidebarContent,
@@ -15,24 +14,20 @@ import {
 	useSidebar
 } from '../ui/sidebar';
 import { Link, useLoaderData, useLocation } from '@tanstack/react-router';
-import { useServerFn } from '@tanstack/react-start';
 import { getFeedsServerFn } from '@/lib/server/feed-sfn';
 import { Button } from '../ui/button';
 import { MENU_ITEMS } from './constants';
+import { userFeedQueryOptions } from '@/lib/queries/feed-query';
+import { useQuery } from '@tanstack/react-query';
 
 export function MenuSidebar() {
 	const { isMobile, toggleSidebar } = useSidebar();
 	const { search, pathname } = useLocation();
-	const { user, integration } = useLoaderData({ from: '/reader' });
-	const getFeeds = useServerFn(getFeedsServerFn);
+	const { user } = useLoaderData({ from: '/reader' });
 
-	const { data: feeds } = useQuery({
-		queryKey: ['feeds', user.id, integration?.id],
-		queryFn: async () => getFeeds(),
-		staleTime: 2 * 60 * 1000 // 2 minutes
-	});
+	const { data: feeds } = useQuery(userFeedQueryOptions(user.id));
 
-	const getFeedIcon = (item: Awaited<ReturnType<typeof getFeeds>>[number]) => {
+	const getFeedIcon = (item: Awaited<ReturnType<typeof getFeedsServerFn>>[number]) => {
 		if (item.meta.icon) {
 			return item.meta.icon;
 		} else if (item.icon) {

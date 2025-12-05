@@ -1,6 +1,6 @@
 import { AppSidebar } from '@/components/layout/sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
-import { getExistingIntegrationServerFn } from '@/lib/server/integration-sfn';
+import { userFeedQueryOptions } from '@/lib/queries/feed-query';
 import { getUserInfoServerFn } from '@/lib/server/user-sfn';
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
 import { z } from 'zod/mini';
@@ -27,9 +27,8 @@ export const Route = createFileRoute('/reader')({
 		return { user };
 	},
 	loader: async ({ context }) => {
-		const integration = await getExistingIntegrationServerFn({ data: { userId: context.user.id } });
-
-		return { user: context.user, integration };
+		context.queryClient.fetchQuery(userFeedQueryOptions(context.user.id));
+		return { user: context.user };
 	}
 });
 
