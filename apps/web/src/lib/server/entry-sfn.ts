@@ -1,6 +1,6 @@
-import { extract } from '@extractus/article-extractor';
+import { type ArticleData, extract } from '@extractus/article-extractor';
 import { createServerFn } from '@tanstack/react-start';
-import * as z from 'zod/mini';
+import * as z from 'zod';
 import { authFnMiddleware } from '../middleware/auth-middleware';
 import sanitizeHtml from 'sanitize-html';
 import { sentryMiddleware } from '../middleware/sentry-middleware';
@@ -8,6 +8,60 @@ import * as Sentry from '@sentry/tanstackstart-react';
 import type { EntryMeta } from './types';
 import { db, entries, feeds, userEntries, userFeedSubscriptions } from '@reafrac/database';
 import { eq, and, desc, count, gte } from '@reafrac/database';
+import { ofetch } from 'ofetch';
+
+export const extractEntryContentServerFn = createServerFn({ method: 'GET' })
+	.middleware([sentryMiddleware, authFnMiddleware])
+	.inputValidator(z.object({ entryUrl: z.string() }))
+	.handler(async ({ data, context }) => {
+		return Sentry.startSpan(
+			{ op: 'server_function', name: 'extractEntryContent' },
+			async (span) => {
+				try {
+					span.setAttribute('user_id', context.user.id);
+					span.setAttribute('entry_url', data.entryUrl);
+
+					// check if user has proxy setup
+					const proxyUrl = process.env.PROXY_URL;
+					span.setAttribute('proxy_url', proxyUrl);
+
+					console.log({ proxyUrl, url: data.entryUrl });
+					let validated: ArticleData | undefined = undefined;
+					if (proxyUrl) {
+						// if user has set proxy settings, use it to extract feed
+						// TODO: if extraction via proxy failed, fallback to extraction in this server
+						const httpResponse = await ofetch<ArticleData>('/extract-article', {
+							baseURL: proxyUrl,
+							timeout: 6000, // 6 seconds
+							method: 'POST',
+							body: { url: data.entryUrl }
+						});
+
+						validated = httpResponse;
+					} else {
+						// otherwise, do the entry content extraction in this server
+						validated = (await extract(data.entryUrl)) ?? undefined;
+					}
+
+					if (!validated) {
+						throw new Error('Failed to extract entry content');
+					}
+
+					return validated;
+				} catch (error) {
+					span.setAttribute('status', 'error');
+					Sentry.captureException(error, {
+						tags: { function: 'extractEntryContent', feedUrl: data.entryUrl },
+						extra: {
+							userId: context.user.id,
+							errorMessage: error instanceof Error ? error.message : 'Unknown error'
+						}
+					});
+					throw error;
+				}
+			}
+		);
+	});
 
 export const updateEntryStatusServerFn = createServerFn({ method: 'POST' })
 	.middleware([sentryMiddleware, authFnMiddleware])
@@ -79,12 +133,12 @@ export const saveEntryToBookmarkServerFn = createServerFn({ method: 'POST' })
 	});
 
 const EntryQuerySchema = z.object({
-	feedId: z.optional(z.string()),
+	feedId: z.string().optional(),
 	offset: z.number(),
-	after: z.optional(z.number()),
-	starred: z.optional(z.boolean()),
-	status: z.optional(z.enum(['read', 'unread'])),
-	forceRefetch: z.optional(z.boolean())
+	after: z.number().optional(),
+	starred: z.boolean().optional(),
+	status: z.enum(['read', 'unread']).optional(),
+	forceRefetch: z.boolean().optional()
 });
 
 export const getEntriesServerFn = createServerFn({ method: 'GET' })
@@ -330,13 +384,16 @@ export const getEntryServerFn = createServerFn({ method: 'GET' })
 
 export const getEntryContentServerFn = createServerFn({ method: 'GET' })
 	.middleware([sentryMiddleware, authFnMiddleware])
-	.inputValidator(z.object({ entryUrl: z.url() }))
+	.inputValidator(z.object({ entryUrl: z.url(), prefixUrl: z.url().optional() }))
 	.handler(async ({ data }) => {
 		return Sentry.startSpan({ op: 'server_function', name: 'getEntryContent' }, async (span) => {
 			try {
+				span.setAttribute('prefix_url', data.prefixUrl);
 				span.setAttribute('entry_url', data.entryUrl);
 
-				const res = await extract(data.entryUrl);
+				const url = data.prefixUrl ? `${data.prefixUrl}${data.entryUrl}` : data.entryUrl;
+
+				const res = await extractEntryContentServerFn({ data: { entryUrl: url } });
 				if (!res) {
 					throw new Error('Failed to extract entry content');
 				}
