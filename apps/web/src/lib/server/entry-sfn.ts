@@ -2,13 +2,13 @@ import { type ArticleData, extract } from '@extractus/article-extractor';
 import { createServerFn } from '@tanstack/react-start';
 import * as z from 'zod';
 import { authFnMiddleware } from '../middleware/auth-middleware';
-import sanitizeHtml from 'sanitize-html';
 import { sentryMiddleware } from '../middleware/sentry-middleware';
 import * as Sentry from '@sentry/tanstackstart-react';
 import type { EntryMeta } from './types';
 import { db, entries, feeds, userEntries, userFeedSubscriptions } from '@reafrac/database';
 import { eq, and, desc, count, gte } from '@reafrac/database';
 import { ofetch } from 'ofetch';
+import { htmlSanitizer } from '../utils/entry-utils';
 
 export const extractEntryContentServerFn = createServerFn({ method: 'GET' })
 	.middleware([sentryMiddleware, authFnMiddleware])
@@ -356,23 +356,18 @@ export const getEntryServerFn = createServerFn({ method: 'GET' })
 					.where(and(eq(feeds.id, entry.feedId), eq(userFeedSubscriptions.userId, context.user.id)))
 					.limit(1);
 
-				//  sanitize HTML in the entry.content
-				const sanitizedContent = sanitizeHtml(
-					entry.content?.replace(/:{3,}/g, '').replace(/\\(?!\w)/g, '') ?? '',
-					{
-						allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'iframe', 'video']),
-						allowProtocolRelative: false,
-						allowedAttributes: {
-							...sanitizeHtml.defaults.allowedAttributes,
-							iframe: ['src', 'allow', 'frameborder']
-						},
-						allowedIframeHostnames: ['www.youtube.com', 'player.vimeo.com']
-					}
-				);
+				//  sanitize HTML in the entry content & description as both used as fallback on the client
+				const sanitizedDescription = htmlSanitizer(entry.description);
+				const sanitizedContent = htmlSanitizer(entry.content ?? '');
 
 				span.setAttribute('status', 'success');
 				span.setAttribute('content_length', sanitizedContent.length);
-				return { ...entry, content: sanitizedContent, feed: feed[0] };
+				return {
+					...entry,
+					description: sanitizedDescription,
+					content: sanitizedContent,
+					feed: feed[0]
+				};
 			} catch (error) {
 				span.setAttribute('status', 'error');
 				Sentry.captureException(error, {
@@ -408,18 +403,7 @@ export const getEntryContentServerFn = createServerFn({ method: 'GET' })
 				// TODO: if extraction success, store in the shared entry tables (db) for caching
 
 				// Sanitize the extracted HTML content before sending it to the client
-				const sanitizedContent = sanitizeHtml(
-					res.content?.replace(/:{3,}/g, '').replace(/\\(?!\w)/g, '') ?? '',
-					{
-						allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'iframe', 'video']),
-						allowProtocolRelative: false,
-						allowedAttributes: {
-							...sanitizeHtml.defaults.allowedAttributes,
-							iframe: ['src', 'allow', 'frameborder']
-						},
-						allowedIframeHostnames: ['www.youtube.com', 'player.vimeo.com']
-					}
-				);
+				const sanitizedContent = htmlSanitizer(res.content ?? '');
 
 				span.setAttribute('status', 'success');
 				span.setAttribute('content_extracted', !!sanitizedContent);

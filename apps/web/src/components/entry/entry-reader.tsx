@@ -120,19 +120,6 @@ export function EntryReader() {
 					</h1>
 
 					<div className="mb-4 flex items-center">
-						{/*<Link
-							className={buttonStyles({
-								intent: 'outline',
-								className: 'mt-4 w-fit cursor-pointer rounded-r-none'
-							})}
-							to="/reader"
-							search={{ ...search, view: search.view === 'expanded' ? undefined : 'expanded' }}
-						>
-							{search.view === 'expanded' && content.status === 'success'
-								? 'Back to Summary'
-								: 'Read Full Article'}
-							{content.isLoading ? <Loader /> : null}
-						</Link>*/}
 						<Button
 							variant="outline"
 							className="w-fit cursor-pointer rounded-r-none"
