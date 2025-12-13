@@ -104,7 +104,9 @@ export function AddFeedDialog() {
 	return (
 		<Dialog open={isOpen} onOpenChange={closeModal}>
 			<DialogTrigger render={<Button />}>
-				<PlusIcon /> Add Feed
+				<PlusIcon />
+				<span className="hidden md:block">Add Feed</span>
+				<span className="block md:hidden">Add</span>
 			</DialogTrigger>
 			<DialogPopup className="sm:max-w-xl">
 				<DialogHeader>

@@ -13,7 +13,7 @@
 		"tsc": "tsc --noEmit"
 	},
 	"dependencies": {
-		"@base-ui-components/react": "^1.0.0-beta.4",
+		"@base-ui-components/react": "^1.0.0-rc.0",
 		"@extractus/article-extractor": "^8.0.20",
 		"@fontsource-variable/atkinson-hyperlegible-next": "^5.2.6",
 		"@fontsource/ibm-plex-mono": "^5.2.7",
@@ -44,8 +44,8 @@
 		"nanoid": "^5.1.6",
 		"ofetch": "^1.5.0",
 		"query-string": "^9.3.1",
-		"react": "^19.0.0",
-		"react-dom": "^19.0.0",
+		"react": "^19.2.1",
+		"react-dom": "^19.2.1",
 		"sanitize-html": "^2.17.0",
 		"tailwind-merge": "^3.3.1",
 		"tailwind-variants": "^3.1.1",
