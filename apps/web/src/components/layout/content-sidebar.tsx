@@ -39,6 +39,7 @@ export function ContentSidebar() {
 	}
 
 	const entries = useInfiniteQuery({
+		enabled: search.page !== 'settings',
 		queryKey: ['entries', search.page],
 		queryFn: async ({ pageParam = 0 }) => {
 			const { after, starred, status } = formatQueryParams(search);

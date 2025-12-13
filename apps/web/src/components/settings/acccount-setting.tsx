@@ -1,16 +1,12 @@
 import { authClient } from '@/lib/auth-client';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
-import { createFileRoute, useLoaderData, useNavigate } from '@tanstack/react-router';
+import { useLoaderData, useNavigate } from '@tanstack/react-router';
 import { Input } from '@/components/ui/input';
 import { Form } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-export const Route = createFileRoute('/reader/settings/account')({
-	component: RouteComponent
-});
-
-function RouteComponent() {
+export function AccountSetting() {
 	const { user } = useLoaderData({ from: '/reader' });
 	const navigate = useNavigate();
 

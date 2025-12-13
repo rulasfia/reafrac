@@ -15,11 +15,7 @@ import { Route as ReaderRouteImport } from './routes/reader'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ReaderIndexRouteImport } from './routes/reader/index'
-import { Route as ReaderSettingsRouteImport } from './routes/reader/settings'
 import { Route as ApiVersionRouteImport } from './routes/api/version'
-import { Route as ReaderSettingsIntegrationsRouteImport } from './routes/reader/settings/integrations'
-import { Route as ReaderSettingsFeedsRouteImport } from './routes/reader/settings/feeds'
-import { Route as ReaderSettingsAccountRouteImport } from './routes/reader/settings/account'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
 const VersionRoute = VersionRouteImport.update({
@@ -52,31 +48,10 @@ const ReaderIndexRoute = ReaderIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ReaderRoute,
 } as any)
-const ReaderSettingsRoute = ReaderSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => ReaderRoute,
-} as any)
 const ApiVersionRoute = ApiVersionRouteImport.update({
   id: '/api/version',
   path: '/api/version',
   getParentRoute: () => rootRouteImport,
-} as any)
-const ReaderSettingsIntegrationsRoute =
-  ReaderSettingsIntegrationsRouteImport.update({
-    id: '/integrations',
-    path: '/integrations',
-    getParentRoute: () => ReaderSettingsRoute,
-  } as any)
-const ReaderSettingsFeedsRoute = ReaderSettingsFeedsRouteImport.update({
-  id: '/feeds',
-  path: '/feeds',
-  getParentRoute: () => ReaderSettingsRoute,
-} as any)
-const ReaderSettingsAccountRoute = ReaderSettingsAccountRouteImport.update({
-  id: '/account',
-  path: '/account',
-  getParentRoute: () => ReaderSettingsRoute,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
@@ -91,12 +66,8 @@ export interface FileRoutesByFullPath {
   '/sign-up': typeof SignUpRoute
   '/version': typeof VersionRoute
   '/api/version': typeof ApiVersionRoute
-  '/reader/settings': typeof ReaderSettingsRouteWithChildren
   '/reader/': typeof ReaderIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/reader/settings/account': typeof ReaderSettingsAccountRoute
-  '/reader/settings/feeds': typeof ReaderSettingsFeedsRoute
-  '/reader/settings/integrations': typeof ReaderSettingsIntegrationsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -104,12 +75,8 @@ export interface FileRoutesByTo {
   '/sign-up': typeof SignUpRoute
   '/version': typeof VersionRoute
   '/api/version': typeof ApiVersionRoute
-  '/reader/settings': typeof ReaderSettingsRouteWithChildren
   '/reader': typeof ReaderIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/reader/settings/account': typeof ReaderSettingsAccountRoute
-  '/reader/settings/feeds': typeof ReaderSettingsFeedsRoute
-  '/reader/settings/integrations': typeof ReaderSettingsIntegrationsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -119,12 +86,8 @@ export interface FileRoutesById {
   '/sign-up': typeof SignUpRoute
   '/version': typeof VersionRoute
   '/api/version': typeof ApiVersionRoute
-  '/reader/settings': typeof ReaderSettingsRouteWithChildren
   '/reader/': typeof ReaderIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/reader/settings/account': typeof ReaderSettingsAccountRoute
-  '/reader/settings/feeds': typeof ReaderSettingsFeedsRoute
-  '/reader/settings/integrations': typeof ReaderSettingsIntegrationsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -135,12 +98,8 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/version'
     | '/api/version'
-    | '/reader/settings'
     | '/reader/'
     | '/api/auth/$'
-    | '/reader/settings/account'
-    | '/reader/settings/feeds'
-    | '/reader/settings/integrations'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -148,12 +107,8 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/version'
     | '/api/version'
-    | '/reader/settings'
     | '/reader'
     | '/api/auth/$'
-    | '/reader/settings/account'
-    | '/reader/settings/feeds'
-    | '/reader/settings/integrations'
   id:
     | '__root__'
     | '/'
@@ -162,12 +117,8 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/version'
     | '/api/version'
-    | '/reader/settings'
     | '/reader/'
     | '/api/auth/$'
-    | '/reader/settings/account'
-    | '/reader/settings/feeds'
-    | '/reader/settings/integrations'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -224,40 +175,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReaderIndexRouteImport
       parentRoute: typeof ReaderRoute
     }
-    '/reader/settings': {
-      id: '/reader/settings'
-      path: '/settings'
-      fullPath: '/reader/settings'
-      preLoaderRoute: typeof ReaderSettingsRouteImport
-      parentRoute: typeof ReaderRoute
-    }
     '/api/version': {
       id: '/api/version'
       path: '/api/version'
       fullPath: '/api/version'
       preLoaderRoute: typeof ApiVersionRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/reader/settings/integrations': {
-      id: '/reader/settings/integrations'
-      path: '/integrations'
-      fullPath: '/reader/settings/integrations'
-      preLoaderRoute: typeof ReaderSettingsIntegrationsRouteImport
-      parentRoute: typeof ReaderSettingsRoute
-    }
-    '/reader/settings/feeds': {
-      id: '/reader/settings/feeds'
-      path: '/feeds'
-      fullPath: '/reader/settings/feeds'
-      preLoaderRoute: typeof ReaderSettingsFeedsRouteImport
-      parentRoute: typeof ReaderSettingsRoute
-    }
-    '/reader/settings/account': {
-      id: '/reader/settings/account'
-      path: '/account'
-      fullPath: '/reader/settings/account'
-      preLoaderRoute: typeof ReaderSettingsAccountRouteImport
-      parentRoute: typeof ReaderSettingsRoute
     }
     '/api/auth/$': {
       id: '/api/auth/$'
@@ -269,29 +192,11 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface ReaderSettingsRouteChildren {
-  ReaderSettingsAccountRoute: typeof ReaderSettingsAccountRoute
-  ReaderSettingsFeedsRoute: typeof ReaderSettingsFeedsRoute
-  ReaderSettingsIntegrationsRoute: typeof ReaderSettingsIntegrationsRoute
-}
-
-const ReaderSettingsRouteChildren: ReaderSettingsRouteChildren = {
-  ReaderSettingsAccountRoute: ReaderSettingsAccountRoute,
-  ReaderSettingsFeedsRoute: ReaderSettingsFeedsRoute,
-  ReaderSettingsIntegrationsRoute: ReaderSettingsIntegrationsRoute,
-}
-
-const ReaderSettingsRouteWithChildren = ReaderSettingsRoute._addFileChildren(
-  ReaderSettingsRouteChildren,
-)
-
 interface ReaderRouteChildren {
-  ReaderSettingsRoute: typeof ReaderSettingsRouteWithChildren
   ReaderIndexRoute: typeof ReaderIndexRoute
 }
 
 const ReaderRouteChildren: ReaderRouteChildren = {
-  ReaderSettingsRoute: ReaderSettingsRouteWithChildren,
   ReaderIndexRoute: ReaderIndexRoute,
 }
 

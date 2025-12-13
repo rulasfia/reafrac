@@ -124,7 +124,7 @@ export function EditFeedDialog({ item, onClose }: Props) {
 
 	return (
 		<Dialog open={isOpen} onOpenChange={onOpenChange}>
-			<DialogPopup className="">
+			<DialogPopup>
 				<DialogHeader>
 					<DialogTitle>Edit Feed</DialogTitle>
 					<DialogDescription>Edit feed properties.</DialogDescription>

@@ -5,8 +5,8 @@ import { MenuSidebar } from './menu-sidebar';
 import { SettingsSidebar } from './settings-sidebar';
 
 export function AppSidebar() {
-	const { pathname } = useLocation();
-	const isSettings = pathname.startsWith('/reader/settings');
+	const { search } = useLocation();
+	const isSettings = search.page === 'settings';
 
 	return (
 		<Sidebar variant="inset" className="p-0">

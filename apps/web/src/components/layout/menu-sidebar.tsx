@@ -39,8 +39,8 @@ export function MenuSidebar() {
 
 	return (
 		<div className="mr col-span-1 flex h-full flex-col overflow-y-auto border-r bg-muted lg:col-span-2 dark:bg-accent">
-			<SidebarHeader>
-				<span className="hidden text-lg font-semibold lg:block">Reafrac</span>
+			<SidebarHeader className="flex flex-row items-start justify-between">
+				<span className="hidden min-h-7 w-fit text-lg font-semibold lg:block">Reafrac</span>
 			</SidebarHeader>
 			<SidebarContent className="overflow-x-clip">
 				<SidebarGroup>
@@ -72,7 +72,7 @@ export function MenuSidebar() {
 						<>
 							<SidebarGroupLabel>Feeds</SidebarGroupLabel>
 							<SidebarGroupAction asChild>
-								<Link to="/reader/settings/feeds">
+								<Link to="/reader" search={{ page: 'settings', category: 'feeds' }}>
 									<ChevronRightIcon />
 									<span className="sr-only">Manage Feeds</span>
 								</Link>
@@ -84,7 +84,10 @@ export function MenuSidebar() {
 						{feeds?.length === 0 ? (
 							<div className="hidden flex-col items-center justify-center gap-y-3 rounded-md border border-dashed border-sidebar-border bg-background px-2 py-6 lg:flex">
 								<span className="text-sm opacity-75">Personalize your feed.</span>
-								<Button size="xs" render={<Link to="/reader/settings/feeds" search={search} />}>
+								<Button
+									size="xs"
+									render={<Link to="/reader" search={{ page: 'settings', category: 'feeds' }} />}
+								>
 									<PlusIcon className="size-5" /> Add Feed
 								</Button>
 							</div>
@@ -125,13 +128,10 @@ export function MenuSidebar() {
 					<SidebarGroupContent>
 						<SidebarMenu>
 							<SidebarMenuItem>
-								<SidebarMenuButton
-									asChild
-									isActive={pathname.startsWith('/reader/settings')}
-									className="justify-center lg:justify-start"
-								>
+								<SidebarMenuButton asChild className="justify-center lg:justify-start">
 									<Link
-										to="/reader/settings/feeds"
+										to="/reader"
+										search={{ page: 'settings', category: 'feeds' }}
 										onClick={() => (isMobile ? toggleSidebar() : undefined)}
 									>
 										<SettingsIcon />

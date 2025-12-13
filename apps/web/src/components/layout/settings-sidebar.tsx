@@ -14,23 +14,26 @@ import { BlocksIcon, RssIcon, ShieldUserIcon } from 'lucide-react';
 const SETTING_ITEMS = [
 	{
 		label: 'Feeds',
-		href: '/reader/settings/feeds',
+		href: '/reader',
+		category: 'feeds',
 		icon: <RssIcon />
 	},
 	{
 		label: 'Integrations',
-		href: '/reader/settings/integrations',
+		href: '/reader',
+		category: 'integrations',
 		icon: <BlocksIcon />
 	},
 	{
 		label: 'Account',
-		href: '/reader/settings/account',
+		href: '/reader',
+		category: 'account',
 		icon: <ShieldUserIcon />
 	}
 ];
 
 export function SettingsSidebar() {
-	const { pathname } = useLocation();
+	const { search } = useLocation();
 	const { toggleSidebar, isMobile } = useSidebar();
 
 	const onEntryClick = () => {
@@ -49,11 +52,15 @@ export function SettingsSidebar() {
 							{SETTING_ITEMS.map((item) => (
 								<SidebarMenuItem key={item.label}>
 									<SidebarMenuButton
-										isActive={pathname === item.href}
+										isActive={search.category === item.category}
 										asChild
 										className="active:bg-sidebar-accent data-[active=true]:bg-sidebar-accent data-[state=open]:hover:bg-sidebar-accent"
 									>
-										<Link to={item.href} onClick={onEntryClick}>
+										<Link
+											to={item.href}
+											search={{ ...search, category: item.category }}
+											onClick={onEntryClick}
+										>
 											{item.icon}
 											{item.label}
 										</Link>

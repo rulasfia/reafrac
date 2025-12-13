@@ -8,6 +8,7 @@ import { z } from 'zod/mini';
 const readerSearchSchema = z.object({
 	page: z.optional(z.string()),
 	entry: z.optional(z.number()),
+	category: z.optional(z.string()),
 	view: z.optional(z.enum(['summary', 'expanded']))
 });
 
@@ -27,7 +28,7 @@ export const Route = createFileRoute('/reader')({
 		return { user };
 	},
 	loader: async ({ context }) => {
-		context.queryClient.fetchQuery(userFeedQueryOptions(context.user.id));
+		await context.queryClient.prefetchQuery(userFeedQueryOptions(context.user.id));
 		return { user: context.user };
 	}
 });

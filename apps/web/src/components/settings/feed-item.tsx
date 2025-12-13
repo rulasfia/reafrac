@@ -1,4 +1,4 @@
-import type { Schema } from '@/lib/db-schema';
+import type { Schema } from '@reafrac/database';
 import { useState } from 'react';
 import { useLocation, useNavigate } from '@tanstack/react-router';
 import { Button } from '../ui/button';
@@ -25,7 +25,8 @@ export function FeedItem({ item, onRemove, onUpdate }: FeedItemProps) {
 			try {
 				await onRemove(item.id);
 				if (search.page === item.id) {
-					navigate({ to: '/reader/settings', search: { ...search, page: undefined } });
+					// TODO: remove later. imposible condition in the new settings
+					navigate({ to: '/reader', search: { ...search, page: 'settings' } });
 				}
 			} catch (error) {
 				console.error('Failed to remove feed:', error);
