@@ -1,5 +1,12 @@
 # @reafrac/web
 
+## 2.0.0
+
+### Major Changes
+
+- 5163619: improve auto dark mode handling
+- 7da9eab: fix slow settings navigation & fix video in reader view
+
 ## 1.3.0
 
 ### Minor Changes
