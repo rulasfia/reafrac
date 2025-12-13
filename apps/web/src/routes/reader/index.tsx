@@ -51,7 +51,7 @@ function RouteComponent() {
 				data: {
 					entryId: entry.data?.id ?? 0,
 					entryUrl: entry.data?.link ?? '',
-					prefixUrl: entry.data?.feed.meta.urlPrefix ?? undefined
+					prefixUrl: entry.data?.feed.meta.urlPrefix || undefined
 				}
 			})
 	});
@@ -210,7 +210,7 @@ function RouteComponent() {
 						</div>
 					) : null}
 					<div
-						className="container mx-auto prose w-full prose-neutral xl:max-w-2xl xl:min-w-xl dark:prose-invert prose-a:decoration-accent prose-a:hover:decoration-foreground prose-img:rounded-xl prose-img:border prose-img:border-border prose-img:shadow-sm prose-img:shadow-accent/50"
+						className="xl:max-w-1xl container mx-auto prose w-full prose-neutral xl:min-w-xl dark:prose-invert prose-a:decoration-accent prose-a:hover:decoration-foreground prose-img:rounded-xl prose-img:border prose-img:border-border prose-img:shadow-sm prose-img:shadow-accent/51 prose-video:rounded-xl prose-video:border prose-video:border-border prose-video:shadow-sm prose-video:shadow-accent/50"
 						dangerouslySetInnerHTML={{
 							__html:
 								search.view === 'expanded' && content.status === 'success'

@@ -360,8 +360,13 @@ export const getEntryServerFn = createServerFn({ method: 'GET' })
 				const sanitizedContent = sanitizeHtml(
 					entry.content?.replace(/:{3,}/g, '').replace(/\\(?!\w)/g, '') ?? '',
 					{
-						allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img']),
-						allowProtocolRelative: false
+						allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'iframe', 'video']),
+						allowProtocolRelative: false,
+						allowedAttributes: {
+							...sanitizeHtml.defaults.allowedAttributes,
+							iframe: ['src', 'allow', 'frameborder']
+						},
+						allowedIframeHostnames: ['www.youtube.com', 'player.vimeo.com']
 					}
 				);
 
@@ -406,8 +411,13 @@ export const getEntryContentServerFn = createServerFn({ method: 'GET' })
 				const sanitizedContent = sanitizeHtml(
 					res.content?.replace(/:{3,}/g, '').replace(/\\(?!\w)/g, '') ?? '',
 					{
-						allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img']),
-						allowProtocolRelative: false
+						allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'iframe', 'video']),
+						allowProtocolRelative: false,
+						allowedAttributes: {
+							...sanitizeHtml.defaults.allowedAttributes,
+							iframe: ['src', 'allow', 'frameborder']
+						},
+						allowedIframeHostnames: ['www.youtube.com', 'player.vimeo.com']
 					}
 				);
 
