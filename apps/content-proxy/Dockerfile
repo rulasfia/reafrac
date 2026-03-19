@@ -34,8 +34,8 @@ ARG BUILD_DATE
 ENV NODE_ENV=production
 RUN bun run build --filter=@reafrac/content-proxy --filter=@reafrac/feed-utils --filter=@reafrac/external-script
 
-# Stage 2: Production stage
-FROM gcr.io/distroless/base
+# Stage 2: Production stage - using debug variant for HEALTHCHECK support
+FROM alpine:3
 
 # Set working directory
 WORKDIR /app
@@ -48,6 +48,10 @@ COPY --from=builder /app/apps/content-proxy/server ./
 
 # Expose port
 EXPOSE 3001
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget -q --tries=1 -O /dev/null http://localhost:3001/health || exit 1
+
 
 # Run server
 CMD ["./server"]

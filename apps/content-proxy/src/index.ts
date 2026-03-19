@@ -11,12 +11,11 @@ const app = new Elysia()
 	)
 	.get('/', () => 'Hello Elysia')
 	.get(
-		'/ping',
+		'/health',
 		() => {
-			console.info('Ping received!');
-			return { status: 'online' };
+			return { status: 'healthy', timestamp: new Date().toISOString() };
 		},
-		{ response: z.object({ status: z.string() }) }
+		{ response: z.object({ status: z.string(), timestamp: z.string() }) }
 	)
 	.post(
 		'/extract-feed',
