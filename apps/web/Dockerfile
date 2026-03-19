@@ -51,7 +51,7 @@ COPY packages/external-script/package.json ./packages/external-script/
 RUN bun install --linker hoisted --frozen-lockfile --production
 
 # Stage 2: Production stage
-FROM base AS runner
+FROM oven/bun:1.3-alpine AS runner
 
 # Set environment to production
 ENV NODE_ENV=production
@@ -78,7 +78,7 @@ EXPOSE 3000
 
 # Health check - using curl which is available in slim images
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -sf http://localhost:3000/api/health || exit 1
+  CMD wget -q --tries=1 -O /dev/null http://localhost:3000/api/health || exit 1
 
 # Set default environment variables
 ENV PORT=3000

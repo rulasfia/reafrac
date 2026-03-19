@@ -35,7 +35,7 @@ ENV NODE_ENV=production
 RUN bun run build --filter=@reafrac/content-proxy --filter=@reafrac/feed-utils --filter=@reafrac/external-script
 
 # Stage 2: Production stage - using debug variant for HEALTHCHECK support
-FROM gcr.io/distroless/base:debug
+FROM alpine:3
 
 # Set working directory
 WORKDIR /app
@@ -49,9 +49,9 @@ COPY --from=builder /app/apps/content-proxy/server ./
 # Expose port
 EXPOSE 3001
 
-# Health check - using busybox wget included in debug variant
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD ["/busybox/wget", "-q", "-O", "-", "http://localhost:3001/health"]
+  CMD wget -q --tries=1 -O /dev/null http://localhost:3001/health || exit 1
+
 
 # Run server
 CMD ["./server"]

@@ -11,14 +11,6 @@ const app = new Elysia()
 	)
 	.get('/', () => 'Hello Elysia')
 	.get(
-		'/ping',
-		() => {
-			console.info('Ping received!');
-			return { status: 'online' };
-		},
-		{ response: z.object({ status: z.string() }) }
-	)
-	.get(
 		'/health',
 		() => {
 			return { status: 'healthy', timestamp: new Date().toISOString() };
