@@ -1,5 +1,5 @@
 import { db, feeds, entries, userFeedSubscriptions, userEntries } from '@reafrac/database';
-import { eq } from 'drizzle-orm';
+import { eq, inArray, and } from 'drizzle-orm';
 import { extractFeed, ParsedFeed } from '@reafrac/feed-utils';
 
 const proxyUrl = process.env.PROXY_URL;
@@ -59,11 +59,12 @@ export async function refetchFeeds() {
 
 				// Process new entries
 				if (feedData.entries.length > 0) {
-					// Get existing entries for this feed to avoid duplicates
+					// Get only titles from new entries to check against existing
+					const newTitles = feedData.entries.map((entry) => entry.title);
 					const existingEntries = await db
 						.select({ title: entries.title })
 						.from(entries)
-						.where(eq(entries.feedId, feed.id));
+						.where(and(eq(entries.feedId, feed.id), inArray(entries.title, newTitles)));
 
 					const existingTitles = new Set(existingEntries.map((entry) => entry.title));
 
