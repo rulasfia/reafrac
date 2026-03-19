@@ -1,5 +1,13 @@
 # @reafrac/external-script
 
+## 2.1.0
+
+### Patch Changes
+
+- Updated dependencies [e5a68ee]
+  - @reafrac/feed-utils@2.1.0
+  - @reafrac/database@2.1.0
+
 ## 1.3.0
 
 ### Patch Changes

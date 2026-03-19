@@ -1,5 +1,18 @@
 # @reafrac/web
 
+## 2.1.0
+
+### Minor Changes
+
+- e5a68ee: admin setting overview & db optimization
+
+### Patch Changes
+
+- Updated dependencies [e5a68ee]
+  - @reafrac/feed-utils@2.1.0
+  - @reafrac/database@2.1.0
+  - @reafrac/external-script@2.1.0
+
 ## 2.0.0
 
 ### Major Changes

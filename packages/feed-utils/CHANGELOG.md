@@ -1,5 +1,11 @@
 # @reafrac/feed-utils
 
+## 2.1.0
+
+### Minor Changes
+
+- e5a68ee: admin setting overview & db optimization
+
 ## 1.3.0
 
 ### Minor Changes
