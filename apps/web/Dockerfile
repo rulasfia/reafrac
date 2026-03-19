@@ -76,9 +76,9 @@ USER bun
 # Expose port
 EXPOSE 3000
 
-# Health check
+# Health check - using curl which is available in slim images
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget -q --tries=1 -O /dev/null http://localhost:3000/ || exit 1
+  CMD curl -sf http://localhost:3000/api/health || exit 1
 
 # Set default environment variables
 ENV PORT=3000

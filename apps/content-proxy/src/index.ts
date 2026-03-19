@@ -18,6 +18,13 @@ const app = new Elysia()
 		},
 		{ response: z.object({ status: z.string() }) }
 	)
+	.get(
+		'/health',
+		() => {
+			return { status: 'healthy', timestamp: new Date().toISOString() };
+		},
+		{ response: z.object({ status: z.string(), timestamp: z.string() }) }
+	)
 	.post(
 		'/extract-feed',
 		async ({ body }) => {

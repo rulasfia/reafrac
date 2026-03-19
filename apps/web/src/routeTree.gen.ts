@@ -16,6 +16,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ReaderIndexRouteImport } from './routes/reader/index'
 import { Route as ApiVersionRouteImport } from './routes/api/version'
+import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
 const VersionRoute = VersionRouteImport.update({
@@ -53,6 +54,11 @@ const ApiVersionRoute = ApiVersionRouteImport.update({
   path: '/api/version',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: '/api/health',
+  path: '/api/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -65,6 +71,7 @@ export interface FileRoutesByFullPath {
   '/reader': typeof ReaderRouteWithChildren
   '/sign-up': typeof SignUpRoute
   '/version': typeof VersionRoute
+  '/api/health': typeof ApiHealthRoute
   '/api/version': typeof ApiVersionRoute
   '/reader/': typeof ReaderIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -74,6 +81,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/sign-up': typeof SignUpRoute
   '/version': typeof VersionRoute
+  '/api/health': typeof ApiHealthRoute
   '/api/version': typeof ApiVersionRoute
   '/reader': typeof ReaderIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -85,6 +93,7 @@ export interface FileRoutesById {
   '/reader': typeof ReaderRouteWithChildren
   '/sign-up': typeof SignUpRoute
   '/version': typeof VersionRoute
+  '/api/health': typeof ApiHealthRoute
   '/api/version': typeof ApiVersionRoute
   '/reader/': typeof ReaderIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -97,6 +106,7 @@ export interface FileRouteTypes {
     | '/reader'
     | '/sign-up'
     | '/version'
+    | '/api/health'
     | '/api/version'
     | '/reader/'
     | '/api/auth/$'
@@ -106,6 +116,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/sign-up'
     | '/version'
+    | '/api/health'
     | '/api/version'
     | '/reader'
     | '/api/auth/$'
@@ -116,6 +127,7 @@ export interface FileRouteTypes {
     | '/reader'
     | '/sign-up'
     | '/version'
+    | '/api/health'
     | '/api/version'
     | '/reader/'
     | '/api/auth/$'
@@ -127,6 +139,7 @@ export interface RootRouteChildren {
   ReaderRoute: typeof ReaderRouteWithChildren
   SignUpRoute: typeof SignUpRoute
   VersionRoute: typeof VersionRoute
+  ApiHealthRoute: typeof ApiHealthRoute
   ApiVersionRoute: typeof ApiVersionRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
@@ -182,6 +195,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiVersionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -209,6 +229,7 @@ const rootRouteChildren: RootRouteChildren = {
   ReaderRoute: ReaderRouteWithChildren,
   SignUpRoute: SignUpRoute,
   VersionRoute: VersionRoute,
+  ApiHealthRoute: ApiHealthRoute,
   ApiVersionRoute: ApiVersionRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
