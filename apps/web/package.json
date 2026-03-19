@@ -23,6 +23,7 @@
 		"@radix-ui/react-slot": "^1.2.4",
 		"@radix-ui/react-tooltip": "^1.2.8",
 		"@reafrac/database": "workspace:*",
+		"@reafrac/external-script": "workspace:*",
 		"@reafrac/feed-utils": "workspace:*",
 		"@sentry/tanstackstart-react": "^10.22.0",
 		"@tailwindcss/vite": "^4.1.16",

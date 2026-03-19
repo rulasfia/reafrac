@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Development Commands
 
 ### Core Development (Turborepo)
+
 ```bash
 # Install dependencies (root level)
 bun install
@@ -29,6 +30,7 @@ bun run tsc
 ```
 
 ### Web App Specific (apps/web)
+
 ```bash
 # Start web development server only
 bun run dev --filter=@reafrac/web
@@ -41,6 +43,7 @@ bun run test --filter=@reafrac/web
 ```
 
 ### Database Operations
+
 ```bash
 # Generate database migrations
 bun run db:generate
@@ -56,8 +59,9 @@ bun run db:browse
 ```
 
 ### Scripts and External Services
+
 ```bash
-# Fetch RSS feeds
+# Fetch RSS feeds (legacy - use ENABLE_FEED_CRON for in-process scheduling)
 bun run start --filter=@reafrac/feed-updater
 
 # Start content proxy service
@@ -65,6 +69,7 @@ bun run start --filter=@reafrac/content-proxy
 ```
 
 ### Docker Development
+
 ```bash
 # Build Docker image
 docker build -t reafrac .
@@ -79,19 +84,23 @@ docker-compose run --rm migrate
 ## Architecture Overview
 
 ### Monorepo Structure (Turborepo)
+
 This is a Turborepo monorepo with the following packages and applications:
 
 #### Packages
+
 - **@reafrac/database** - Shared database schema, connection, and Drizzle configuration
 - **@reafrac/feed-utils** - RSS feed parsing and extraction utilities using extractus
 - **@reafrac/external-script** - Refetch Feed and migration scripts for feed fetching and data migration
 
 #### Applications
+
 - **@reafrac/web** - Main web application (TanStack Start with React SSR)
 - **@reafrac/content-proxy** - Content proxy service for article extraction
-- **@reafrac/feed-updater** - Feed updater service for background RSS fetching
+- **@reafrac/feed-updater** - Feed updater service for background RSS fetching (legacy - replaced by in-process cron)
 
 ### Technology Stack
+
 - **Monorepo**: Turborepo for efficient builds and task orchestration
 - **Framework**: TanStack Start (React SSR framework with file-based routing)
 - **Runtime**: Bun (JavaScript runtime)
@@ -108,15 +117,17 @@ This is a Turborepo monorepo with the following packages and applications:
 ### Project Structure
 
 #### Web Application (apps/web)
+
 - `apps/web/src/routes/__root.tsx` - Root route with layout, providers, and global error handling
 - `apps/web/src/client.tsx` - Client-side hydration entry point
 - `apps/web/src/server.ts` - Server-side entry point with Sentry configuration
-- `apps/web/server.ts` - Production server with intelligent asset preloading
+- `apps/web/server.ts` - Production server with intelligent asset preloading and optional feed cron
 - `apps/web/src/routes/` - File-based routing with TanStack Router
 - `apps/web/src/components/` - Reusable React components
 - `apps/web/src/lib/` - Utilities, middleware, and business logic
 
 #### Database & Authentication (packages/database)
+
 - `packages/database/src/schema.ts` - Primary database schema (using UUID primary keys)
 - `packages/database/src/connection.ts` - Database connection and client setup
 - `packages/database/drizzle.config.ts` - Drizzle ORM configuration
@@ -124,17 +135,22 @@ This is a Turborepo monorepo with the following packages and applications:
 - `auth-schema.ts` - Legacy auth schema (using text primary keys) - **DO NOT EDIT**
 
 #### External Scripts & Services (packages/external-script)
+
 - `packages/external-script/src/feed/refetch-feeds.ts` - Cron job function for fetching RSS feeds
 
 #### Feed Utilities (packages/feed-utils)
+
 - `packages/feed-utils/src/index.ts` - RSS feed parsing and extraction utilities using extractus
 
 #### Additional Applications
+
 - `apps/content-proxy/` - Content proxy service for article extraction
 - `apps/feed-updater/` - Feed updater service for background RSS fetching
 
 ### Application Features
+
 This is an RSS reader client designed to work with Miniflux servers, featuring:
+
 - User authentication with Better Auth
 - RSS feed management and reading with full content extraction using extractus
 - Miniflux server connections via `fluxConnections` table
@@ -148,12 +164,14 @@ This is an RSS reader client designed to work with Miniflux servers, featuring:
 ### Development Patterns
 
 #### Routing
+
 - Uses file-based routing via TanStack Router
 - Route files in `src/routes/` automatically generate routes
 - Use `createFileRoute` for route components
 - Data loading via route loaders or React Query
 
 #### Database Schema
+
 - Primary schema located in `packages/database/src/schema.ts` uses UUID primary keys
 - Categories and feeds use nanoid for URL-friendly IDs
 - Entries use serial for primary key
@@ -164,6 +182,7 @@ This is an RSS reader client designed to work with Miniflux servers, featuring:
 - Multi-user architecture with shared feeds/entries and user-specific relationships
 
 #### Styling
+
 - Tailwind CSS v4 with @tailwindcss/vite plugin
 - Base UI for accessible UI primitives
 - Component variants using class-variance-authority and tailwind-variants
@@ -173,6 +192,7 @@ This is an RSS reader client designed to work with Miniflux servers, featuring:
 - Custom fonts: Atkinson Hyperlegible (variable), IBM Plex Mono, Merriweather
 
 #### Error Handling
+
 - Sentry integration for error tracking across all applications
 - Global error boundary in root route of web app
 - Route-level error components
@@ -180,62 +200,69 @@ This is an RSS reader client designed to work with Miniflux servers, featuring:
 - Custom spans for performance monitoring
 
 These examples should be used as guidance when configuring Sentry functionality within a project.
+
 #### Error / Exception Tracking
+
 Use `Sentry.captureException(error)` to capture an exception and log the error in Sentry.
 Use this in try catch blocks or areas where exceptions are expected
 
 #### Tracing Examples
+
 Spans should be created for meaningful actions within applications like button clicks, API calls, and function calls
 Ensure you are creating custom spans with meaningful names and operations
 Use the `Sentry.startSpan` function to create a span
 Child spans can exist within a parent span
 
 #### Custom Span instrumentation in component actions
+
 ```javascript
 function TestComponent() {
-  const handleTestButtonClick = () => {
-    // Create a transaction/span to measure performance
-    Sentry.startSpan(
-      {
-        op: "ui.click",
-        name: "Test Button Click",
-      },
-      (span) => {
-        const value = "some config";
-        const metric = "some metric";
-        // Metrics can be added to the span
-        span.setAttribute("config", value);
-        span.setAttribute("metric", metric);
-        doSomething();
-      },
-    );
-  };
-  return (
-    <button type="button" onClick={handleTestButtonClick}>
-      Test Sentry
-    </button>
-  );
+	const handleTestButtonClick = () => {
+		// Create a transaction/span to measure performance
+		Sentry.startSpan(
+			{
+				op: 'ui.click',
+				name: 'Test Button Click'
+			},
+			(span) => {
+				const value = 'some config';
+				const metric = 'some metric';
+				// Metrics can be added to the span
+				span.setAttribute('config', value);
+				span.setAttribute('metric', metric);
+				doSomething();
+			}
+		);
+	};
+	return (
+		<button type="button" onClick={handleTestButtonClick}>
+			Test Sentry
+		</button>
+	);
 }
 ```
 
 #### Custom span instrumentation in API calls
+
 ```javascript
 async function fetchUserData(userId) {
-  return Sentry.startSpan(
-    {
-      op: "http.client",
-      name: `GET /api/users/${userId}`,
-    },
-    async () => {
-      const data = await ofetch(`/api/users/${userId}`);
-      return data;
-    },
-  );
+	return Sentry.startSpan(
+		{
+			op: 'http.client',
+			name: `GET /api/users/${userId}`
+		},
+		async () => {
+			const data = await ofetch(`/api/users/${userId}`);
+			return data;
+		}
+	);
 }
 ```
 
 ### Environment Variables
+
 Key environment variables (see `.env` for complete list):
+
 - `DATABASE_URL` - PostgreSQL connection string
 - `GOOGLE_CLIENT_ID` - Google OAuth client ID (optional)
 - `GOOGLE_CLIENT_SECRET` - Google OAuth client secret (optional)
@@ -245,7 +272,9 @@ Key environment variables (see `.env` for complete list):
 - `PORT` - Server port (default: 3000)
 
 ### Production Server
+
 The custom production server (`server.ts`) includes:
+
 - Intelligent static asset preloading with configurable memory limits
 - ETag support for cache validation
 - Gzip compression for eligible assets
@@ -254,6 +283,7 @@ The custom production server (`server.ts`) includes:
 - Memory-efficient response generation
 
 ### Server Functions
+
 - Type-safe server functions with `createServerFn`
 - Input validation with Zod schemas
 - Built-in middleware support (auth, Sentry, logging)
