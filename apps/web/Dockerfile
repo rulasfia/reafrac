@@ -70,6 +70,10 @@ COPY --from=builder /app/turbo.json  ./
 # Copy node_modules from dependencies stage
 COPY --from=dependencies /app/node_modules ./node_modules
 
+# Copy workspace packages (needed for workspace symlinks)
+COPY --from=builder /app/packages ./packages
+COPY --from=builder /app/tsconfig.base.json ./tsconfig.base.json
+
 # Switch to non-root user (bun user already exists in image)
 USER bun
 
