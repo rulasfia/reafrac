@@ -1,5 +1,11 @@
 # @reafrac/database
 
+## 2.1.0
+
+### Minor Changes
+
+- e5a68ee: admin setting overview & db optimization
+
 ## 0.5.0
 
 ### Minor Changes

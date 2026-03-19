@@ -1,5 +1,13 @@
 # @reafrac/content-proxy
 
+## 0.3.1
+
+### Patch Changes
+
+- Updated dependencies [e5a68ee]
+  - @reafrac/feed-utils@2.1.0
+  - @reafrac/external-script@2.1.0
+
 ## 0.3.0
 
 ### Minor Changes
