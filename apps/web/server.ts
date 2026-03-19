@@ -59,11 +59,27 @@
  *   - Supports partial matching for types ending with "/"
  *   - Default: text/,application/javascript,application/json,application/xml,image/svg+xml
  *
+ * ENABLE_FEED_CRON (boolean)
+ *   - Enable scheduled feed refetch cron job
+ *   - Default: false
+ *   - Set to "true" to enable
+ *
+ * FEED_CRON_INTERVAL_MS (number)
+ *   - Interval in milliseconds between feed refetch runs
+ *   - Default: 1800000 (30 minutes)
+ *
  * Usage:
  *   bun run server.ts
  */
 
 import path from 'node:path';
+import * as Sentry from '@sentry/tanstackstart-react';
+import { refetchFeeds } from '@reafrac/external-script';
+
+const ENABLE_FEED_CRON = process.env.ENABLE_FEED_CRON === 'true';
+const FEED_CRON_INTERVAL_MS = Number(process.env.FEED_CRON_INTERVAL_MS ?? 30 * 60 * 1000);
+
+let feedCronRunning = false;
 
 // Configuration
 const SERVER_PORT = Number(process.env.PORT ?? 3000);
@@ -509,6 +525,40 @@ async function initializeServer() {
 	});
 
 	log.success(`Server listening on http://localhost:${String(server.port)}`);
+
+	if (ENABLE_FEED_CRON) {
+		const runFeedRefetch = async () => {
+			if (feedCronRunning) {
+				log.warning('Feed refetch already in progress, skipping this run');
+				return;
+			}
+
+			feedCronRunning = true;
+			const startTime = Date.now();
+			log.info('Starting scheduled feed refetch...');
+
+			try {
+				await Sentry.startSpan({ op: 'cron', name: 'feed-refetch' }, async () => {
+					await refetchFeeds();
+				});
+				const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+				log.success(`Feed refetch completed in ${duration}s`);
+			} catch (error) {
+				const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+				log.error(`Feed refetch failed after ${duration}s: ${String(error)}`);
+				Sentry.captureException(error, {
+					tags: { component: 'feed-cron' }
+				});
+			} finally {
+				feedCronRunning = false;
+			}
+		};
+
+		setInterval(runFeedRefetch, FEED_CRON_INTERVAL_MS);
+		log.success(
+			`Feed cron scheduled (every ${(FEED_CRON_INTERVAL_MS / 1000 / 60).toFixed(0)} minutes)`
+		);
+	}
 }
 
 // Initialize the server
