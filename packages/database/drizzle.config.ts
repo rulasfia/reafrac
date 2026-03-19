@@ -5,6 +5,7 @@ if (!DB_URL) {
 	throw new Error('DATABASE_URL is not defined');
 }
 
+console.log({ DB_URL });
 export default defineConfig({
 	out: './migrations',
 	schema: './src/schema.ts',

@@ -72,22 +72,29 @@ export const getFeedsServerFn = createServerFn({ method: 'GET' })
 						}
 					});
 
-					// Add Miniflux feeds and create subscriptions
-					for (const f of res) {
-						// Check if feed already exists (globally)
-						let existingFeed = await db
-							.select()
-							.from(feeds)
-							.where(eq(feeds.link, f.feed_url))
-							.limit(1);
+					if (res.length === 0) {
+						span.setAttribute('status', 'success');
+						span.setAttribute('feeds_count', userFeeds.length);
+						return userFeeds;
+					}
 
-						let feedId: string;
+					// Batch query: Get all existing feeds by URLs
+					const feedUrls = res.map((f) => f.feed_url);
+					const existingFeedsList = await db
+						.select()
+						.from(feeds)
+						.where(inArray(feeds.link, feedUrls));
+					const feedMap = new Map(existingFeedsList.map((f) => [f.link, f]));
 
-						if (existingFeed.length === 0) {
-							// Create new feed
-							const newFeed = await db
-								.insert(feeds)
-								.values({
+					// Identify feeds that need to be created
+					const feedsToCreate = res.filter((f) => !feedMap.has(f.feed_url));
+
+					// Batch insert new feeds
+					if (feedsToCreate.length > 0) {
+						const insertedFeeds = await db
+							.insert(feeds)
+							.values(
+								feedsToCreate.map((f) => ({
 									title: f.title,
 									description: f.title,
 									link: f.feed_url,
@@ -96,67 +103,79 @@ export const getFeedsServerFn = createServerFn({ method: 'GET' })
 									icon: `${integration?.serverUrl}/feed/icon/${f.icon?.external_icon_id}`,
 									generator: 'miniflux',
 									language: 'en_US'
-								})
-								.returning();
-							feedId = newFeed[0].id;
-						} else {
-							feedId = existingFeed[0].id;
-						}
-
-						// Create user subscription if it doesn't exist
-						const existingSubscription = await db
-							.select()
-							.from(userFeedSubscriptions)
-							.where(
-								and(
-									eq(userFeedSubscriptions.userId, context.user.id),
-									eq(userFeedSubscriptions.feedId, feedId)
-								)
+								}))
 							)
-							.limit(1);
+							.returning();
+						insertedFeeds.forEach((f) => feedMap.set(f.link, f));
+					}
 
-						if (existingSubscription.length === 0) {
-							await db.insert(userFeedSubscriptions).values({
-								userId: context.user.id,
-								feedId: feedId
+					// Get all feed IDs (existing + newly created)
+					const allFeedIds = res.map((f) => feedMap.get(f.feed_url)!.id);
+
+					// Batch query: Check existing subscriptions
+					const existingSubscriptions = await db
+						.select()
+						.from(userFeedSubscriptions)
+						.where(
+							and(
+								eq(userFeedSubscriptions.userId, context.user.id),
+								inArray(userFeedSubscriptions.feedId, allFeedIds)
+							)
+						);
+					const subscribedFeedIds = new Set(existingSubscriptions.map((s) => s.feedId));
+
+					// Batch insert new subscriptions
+					const subscriptionsToCreate = allFeedIds.filter((id) => !subscribedFeedIds.has(id));
+					if (subscriptionsToCreate.length > 0) {
+						await db
+							.insert(userFeedSubscriptions)
+							.values(
+								subscriptionsToCreate.map((feedId) => ({
+									userId: context.user.id,
+									feedId: feedId
+								}))
+							)
+							.onConflictDoNothing({
+								target: [userFeedSubscriptions.userId, userFeedSubscriptions.feedId]
+							});
+					}
+
+					// Merge synced feeds with existing userFeeds
+					for (const f of res) {
+						const feed = feedMap.get(f.feed_url)!;
+						const existingIndex = userFeeds.findIndex((uf) => uf.id === feed.id);
+						if (existingIndex >= 0) {
+							userFeeds[existingIndex] = {
+								...userFeeds[existingIndex],
+								title: feed.title,
+								description: feed.description,
+								link: feed.link,
+								icon: feed.icon,
+								siteUrl: feed.siteUrl,
+								language: feed.language,
+								generator: feed.generator,
+								publishedAt: feed.publishedAt,
+								lastFetchedAt: feed.lastFetchedAt,
+								createdAt: feed.createdAt,
+								updatedAt: feed.updatedAt
+							};
+						} else {
+							userFeeds.push({
+								id: feed.id,
+								title: feed.title,
+								description: feed.description,
+								link: feed.link,
+								icon: feed.icon,
+								siteUrl: feed.siteUrl,
+								language: feed.language,
+								generator: feed.generator,
+								publishedAt: feed.publishedAt,
+								lastFetchedAt: feed.lastFetchedAt,
+								createdAt: feed.createdAt,
+								updatedAt: feed.updatedAt,
+								meta: { urlPrefix: null, title: null, icon: null }
 							});
 						}
-
-						// Add to user feeds list
-						const feedData =
-							existingFeed.length > 0
-								? {
-										id: existingFeed[0].id,
-										title: existingFeed[0].title,
-										description: existingFeed[0].description,
-										link: existingFeed[0].link,
-										icon: existingFeed[0].icon,
-										siteUrl: existingFeed[0].siteUrl,
-										language: existingFeed[0].language,
-										generator: existingFeed[0].generator,
-										publishedAt: existingFeed[0].publishedAt,
-										lastFetchedAt: existingFeed[0].lastFetchedAt,
-										createdAt: existingFeed[0].createdAt,
-										updatedAt: existingFeed[0].updatedAt,
-										meta: { urlPrefix: null, title: null, icon: null }
-									}
-								: {
-										id: feedId,
-										title: f.title,
-										description: f.title,
-										link: f.feed_url,
-										icon: `${integration?.serverUrl}/feed/icon/${f.icon?.external_icon_id}`,
-										siteUrl: f.site_url,
-										language: 'en_US',
-										generator: 'miniflux',
-										publishedAt: new Date(),
-										lastFetchedAt: new Date(),
-										updatedAt: new Date(),
-										createdAt: new Date(),
-										meta: { urlPrefix: null, title: null, icon: null }
-									};
-
-						userFeeds.push(feedData);
 					}
 				}
 
@@ -559,21 +578,18 @@ export const removeFeedServerFn = createServerFn({ method: 'POST' })
 				span.setAttribute('feed_id', data.feedId);
 				span.setAttribute('user_id', context.user.id);
 
-				// Check if user is subscribed to this feed
-				const subscription = await db
-					.select()
-					.from(userFeedSubscriptions)
+				// Delete user entries for this feed using a subquery approach
+				await db
+					.delete(userEntries)
 					.where(
 						and(
-							eq(userFeedSubscriptions.userId, context.user.id),
-							eq(userFeedSubscriptions.feedId, data.feedId)
+							eq(userEntries.userId, context.user.id),
+							inArray(
+								userEntries.entryId,
+								db.select({ id: entries.id }).from(entries).where(eq(entries.feedId, data.feedId))
+							)
 						)
-					)
-					.limit(1);
-
-				if (subscription.length === 0) {
-					throw new Error('Feed not found or not subscribed');
-				}
+					);
 
 				// Remove user subscription
 				const deletedSubscription = await db
@@ -587,22 +603,7 @@ export const removeFeedServerFn = createServerFn({ method: 'POST' })
 					.returning();
 
 				if (deletedSubscription.length === 0) {
-					throw new Error('Failed to remove subscription');
-				}
-
-				// Remove user entries for this feed
-				const feedEntries = await db
-					.select({ id: entries.id })
-					.from(entries)
-					.where(eq(entries.feedId, data.feedId));
-
-				if (feedEntries.length > 0) {
-					const entryIds = feedEntries.map((entry) => entry.id);
-					await db
-						.delete(userEntries)
-						.where(
-							and(eq(userEntries.userId, context.user.id), inArray(userEntries.entryId, entryIds))
-						);
+					throw new Error('Feed not found or not subscribed');
 				}
 
 				span.setAttribute('status', 'success');
