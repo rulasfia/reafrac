@@ -23,7 +23,8 @@ export const users = pgTable('users', {
 		.$onUpdate(() => /* @__PURE__ */ new Date())
 		.notNull(),
 	username: text('username').unique(),
-	displayUsername: text('display_username')
+	displayUsername: text('display_username'),
+	isAdmin: boolean('is_admin').default(false).notNull()
 });
 
 export const sessions = pgTable(
@@ -104,18 +105,22 @@ export const accountRelations = relations(accounts, ({ one }) => ({
 	})
 }));
 
-export const fluxConnections = pgTable('flux_connections', {
-	id: uuid('id').defaultRandom().primaryKey(),
-	userId: uuid('user_id')
-		.notNull()
-		.references(() => users.id, { onDelete: 'cascade' }),
-	serverUrl: text('server_url').notNull(),
-	apiKey: text('api_key').notNull(),
-	createdAt: timestamp('created_at').defaultNow().notNull(),
-	updatedAt: timestamp('updated_at')
-		.$onUpdate(() => /* @__PURE__ */ new Date())
-		.notNull()
-});
+export const fluxConnections = pgTable(
+	'flux_connections',
+	{
+		id: uuid('id').defaultRandom().primaryKey(),
+		userId: uuid('user_id')
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' }),
+		serverUrl: text('server_url').notNull(),
+		apiKey: text('api_key').notNull(),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at')
+			.$onUpdate(() => /* @__PURE__ */ new Date())
+			.notNull()
+	},
+	(table) => [index('fluxConnections_userId_idx').on(table.userId)]
+);
 
 export const categories = pgTable('categories', {
 	// we use nanoid here for short, url frendly id
@@ -129,26 +134,33 @@ export const categories = pgTable('categories', {
 		.notNull()
 });
 
-export const feeds = pgTable('feeds', {
-	// we use nanoid here for short, url frendly id
-	id: text('id')
-		.primaryKey()
-		.$defaultFn(() => nanoid(12)),
-	categoryId: text('category_id').references(() => categories.id, { onDelete: 'cascade' }),
-	title: text('title').notNull(),
-	link: text('link').notNull(),
-	siteUrl: text('site_url').notNull().default(''),
-	icon: text('icon').notNull(),
-	description: text('description').notNull(),
-	language: text('language').notNull(),
-	generator: text('generator').notNull(),
-	publishedAt: timestamp('published_at').notNull(),
-	lastFetchedAt: timestamp('last_fetched_at').defaultNow().notNull(),
-	createdAt: timestamp('created_at').defaultNow().notNull(),
-	updatedAt: timestamp('updated_at')
-		.$onUpdate(() => /* @__PURE__ */ new Date())
-		.notNull()
-});
+export const feeds = pgTable(
+	'feeds',
+	{
+		// we use nanoid here for short, url frendly id
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => nanoid(12)),
+		categoryId: text('category_id').references(() => categories.id, { onDelete: 'cascade' }),
+		title: text('title').notNull(),
+		link: text('link').notNull(),
+		siteUrl: text('site_url').notNull().default(''),
+		icon: text('icon').notNull(),
+		description: text('description').notNull(),
+		language: text('language').notNull(),
+		generator: text('generator').notNull(),
+		publishedAt: timestamp('published_at').notNull(),
+		lastFetchedAt: timestamp('last_fetched_at').defaultNow().notNull(),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at')
+			.$onUpdate(() => /* @__PURE__ */ new Date())
+			.notNull()
+	},
+	(table) => [
+		index('feeds_categoryId_idx').on(table.categoryId),
+		index('feeds_link_idx').on(table.link)
+	]
+);
 
 export const entries = pgTable(
 	'entries',
@@ -172,8 +184,10 @@ export const entries = pgTable(
 		thumbnailCaption: text('thumbnail_caption')
 	},
 	(table) => [
-		// Prevent duplicate entries within the same feed based on title
-		unique('uniqueFeedEntryTitle').on(table.feedId, table.title)
+		unique('uniqueFeedEntryTitle').on(table.feedId, table.title),
+		index('entries_feedId_idx').on(table.feedId),
+		index('entries_publishedAt_idx').on(table.publishedAt),
+		index('entries_createdAt_idx').on(table.createdAt)
 	]
 );
 
@@ -198,8 +212,9 @@ export const userFeedSubscriptions = pgTable(
 			.notNull()
 	},
 	(table) => [
-		// Prevent duplicate subscriptions
-		unique('uniqueUserFeedSubscription').on(table.userId, table.feedId)
+		unique('uniqueUserFeedSubscription').on(table.userId, table.feedId),
+		index('userFeedSubscriptions_userId_idx').on(table.userId),
+		index('userFeedSubscriptions_feedId_idx').on(table.feedId)
 	]
 );
 
@@ -224,8 +239,11 @@ export const userEntries = pgTable(
 			.notNull()
 	},
 	(table) => [
-		// Prevent duplicate user-entry relationships
-		unique('uniqueUserEntry').on(table.userId, table.entryId)
+		unique('uniqueUserEntry').on(table.userId, table.entryId),
+		index('userEntries_userId_idx').on(table.userId),
+		index('userEntries_entryId_idx').on(table.entryId),
+		index('userEntries_status_idx').on(table.status),
+		index('userEntries_userId_status_idx').on(table.userId, table.status)
 	]
 );
 

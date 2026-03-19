@@ -9,7 +9,8 @@ import {
 	SidebarMenuItem,
 	useSidebar
 } from '../ui/sidebar';
-import { BlocksIcon, RssIcon, ShieldUserIcon } from 'lucide-react';
+import { BlocksIcon, RssIcon, ShieldUserIcon, LockIcon } from 'lucide-react';
+import { useLoaderData } from '@tanstack/react-router';
 
 const SETTING_ITEMS = [
 	{
@@ -32,13 +33,24 @@ const SETTING_ITEMS = [
 	}
 ];
 
+const ADMIN_SETTING_ITEM = {
+	label: 'Admin',
+	href: '/reader',
+	category: 'admin',
+	icon: <LockIcon />
+};
+
 export function SettingsSidebar() {
 	const { search } = useLocation();
 	const { toggleSidebar, isMobile } = useSidebar();
+	const { user } = useLoaderData({ from: '/reader' });
 
 	const onEntryClick = () => {
 		if (isMobile) toggleSidebar();
 	};
+
+	const settingItems =
+		user.isAdmin === true ? [...SETTING_ITEMS, ADMIN_SETTING_ITEM] : SETTING_ITEMS;
 
 	return (
 		<div className="col-span-4 flex h-full flex-col overflow-y-auto lg:col-span-3">
@@ -49,7 +61,7 @@ export function SettingsSidebar() {
 				<SidebarGroup>
 					<SidebarGroupContent>
 						<SidebarMenu>
-							{SETTING_ITEMS.map((item) => (
+							{settingItems.map((item) => (
 								<SidebarMenuItem key={item.label}>
 									<SidebarMenuButton
 										isActive={search.category === item.category}

@@ -85,6 +85,20 @@
       "when": 1763957044834,
       "tag": "0011_chemical_northstar",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1773913488191,
+      "tag": "0012_groovy_zuras",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1773925342842,
+      "tag": "0013_sour_kang",
+      "breakpoints": true
     }
   ]
 }
