@@ -23,7 +23,8 @@ export const users = pgTable('users', {
 		.$onUpdate(() => /* @__PURE__ */ new Date())
 		.notNull(),
 	username: text('username').unique(),
-	displayUsername: text('display_username')
+	displayUsername: text('display_username'),
+	isAdmin: boolean('is_admin').default(false).notNull()
 });
 
 export const sessions = pgTable(

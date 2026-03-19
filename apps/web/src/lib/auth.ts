@@ -34,6 +34,14 @@ export const auth = betterAuth({
 	},
 	socialProviders,
 	plugins: [username(), tanstackStartCookies()],
+	user: {
+		additionalFields: {
+			isAdmin: {
+				type: 'boolean',
+				input: false
+			}
+		}
+	},
 	experimental: {
 		joins: true
 	}
