@@ -127,32 +127,55 @@ export const getFeedsServerFn = createServerFn({ method: 'GET' })
 					// Batch insert new subscriptions
 					const subscriptionsToCreate = allFeedIds.filter((id) => !subscribedFeedIds.has(id));
 					if (subscriptionsToCreate.length > 0) {
-						await db.insert(userFeedSubscriptions).values(
-							subscriptionsToCreate.map((feedId) => ({
-								userId: context.user.id,
-								feedId: feedId
-							}))
-						);
+						await db
+							.insert(userFeedSubscriptions)
+							.values(
+								subscriptionsToCreate.map((feedId) => ({
+									userId: context.user.id,
+									feedId: feedId
+								}))
+							)
+							.onConflictDoNothing({
+								target: [userFeedSubscriptions.userId, userFeedSubscriptions.feedId]
+							});
 					}
 
-					// Build user feeds list
+					// Merge synced feeds with existing userFeeds
 					for (const f of res) {
 						const feed = feedMap.get(f.feed_url)!;
-						userFeeds.push({
-							id: feed.id,
-							title: feed.title,
-							description: feed.description,
-							link: feed.link,
-							icon: feed.icon,
-							siteUrl: feed.siteUrl,
-							language: feed.language,
-							generator: feed.generator,
-							publishedAt: feed.publishedAt,
-							lastFetchedAt: feed.lastFetchedAt,
-							createdAt: feed.createdAt,
-							updatedAt: feed.updatedAt,
-							meta: { urlPrefix: null, title: null, icon: null }
-						});
+						const existingIndex = userFeeds.findIndex((uf) => uf.id === feed.id);
+						if (existingIndex >= 0) {
+							userFeeds[existingIndex] = {
+								...userFeeds[existingIndex],
+								title: feed.title,
+								description: feed.description,
+								link: feed.link,
+								icon: feed.icon,
+								siteUrl: feed.siteUrl,
+								language: feed.language,
+								generator: feed.generator,
+								publishedAt: feed.publishedAt,
+								lastFetchedAt: feed.lastFetchedAt,
+								createdAt: feed.createdAt,
+								updatedAt: feed.updatedAt
+							};
+						} else {
+							userFeeds.push({
+								id: feed.id,
+								title: feed.title,
+								description: feed.description,
+								link: feed.link,
+								icon: feed.icon,
+								siteUrl: feed.siteUrl,
+								language: feed.language,
+								generator: feed.generator,
+								publishedAt: feed.publishedAt,
+								lastFetchedAt: feed.lastFetchedAt,
+								createdAt: feed.createdAt,
+								updatedAt: feed.updatedAt,
+								meta: { urlPrefix: null, title: null, icon: null }
+							});
+						}
 					}
 				}
 
