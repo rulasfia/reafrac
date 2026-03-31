@@ -60,15 +60,19 @@ function createPinoOptions(options: CreateLoggerOptions): LoggerOptions {
 	};
 
 	if (pretty) {
-		pinoOptions.transport = {
-			target: 'pino-pretty',
-			options: {
-				colorize: true,
-				translateTime: 'SYS:standard',
-				ignore: 'pid,hostname',
-				singleLine: false
-			}
-		};
+		try {
+			pinoOptions.transport = {
+				target: 'pino-pretty',
+				options: {
+					colorize: true,
+					translateTime: 'SYS:standard',
+					ignore: 'pid,hostname',
+					singleLine: false
+				}
+			};
+		} catch {
+			// pino-pretty not available (compiled binary), use JSON output
+		}
 	}
 
 	return pinoOptions;
