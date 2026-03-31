@@ -15,6 +15,7 @@ COPY apps/content-proxy/package.json ./apps/content-proxy/
 COPY packages/database/package.json ./packages/database/
 COPY packages/feed-utils/package.json ./packages/feed-utils/
 COPY packages/external-script/package.json ./packages/external-script/
+COPY packages/logger/package.json ./packages/logger/
 
 # Install dependencies (including devDependencies for build)
 RUN bun install --linker hoisted --frozen-lockfile
@@ -27,6 +28,7 @@ COPY apps/content-proxy/ ./apps/content-proxy/
 COPY packages/database/ ./packages/database/
 COPY packages/feed-utils/ ./packages/feed-utils/
 COPY packages/external-script/ ./packages/external-script/
+COPY packages/logger/ ./packages/logger/
 
 # Build application with version injection
 ARG BUILD_VERSION
@@ -34,7 +36,7 @@ ARG BUILD_DATE
 ARG VITE_APP_VERSION
 ENV NODE_ENV=production
 ENV VITE_APP_VERSION=${VITE_APP_VERSION:-dev}
-RUN bun run build --filter=@reafrac/web --filter=@reafrac/database --filter=@reafrac/feed-utils
+RUN bun run build --filter=@reafrac/web --filter=@reafrac/database --filter=@reafrac/feed-utils --filter=@reafrac/logger
 
 FROM base AS dependencies
 
@@ -47,6 +49,7 @@ COPY apps/content-proxy/package.json ./apps/content-proxy/
 COPY packages/database/package.json ./packages/database/
 COPY packages/feed-utils/package.json ./packages/feed-utils/
 COPY packages/external-script/package.json ./packages/external-script/
+COPY packages/logger/package.json ./packages/logger/
 
 RUN bun install --linker hoisted --frozen-lockfile --production
 
@@ -70,9 +73,10 @@ COPY --from=builder /app/turbo.json  ./
 # Copy node_modules from dependencies stage
 COPY --from=dependencies /app/node_modules ./node_modules
 
-# Copy workspace packages (needed for workspace symlinks)
 COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/tsconfig.base.json ./tsconfig.base.json
+
+RUN rm -rf packages/*/node_modules packages/*/*/node_modules
 
 # Switch to non-root user (bun user already exists in image)
 USER bun
