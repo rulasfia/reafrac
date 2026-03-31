@@ -9,6 +9,7 @@
 	],
 	"scripts": {
 		"dev": "turbo run dev",
+		"dev:proxy": "turbo run dev --filter @reafrac/feed-updater --filter @reafrac/web --filter @reafrac/content-proxy",
 		"build": "turbo run build",
 		"start": "turbo run start",
 		"test": "turbo run test",

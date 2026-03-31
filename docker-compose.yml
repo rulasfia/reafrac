@@ -1,99 +1,51 @@
+# Reafrac - RSS Reader
+#
+# Create a .env file with the following variables:
+#   POSTGRES_PASSWORD=your-secure-password
+#   BETTER_AUTH_SECRET=your-auth-secret
+#   GOOGLE_CLIENT_ID=your-google-client-id (optional)
+#   GOOGLE_CLIENT_SECRET=your-google-client-secret (optional)
+#   VITE_SENTRY_DSN=your-sentry-dsn (optional)
+#   VITE_SENTRY_TRACES_SAMPLE_RATE=0.1 (optional)
+#   PROXY_URL=your-proxy-url (optional)
+#   ENABLE_FEED_CRON=true (optional, enables in-process feed fetching)
+
 services:
-  app:
-    image: ghcr.io/${GITHUB_USERNAME}/reafrac:latest
-    container_name: reafrac-app
+  reafrac:
+    image: ghcr.io/rulasfia/reafrac:latest
+    container_name: reafrac
     restart: unless-stopped
     ports:
-      - '3000:3000'
+      - '${PORT:-3000}:3000'
     environment:
-      - NODE_ENV=production
-      - PORT=3000
-      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - PORT=${PORT:-3000}
+      - DATABASE_URL=postgres://postgres:${POSTGRES_PASSWORD}@reafrac-pg:5432/reafrac
+      - VITE_SENTRY_DSN=${VITE_SENTRY_DSN}
+      - VITE_SENTRY_TRACES_SAMPLE_RATE=${VITE_SENTRY_TRACES_SAMPLE_RATE}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - PROXY_URL=${PROXY_URL}
+      - ENABLE_FEED_CRON=${ENABLE_FEED_CRON}
     depends_on:
-      postgres:
+      reafrac-pg:
         condition: service_healthy
-    networks:
-      - reafrac-network
-    healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:3000/']
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
-  # Migration service (run once and exit)
-  migrate:
-    image: ghcr.io/${GITHUB_USERNAME}/reafrac:latest
-    container_name: reafrac-migrate
-    environment:
-      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-    command: ['bun', 'run', 'db:migrate']
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - reafrac-network
-    restart: 'no' # Only run once
-
-  postgres:
+  reafrac-pg:
     image: postgres:17-alpine
-    container_name: reafrac-db
+    container_name: reafrac-pg
     restart: unless-stopped
-    environment:
-      - POSTGRES_DB=${POSTGRES_DB:-reafrac}
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./migrations:/docker-entrypoint-initdb.d:ro
-    ports:
-      - '5432:5432'
-    networks:
-      - reafrac-network
+      - reafrac-db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=reafrac
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-reafrac}']
-      interval: 10s
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
       timeout: 5s
       retries: 5
-      start_period: 30s
-    # Optional: Add resource limits
-    deploy:
-      resources:
-        limits:
-          memory: 1024M
-        reservations:
-          memory: 256M
-
-  # Optional: Add pgAdmin for database management
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: reafrac-pgadmin
-    restart: unless-stopped
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL:-admin@example.com}
-      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD}
-      - PGADMIN_CONFIG_SERVER_MODE=False
-    ports:
-      - '5050:80'
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
-    networks:
-      - reafrac-network
-    depends_on:
-      - postgres
-    profiles:
-      - admin # Use 'docker-compose --profile admin up' to include this service
 
 volumes:
-  postgres_data:
-    driver: local
-  pgadmin_data:
-    driver: local
-
-networks:
-  reafrac-network:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
+  reafrac-db:
