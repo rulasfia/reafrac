@@ -1,26 +1,27 @@
 import { db, feeds, entries, userFeedSubscriptions, userEntries } from '@reafrac/database';
 import { eq, inArray, and } from 'drizzle-orm';
 import { extractFeed, ParsedFeed } from '@reafrac/feed-utils';
+import { createLogger } from '@reafrac/logger';
 
+const log = createLogger({ name: 'feed-refetch' });
 const proxyUrl = process.env.PROXY_URL;
-// Main function to refetch feeds and update entries
+
 export async function refetchFeeds() {
-	console.log('Starting feed refetch process...');
+	log.info('Starting feed refetch process');
 
 	try {
-		const feedsToRefetch = await db.select().from(feeds).limit(50); // Limit to prevent overwhelming the system
+		const feedsToRefetch = await db.select().from(feeds).limit(50);
 
-		console.log(`>>> Found ${feedsToRefetch.length} feeds to refetch`);
+		log.info({ count: feedsToRefetch.length }, 'Found feeds to refetch');
 
-		// Create async functions for each feed to be executed in parallel
 		const feedTasks = feedsToRefetch.map((feed, idx) => async () => {
+			const feedLog = log.child({ feedId: feed.id, feedTitle: feed.title, feedLink: feed.link });
+
 			try {
-				const i = String(idx + 1).padStart(2, '0');
-				console.log(`${i}. Refetching feed: ${feed.title} (${feed.link})`);
+				feedLog.debug('Refetching feed');
 
 				let feedData: ParsedFeed | undefined = undefined;
 				if (proxyUrl) {
-					// if user has set proxy settings, use it to extract feed
 					const httpResponse = await fetch(`${proxyUrl}/extract-feed`, {
 						method: 'POST',
 						body: JSON.stringify({ url: feed.link }),
@@ -33,11 +34,9 @@ export async function refetchFeeds() {
 
 					feedData = (await httpResponse.json()) as ParsedFeed;
 				} else {
-					// otherwise, do the feed extraction in this server
 					feedData = await extractFeed(feed.link);
 				}
 
-				// Update feed's last fetched timestamp
 				await db
 					.update(feeds)
 					.set({
@@ -46,20 +45,17 @@ export async function refetchFeeds() {
 					})
 					.where(eq(feeds.id, feed.id));
 
-				// Get users subscribed to this feed
 				const subscriptions = await db
 					.select({ userId: userFeedSubscriptions.userId })
 					.from(userFeedSubscriptions)
 					.where(eq(userFeedSubscriptions.feedId, feed.id));
 
 				if (subscriptions.length === 0) {
-					console.log(`${i}. No users subscribed to feed ${feed.title}, skipping entry insertion`);
+					feedLog.debug('No users subscribed, skipping entry insertion');
 					return;
 				}
 
-				// Process new entries
 				if (feedData.entries.length > 0) {
-					// Get only titles from new entries to check against existing
 					const newTitles = feedData.entries.map((entry) => entry.title);
 					const existingEntries = await db
 						.select({ title: entries.title })
@@ -67,18 +63,15 @@ export async function refetchFeeds() {
 						.where(and(eq(entries.feedId, feed.id), inArray(entries.title, newTitles)));
 
 					const existingTitles = new Set(existingEntries.map((entry) => entry.title));
-
-					// Filter only new entries
 					const newEntries = feedData.entries.filter((entry) => !existingTitles.has(entry.title));
 
 					if (newEntries.length === 0) {
-						console.log(`${i}. No new entries for feed ${feed.title}`);
+						feedLog.debug('No new entries found');
 						return;
 					}
 
-					console.log(`${i}. Processing ${newEntries.length} new entries for feed ${feed.title}`);
+					feedLog.info({ count: newEntries.length }, 'Processing new entries');
 
-					// Insert new entries
 					const insertedEntries = await db
 						.insert(entries)
 						.values(
@@ -96,10 +89,7 @@ export async function refetchFeeds() {
 						)
 						.returning({ id: entries.id });
 
-					// Create user entries for all subscribed users
 					const userIds = subscriptions.map((sub) => sub.userId);
-
-					// Batch inserts to avoid memory/query size issues
 					const BATCH_SIZE = 1000;
 					let totalCreated = 0;
 
@@ -111,7 +101,6 @@ export async function refetchFeeds() {
 							starred: false
 						}));
 
-						// Insert in chunks
 						for (let j = 0; j < batch.length; j += BATCH_SIZE) {
 							const chunk = batch.slice(j, j + BATCH_SIZE);
 							await db.insert(userEntries).values(chunk);
@@ -120,18 +109,16 @@ export async function refetchFeeds() {
 					}
 
 					if (totalCreated > 0) {
-						console.log(`${i}. Created ${totalCreated} u-entries for ${feed.title}`);
+						feedLog.info({ userEntryCount: totalCreated }, 'Created user entries');
 					}
 				}
 
-				console.log(`${i}. Successfully refetched feed: ${feed.title}`);
+				feedLog.info('Feed refetched successfully');
 			} catch (error) {
-				console.error(`Error refetching feed ${feed.id} (${feed.link}):`, error);
-				// Continue with other feeds even if one fails
+				feedLog.error({ error: String(error) }, 'Error refetching feed');
 			}
 		});
 
-		// Execute feed processing in parallel with a concurrency limit
 		const FEED_CONCURRENCY = 10;
 		let finishedFeedCount = 0;
 
@@ -142,10 +129,10 @@ export async function refetchFeeds() {
 		}
 
 		if (finishedFeedCount > 0) {
-			console.log(`Feed refetch process completed successfully: ${finishedFeedCount} `);
+			log.info({ count: finishedFeedCount }, 'Feed refetch process completed');
 		}
 	} catch (error) {
-		console.error('Error in feed refetch process:', error);
+		log.error({ error: String(error) }, 'Error in feed refetch process');
 		throw error;
 	}
 }

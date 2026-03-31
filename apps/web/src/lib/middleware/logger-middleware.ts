@@ -1,8 +1,9 @@
 import { createMiddleware } from '@tanstack/react-start';
+import { createLogger } from '@reafrac/logger';
+
+const log = createLogger({ name: 'http' });
 
 export const requestLoggerMiddleware = createMiddleware().server(async ({ next, request }) => {
-	if (process.env.NODE_ENV?.toLowerCase() !== 'production') {
-		console.log(`[${request.method}] - ${request.url}`);
-	}
+	log.info({ method: request.method, url: request.url }, 'Incoming request');
 	return await next();
 });
