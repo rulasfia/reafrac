@@ -1,5 +1,13 @@
 # @reafrac/content-proxy
 
+## 0.3.2
+
+### Patch Changes
+
+- Updated dependencies [1e806bb]
+  - @reafrac/logger@1.0.0
+  - @reafrac/external-script@2.1.1
+
 ## 0.3.1
 
 ### Patch Changes

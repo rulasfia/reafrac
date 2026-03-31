@@ -1,5 +1,11 @@
 # @reafrac/feed-updater
 
+## 0.0.6
+
+### Patch Changes
+
+- @reafrac/external-script@2.1.1
+
 ## 0.0.5
 
 ### Patch Changes

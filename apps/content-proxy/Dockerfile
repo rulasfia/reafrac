@@ -15,6 +15,7 @@ COPY apps/content-proxy/package.json ./apps/content-proxy/
 COPY packages/database/package.json ./packages/database/
 COPY packages/feed-utils/package.json ./packages/feed-utils/
 COPY packages/external-script/package.json ./packages/external-script/
+COPY packages/logger/package.json ./packages/logger/
 
 # Install dependencies (including devDependencies for build)
 RUN bun install --linker isolated --frozen-lockfile --filter '!@reafrac/web'
@@ -27,12 +28,13 @@ COPY apps/content-proxy/ ./apps/content-proxy/
 COPY packages/database/ ./packages/database/
 COPY packages/feed-utils/ ./packages/feed-utils/
 COPY packages/external-script/ ./packages/external-script/
+COPY packages/logger/ ./packages/logger/
 
 # Build application with version injection
 ARG BUILD_VERSION
 ARG BUILD_DATE
 ENV NODE_ENV=production
-RUN bun run build --filter=@reafrac/content-proxy --filter=@reafrac/feed-utils --filter=@reafrac/external-script
+RUN bun run build --filter=@reafrac/content-proxy --filter=@reafrac/feed-utils --filter=@reafrac/external-script --filter=@reafrac/logger
 
 # Stage 2: Production stage - using debug variant for HEALTHCHECK support
 FROM alpine:3
