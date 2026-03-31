@@ -75,6 +75,7 @@
 import path from 'node:path';
 import * as Sentry from '@sentry/tanstackstart-react';
 import { refetchFeeds } from '@reafrac/external-script';
+import { runMigrations } from '@reafrac/database';
 
 const ENABLE_FEED_CRON = process.env.ENABLE_FEED_CRON === 'true';
 const FEED_CRON_INTERVAL_MS = Number(process.env.FEED_CRON_INTERVAL_MS ?? 30 * 60 * 1000);
@@ -481,6 +482,16 @@ async function initializeStaticRoutes(clientDirectory: string): Promise<PreloadR
  */
 async function initializeServer() {
 	log.header('Starting Production Server');
+
+	// Run database migrations before starting
+	log.info('Running database migrations...');
+	try {
+		await runMigrations();
+		log.success('Database migrations completed');
+	} catch (error) {
+		log.error(`Migration failed: ${String(error)}`);
+		process.exit(1);
+	}
 
 	// Load TanStack Start server handler
 	let handler: { fetch: (request: Request) => Response | Promise<Response> };
