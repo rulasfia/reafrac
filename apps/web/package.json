@@ -25,6 +25,7 @@
 		"@reafrac/database": "workspace:*",
 		"@reafrac/external-script": "workspace:*",
 		"@reafrac/feed-utils": "workspace:*",
+		"@reafrac/logger": "workspace:*",
 		"@sentry/tanstackstart-react": "^10.22.0",
 		"@tailwindcss/vite": "^4.1.16",
 		"@tanstack/react-devtools": "^0.7.8",

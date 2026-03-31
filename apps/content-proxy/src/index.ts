@@ -2,6 +2,9 @@ import { extractFeed, parsedFeedSchema, extractArticle } from '@reafrac/feed-uti
 import { Elysia } from 'elysia';
 import { openapi } from '@elysiajs/openapi';
 import { z } from 'zod';
+import { createLogger } from '@reafrac/logger';
+
+const log = createLogger({ name: 'content-proxy' });
 
 const app = new Elysia()
 	.use(
@@ -20,9 +23,9 @@ const app = new Elysia()
 	.post(
 		'/extract-feed',
 		async ({ body }) => {
-			console.log('extracting feed: ', body.url);
+			log.debug({ url: body.url }, 'Extracting feed');
 			const validated = await extractFeed(body.url);
-
+			log.info({ url: body.url }, 'Feed extracted');
 			return validated;
 		},
 		{
@@ -33,9 +36,9 @@ const app = new Elysia()
 	.post(
 		'/extract-article',
 		async ({ body }) => {
-			console.log('extracting article: ', body.url);
+			log.debug({ url: body.url }, 'Extracting article');
 			const validated = await extractArticle(body.url);
-
+			log.info({ url: body.url }, 'Article extracted');
 			return validated;
 		},
 		{
@@ -60,4 +63,4 @@ const app = new Elysia()
 	)
 	.listen(3001);
 
-console.log(`🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`);
+log.info({ host: app.server?.hostname, port: app.server?.port }, 'Content proxy server running');

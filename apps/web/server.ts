@@ -76,35 +76,18 @@ import path from 'node:path';
 import * as Sentry from '@sentry/tanstackstart-react';
 import { refetchFeeds } from '@reafrac/external-script';
 import { runMigrations } from '@reafrac/database';
+import { createLogger, type Logger } from '@reafrac/logger';
 
 const ENABLE_FEED_CRON = process.env.ENABLE_FEED_CRON === 'true';
 const FEED_CRON_INTERVAL_MS = Number(process.env.FEED_CRON_INTERVAL_MS ?? 30 * 60 * 1000);
 
 let feedCronRunning = false;
 
-// Configuration
 const SERVER_PORT = Number(process.env.PORT ?? 3000);
 const CLIENT_DIRECTORY = './dist/client';
 const SERVER_ENTRY_POINT = './dist/server/server.js';
 
-// Logging utilities for professional output
-const log = {
-	info: (message: string) => {
-		console.log(`[INFO] ${message}`);
-	},
-	success: (message: string) => {
-		console.log(`[SUCCESS] ${message}`);
-	},
-	warning: (message: string) => {
-		console.log(`[WARNING] ${message}`);
-	},
-	error: (message: string) => {
-		console.log(`[ERROR] ${message}`);
-	},
-	header: (message: string) => {
-		console.log(`\n${message}\n`);
-	}
-};
+const log: Logger = createLogger({ name: 'server' });
 
 // Preloading configuration from environment variables
 const MAX_PRELOAD_BYTES = Number(
@@ -292,15 +275,16 @@ async function initializeStaticRoutes(clientDirectory: string): Promise<PreloadR
 	const loaded: AssetMetadata[] = [];
 	const skipped: AssetMetadata[] = [];
 
-	log.info(`Loading static assets from ${clientDirectory}...`);
+	log.info({ directory: clientDirectory }, 'Loading static assets');
 	if (VERBOSE) {
-		console.log(`Max preload size: ${(MAX_PRELOAD_BYTES / 1024 / 1024).toFixed(2)} MB`);
-		if (INCLUDE_PATTERNS.length > 0) {
-			console.log(`Include patterns: ${process.env.ASSET_PRELOAD_INCLUDE_PATTERNS ?? ''}`);
-		}
-		if (EXCLUDE_PATTERNS.length > 0) {
-			console.log(`Exclude patterns: ${process.env.ASSET_PRELOAD_EXCLUDE_PATTERNS ?? ''}`);
-		}
+		log.debug(
+			{
+				maxSizeMB: (MAX_PRELOAD_BYTES / 1024 / 1024).toFixed(2),
+				includePatterns: process.env.ASSET_PRELOAD_INCLUDE_PATTERNS ?? '',
+				excludePatterns: process.env.ASSET_PRELOAD_EXCLUDE_PATTERNS ?? ''
+			},
+			'Asset preload configuration'
+		);
 	}
 
 	let totalPreloadedBytes = 0;
@@ -368,110 +352,47 @@ async function initializeStaticRoutes(clientDirectory: string): Promise<PreloadR
 			}
 		}
 
-		// Show detailed file overview only when verbose mode is enabled
-		if (VERBOSE && (loaded.length > 0 || skipped.length > 0)) {
-			const allFiles = [...loaded, ...skipped].sort((a, b) => a.route.localeCompare(b.route));
-
-			// Calculate max path length for alignment
-			const maxPathLength = Math.min(Math.max(...allFiles.map((f) => f.route.length)), 60);
-
-			// Format file size with KB and actual gzip size
-			const formatFileSize = (bytes: number, gzBytes?: number) => {
-				const kb = bytes / 1024;
-				const sizeStr = kb < 100 ? kb.toFixed(2) : kb.toFixed(1);
-
-				if (gzBytes !== undefined) {
-					const gzKb = gzBytes / 1024;
-					const gzStr = gzKb < 100 ? gzKb.toFixed(2) : gzKb.toFixed(1);
-					return {
-						size: sizeStr,
-						gzip: gzStr
-					};
-				}
-
-				// Rough gzip estimation (typically 30-70% compression) if no actual gzip data
-				const gzipKb = kb * 0.35;
-				return {
-					size: sizeStr,
-					gzip: gzipKb < 100 ? gzipKb.toFixed(2) : gzipKb.toFixed(1)
-				};
-			};
-
-			if (loaded.length > 0) {
-				console.log('\n📁 Preloaded into memory:');
-				console.log('Path                                          │    Size │ Gzip Size');
-				loaded
-					.sort((a, b) => a.route.localeCompare(b.route))
-					.forEach((file) => {
-						const { size, gzip } = formatFileSize(file.size);
-						const paddedPath = file.route.padEnd(maxPathLength);
-						const sizeStr = `${size.padStart(7)} kB`;
-						const gzipStr = `${gzip.padStart(7)} kB`;
-						console.log(`${paddedPath} │ ${sizeStr} │  ${gzipStr}`);
-					});
-			}
-
-			if (skipped.length > 0) {
-				console.log('\n💾 Served on-demand:');
-				console.log('Path                                          │    Size │ Gzip Size');
-				skipped
-					.sort((a, b) => a.route.localeCompare(b.route))
-					.forEach((file) => {
-						const { size, gzip } = formatFileSize(file.size);
-						const paddedPath = file.route.padEnd(maxPathLength);
-						const sizeStr = `${size.padStart(7)} kB`;
-						const gzipStr = `${gzip.padStart(7)} kB`;
-						console.log(`${paddedPath} │ ${sizeStr} │  ${gzipStr}`);
-					});
-			}
-		}
-
-		// Show detailed verbose info if enabled
 		if (VERBOSE) {
 			if (loaded.length > 0 || skipped.length > 0) {
-				const allFiles = [...loaded, ...skipped].sort((a, b) => a.route.localeCompare(b.route));
-				console.log('\n📊 Detailed file information:');
-				console.log(
-					'Status       │ Path                            │ MIME Type                    │ Reason'
+				log.debug(
+					{
+						preloaded: loaded.map((f) => ({
+							route: f.route,
+							sizeKB: (f.size / 1024).toFixed(2),
+							type: f.type
+						})),
+						onDemand: skipped.map((f) => ({
+							route: f.route,
+							sizeKB: (f.size / 1024).toFixed(2),
+							type: f.type
+						}))
+					},
+					'Asset preload details'
 				);
-				allFiles.forEach((file) => {
-					const isPreloaded = loaded.includes(file);
-					const status = isPreloaded ? 'MEMORY' : 'ON-DEMAND';
-					const reason =
-						!isPreloaded && file.size > MAX_PRELOAD_BYTES
-							? 'too large'
-							: !isPreloaded
-								? 'filtered'
-								: 'preloaded';
-					const route = file.route.length > 30 ? file.route.substring(0, 27) + '...' : file.route;
-					console.log(
-						`${status.padEnd(12)} │ ${route.padEnd(30)} │ ${file.type.padEnd(28)} │ ${reason.padEnd(10)}`
-					);
-				});
 			} else {
-				console.log('\n📊 No files found to display');
+				log.debug('No files found to preload');
 			}
 		}
 
-		// Log summary after the file list
-		console.log(); // Empty line for separation
 		if (loaded.length > 0) {
-			log.success(
-				`Preloaded ${String(loaded.length)} files (${(totalPreloadedBytes / 1024 / 1024).toFixed(2)} MB) into memory`
+			log.info(
+				{
+					count: loaded.length,
+					totalSizeMB: (totalPreloadedBytes / 1024 / 1024).toFixed(2)
+				},
+				'Static assets preloaded'
 			);
 		} else {
-			log.info('No files preloaded into memory');
+			log.info('No static assets preloaded into memory');
 		}
 
 		if (skipped.length > 0) {
 			const tooLarge = skipped.filter((f) => f.size > MAX_PRELOAD_BYTES).length;
 			const filtered = skipped.length - tooLarge;
-			log.info(
-				`${String(skipped.length)} files will be served on-demand (${String(tooLarge)} too large, ${String(filtered)} filtered)`
-			);
+			log.info({ count: skipped.length, tooLarge, filtered }, 'Static assets served on-demand');
 		}
 	} catch (error) {
-		log.error(`Failed to load static files from ${clientDirectory}: ${String(error)}`);
+		log.error({ directory: clientDirectory, error: String(error) }, 'Failed to load static assets');
 	}
 
 	return { routes, loaded, skipped };
@@ -481,82 +402,78 @@ async function initializeStaticRoutes(clientDirectory: string): Promise<PreloadR
  * Initialize the server
  */
 async function initializeServer() {
-	log.header('Starting Production Server');
+	log.info('Starting production server');
 
-	// Run database migrations before starting
-	log.info('Running database migrations...');
+	log.info('Running database migrations');
 	try {
 		await runMigrations();
-		log.success('Database migrations completed');
+		log.info('Database migrations completed');
 	} catch (error) {
-		log.error(`Migration failed: ${String(error)}`);
+		log.error({ error: String(error) }, 'Migration failed');
 		process.exit(1);
 	}
 
-	// Load TanStack Start server handler
 	let handler: { fetch: (request: Request) => Response | Promise<Response> };
 	try {
 		const serverModule = (await import(SERVER_ENTRY_POINT)) as {
 			default: { fetch: (request: Request) => Response | Promise<Response> };
 		};
 		handler = serverModule.default;
-		log.success('TanStack Start application handler initialized');
+		log.info('Application handler initialized');
 	} catch (error) {
-		log.error(`Failed to load server handler: ${String(error)}`);
+		log.error({ error: String(error) }, 'Failed to load server handler');
 		process.exit(1);
 	}
 
-	// Build static routes with intelligent preloading
 	const { routes } = await initializeStaticRoutes(CLIENT_DIRECTORY);
 
-	// Create Bun server
 	const server = Bun.serve({
 		port: SERVER_PORT,
 
 		routes: {
-			// Serve static assets (preloaded or on-demand)
 			...routes,
 
-			// Fallback to TanStack Start handler for all other routes
 			'/*': (req: Request) => {
 				try {
 					return handler.fetch(req);
 				} catch (error) {
-					log.error(`Server handler error: ${String(error)}`);
+					log.error({ error: String(error) }, 'Server handler error');
 					return new Response('Internal Server Error', { status: 500 });
 				}
 			}
 		},
 
-		// Global error handler
 		error(error) {
-			log.error(`Uncaught server error: ${error instanceof Error ? error.message : String(error)}`);
+			log.error(
+				{ error: error instanceof Error ? error.message : String(error) },
+				'Uncaught server error'
+			);
 			return new Response('Internal Server Error', { status: 500 });
 		}
 	});
 
-	log.success(`Server listening on http://localhost:${String(server.port)}`);
+	log.info({ url: `http://localhost:${server.port}`, port: server.port }, 'Server listening');
 
 	if (ENABLE_FEED_CRON) {
 		const runFeedRefetch = async () => {
 			if (feedCronRunning) {
-				log.warning('Feed refetch already in progress, skipping this run');
+				log.warn('Feed refetch already in progress, skipping');
 				return;
 			}
 
 			feedCronRunning = true;
 			const startTime = Date.now();
-			log.info('Starting scheduled feed refetch...');
+			log.info('Starting scheduled feed refetch');
 
 			try {
 				await Sentry.startSpan({ op: 'cron', name: 'feed-refetch' }, async () => {
 					await refetchFeeds();
 				});
 				const duration = ((Date.now() - startTime) / 1000).toFixed(1);
-				log.success(`Feed refetch completed in ${duration}s`);
+				log.info({ durationSeconds: duration }, 'Feed refetch completed');
 			} catch (error) {
 				const duration = ((Date.now() - startTime) / 1000).toFixed(1);
-				log.error(`Feed refetch failed after ${duration}s: ${String(error)}`);
+				log.error({ durationSeconds: duration, error: String(error) }, 'Feed refetch failed');
 				Sentry.captureException(error, {
 					tags: { component: 'feed-cron' }
 				});
@@ -566,14 +483,14 @@ async function initializeServer() {
 		};
 
 		setInterval(runFeedRefetch, FEED_CRON_INTERVAL_MS);
-		log.success(
-			`Feed cron scheduled (every ${(FEED_CRON_INTERVAL_MS / 1000 / 60).toFixed(0)} minutes)`
+		log.info(
+			{ intervalMinutes: (FEED_CRON_INTERVAL_MS / 1000 / 60).toFixed(0) },
+			'Feed cron scheduled'
 		);
 	}
 }
 
-// Initialize the server
 initializeServer().catch((error: unknown) => {
-	log.error(`Failed to start server: ${String(error)}`);
+	log.error({ error: String(error) }, 'Failed to start server');
 	process.exit(1);
 });

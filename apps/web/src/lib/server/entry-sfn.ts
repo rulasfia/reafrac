@@ -9,6 +9,9 @@ import { db, entries, feeds, userEntries, userFeedSubscriptions } from '@reafrac
 import { eq, and, desc, count, gte } from '@reafrac/database';
 import { ofetch } from 'ofetch';
 import { htmlSanitizer } from '../utils/entry-utils';
+import { createLogger } from '@reafrac/logger';
+
+const log = createLogger({ name: 'entry-sfn' });
 
 export const extractEntryContentServerFn = createServerFn({ method: 'GET' })
 	.middleware([sentryMiddleware, authFnMiddleware])
@@ -21,11 +24,10 @@ export const extractEntryContentServerFn = createServerFn({ method: 'GET' })
 					span.setAttribute('user_id', context.user.id);
 					span.setAttribute('entry_url', data.entryUrl);
 
-					// check if user has proxy setup
 					const proxyUrl = process.env.PROXY_URL;
 					span.setAttribute('proxy_url', proxyUrl);
 
-					console.log({ proxyUrl, url: data.entryUrl });
+					log.debug({ proxyUrl, entryUrl: data.entryUrl }, 'Extracting entry content');
 					let validated: ArticleData | undefined = undefined;
 					if (proxyUrl) {
 						// if user has set proxy settings, use it to extract feed
@@ -153,30 +155,6 @@ export const getEntriesServerFn = createServerFn({ method: 'GET' })
 				span.setAttribute('status', data.status || 'all');
 				span.setAttribute('starred', data.starred || false);
 				span.setAttribute('force_refetch', data.forceRefetch || false);
-
-				// Refetch entries data from feeds link stored in db
-				// Only refetch for specific feed if feedId is provided, otherwise refetch all feeds
-				Sentry.startSpan({ op: 'function', name: 'refetchBeforeGetEntries' }, async () => {
-					try {
-						// await refetchFeedEntries(
-						// 	context.user.id,
-						// 	data.feedId ? [data.feedId] : undefined,
-						// 	data.forceRefetch
-						// );
-					} catch (error) {
-						console.error('Error refetching feed entries:', error);
-						// Don't let refetch errors block the main request - just log them
-						Sentry.captureException(error, {
-							tags: { function: 'refetchBeforeGetEntries' },
-							extra: {
-								userId: context.user.id,
-								feedId: data.feedId,
-								forceRefetch: data.forceRefetch,
-								errorMessage: error instanceof Error ? error.message : 'Unknown error'
-							}
-						});
-					}
-				});
 
 				// Build query conditions - ensure user only sees entries from feeds they're subscribed to
 				// Using inner joins guarantees we only get entries that have user entries
