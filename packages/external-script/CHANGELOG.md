@@ -1,5 +1,12 @@
 # @reafrac/external-script
 
+## 2.1.1
+
+### Patch Changes
+
+- Updated dependencies [1e806bb]
+  - @reafrac/logger@1.0.0
+
 ## 2.1.0
 
 ### Patch Changes
