@@ -39,6 +39,11 @@ export function FeedDiscovery({ onSelectFeed }: FeedDiscoveryProps) {
 		return match ? parseInt(match[1]) : null;
 	};
 
+	// Limit number of feeds displayed
+	const MAX_FEEDS = 10;
+	const displayedFeeds = feeds?.slice(0, MAX_FEEDS);
+	const hasMoreFeeds = feeds && feeds.length > MAX_FEEDS;
+
 	return (
 		<div className="space-y-4">
 			{/* Search Input */}
@@ -90,12 +95,21 @@ export function FeedDiscovery({ onSelectFeed }: FeedDiscoveryProps) {
 			)}
 
 			{/* Results */}
-			{feeds && feeds.length > 0 && (
+			{displayedFeeds && displayedFeeds.length > 0 && (
 				<div className="space-y-2">
-					<p className="text-sm font-medium">Found {feeds.length} feeds:</p>
-					{feeds.map((feed) => (
-						<FeedDiscoveryCard key={feed.feedUrl} feed={feed} onSelect={onSelectFeed} />
-					))}
+					<div className="flex items-center justify-between">
+						<p className="text-sm font-medium">
+							Found {feeds?.length} feed{feeds && feeds.length !== 1 ? 's' : ''}
+						</p>
+						{hasMoreFeeds && (
+							<p className="text-xs text-muted-foreground">Showing top {MAX_FEEDS}</p>
+						)}
+					</div>
+					<div className="max-h-[400px] space-y-2 overflow-y-auto pr-1">
+						{displayedFeeds.map((feed) => (
+							<FeedDiscoveryCard key={feed.feedUrl} feed={feed} onSelect={onSelectFeed} />
+						))}
+					</div>
 				</div>
 			)}
 
@@ -129,26 +143,28 @@ interface FeedDiscoveryCardProps {
 function FeedDiscoveryCard({ feed, onSelect }: FeedDiscoveryCardProps) {
 	return (
 		<div
-			className="cursor-pointer rounded-lg border p-4 transition-colors hover:bg-accent"
+			className="cursor-pointer rounded-lg border p-3 transition-colors hover:bg-accent"
 			onClick={() => onSelect(feed.feedUrl)}
 		>
 			<div className="flex items-start gap-3">
 				{/* Favicon */}
-				{feed.favicon ? (
-					<img src={feed.favicon} alt="" className="h-6 w-6 rounded" />
-				) : (
-					<div className="flex h-6 w-6 items-center justify-center rounded bg-muted">
-						<GlobeIcon className="h-4 w-4 text-muted-foreground" />
-					</div>
-				)}
+				<div className="shrink-0">
+					{feed.favicon ? (
+						<img src={feed.favicon} alt="" className="h-6 w-6 rounded" />
+					) : (
+						<div className="flex h-6 w-6 items-center justify-center rounded bg-muted">
+							<GlobeIcon className="h-4 w-4 text-muted-foreground" />
+						</div>
+					)}
+				</div>
 
 				{/* Content */}
-				<div className="min-w-0 flex-1">
-					<h4 className="truncate font-medium">{feed.title}</h4>
+				<div className="min-w-0 flex-1 overflow-hidden">
+					<h4 className="truncate text-sm font-medium">{feed.title}</h4>
 					{feed.description && (
-						<p className="mt-1 truncate text-sm text-muted-foreground">{feed.description}</p>
+						<p className="mt-0.5 truncate text-xs text-muted-foreground">{feed.description}</p>
 					)}
-					<div className="mt-2 flex gap-2 text-xs text-muted-foreground">
+					<div className="mt-1.5 flex flex-wrap gap-2 text-xs text-muted-foreground">
 						{feed.itemCount && <span>{feed.itemCount} items</span>}
 						{feed.isPodcast && (
 							<span className="rounded bg-primary/10 px-1.5 py-0.5 font-medium text-primary">
@@ -162,7 +178,7 @@ function FeedDiscoveryCard({ feed, onSelect }: FeedDiscoveryCardProps) {
 				<Button
 					variant="ghost"
 					size="sm"
-					className="shrink-0"
+					className="h-8 w-8 shrink-0 p-0"
 					onClick={(e) => {
 						e.stopPropagation();
 						onSelect(feed.feedUrl);
