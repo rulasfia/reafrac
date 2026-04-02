@@ -194,7 +194,7 @@ function FeedDiscoveryCard({ feed, onSelect }: FeedDiscoveryCardProps) {
 				<div className="min-w-0 flex-1 overflow-hidden">
 					<h4 className="truncate text-sm font-medium">{feed.title}</h4>
 					{feed.description && (
-						<p className="mt-0.5 truncate text-xs text-muted-foreground">{feed.description}</p>
+						<p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{feed.description}</p>
 					)}
 					<div className="mt-1.5 flex flex-wrap gap-2 text-xs text-muted-foreground">
 						{feed.itemCount && <span>{feed.itemCount} items</span>}

@@ -162,7 +162,7 @@ export function AddFeedDialog() {
 											type="submit"
 											disabled={isSearching}
 										>
-											<Spinner /> Searching...
+											<Spinner /> Loading...
 										</Button>
 									) : (
 										<Button
@@ -171,7 +171,7 @@ export function AddFeedDialog() {
 											type="submit"
 											disabled={isSearching}
 										>
-											<SearchIcon /> Search Feed
+											<SearchIcon /> Preview Feed
 										</Button>
 									)}
 								</div>
