@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { feedDiscoveryQueryOptions, type DiscoveredFeed } from '@/lib/queries/feed-discovery-query';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Spinner } from '../ui/spinner';
-import { PlusIcon, GlobeIcon } from 'lucide-react';
+import { PlusIcon, GlobeIcon, SearchIcon } from 'lucide-react';
+import { Field, FieldError, FieldLabel } from '../ui/field';
+import { Form } from '../ui/form';
 
 interface FeedDiscoveryProps {
 	onSelectFeed: (feedUrl: string) => void;
@@ -14,24 +16,32 @@ interface FeedDiscoveryProps {
 
 export function FeedDiscovery({ onSelectFeed }: FeedDiscoveryProps) {
 	const [query, setQuery] = useState('');
-	const [debouncedQuery, setDebouncedQuery] = useState('');
-
-	// Debounce search input (500ms)
-	useEffect(() => {
-		const timer = setTimeout(() => {
-			setDebouncedQuery(query);
-		}, 500);
-		return () => clearTimeout(timer);
-	}, [query]);
+	const [searchQuery, setSearchQuery] = useState('');
+	const [isSearching, setIsSearching] = useState(false);
 
 	// React Query for discovery
 	const {
 		data: feeds,
 		isLoading,
-		error
-	} = useQuery(
-		feedDiscoveryQueryOptions(debouncedQuery, true) // skipCrawl=true for faster cached results
-	);
+		error,
+		refetch
+	} = useQuery({
+		...feedDiscoveryQueryOptions(searchQuery, true),
+		enabled: false // Don't auto-fetch, only fetch on manual trigger
+	});
+
+	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+		event.preventDefault();
+		if (!query.trim()) return;
+
+		setIsSearching(true);
+		setSearchQuery(query);
+		try {
+			await refetch();
+		} finally {
+			setIsSearching(false);
+		}
+	};
 
 	// Extract seconds from rate limit error message
 	const getRateLimitSeconds = (errorMessage: string): number | null => {
@@ -46,13 +56,43 @@ export function FeedDiscovery({ onSelectFeed }: FeedDiscoveryProps) {
 
 	return (
 		<div className="space-y-4">
-			{/* Search Input */}
-			<Input
-				placeholder="Enter website URL (e.g., theverge.com)"
-				value={query}
-				onChange={(e) => setQuery(e.target.value)}
-				disabled={isLoading}
-			/>
+			{/* Search Form */}
+			<Form onSubmit={handleSubmit}>
+				<Field name="discoveryUrl">
+					<FieldLabel>Website URL</FieldLabel>
+					<div className="flex w-full flex-col items-end gap-2 sm:flex-row sm:items-center">
+						<Input
+							className="w-full"
+							placeholder="theverge.com"
+							type="text"
+							value={query}
+							onChange={(e) => setQuery(e.target.value)}
+							disabled={isSearching}
+						/>
+
+						{isSearching ? (
+							<Button
+								className="w-full sm:w-fit"
+								variant="outline"
+								type="submit"
+								disabled={isSearching}
+							>
+								<Spinner /> Searching...
+							</Button>
+						) : (
+							<Button
+								className="w-full sm:w-fit"
+								variant="outline"
+								type="submit"
+								disabled={!query.trim() || isSearching}
+							>
+								<SearchIcon /> Discover Feeds
+							</Button>
+						)}
+					</div>
+					<FieldError />
+				</Field>
+			</Form>
 
 			{/* Attribution Link */}
 			<p className="text-xs text-muted-foreground">
@@ -66,14 +106,6 @@ export function FeedDiscovery({ onSelectFeed }: FeedDiscoveryProps) {
 					Feedsearch
 				</a>
 			</p>
-
-			{/* Loading State */}
-			{isLoading && (
-				<div className="flex items-center justify-center py-8">
-					<Spinner />
-					<span className="ml-2 text-muted-foreground">Searching...</span>
-				</div>
-			)}
 
 			{/* Error State */}
 			{error && (
@@ -114,7 +146,7 @@ export function FeedDiscovery({ onSelectFeed }: FeedDiscoveryProps) {
 			)}
 
 			{/* No Results */}
-			{feeds && feeds.length === 0 && !isLoading && debouncedQuery && (
+			{feeds && feeds.length === 0 && !isSearching && searchQuery && (
 				<div className="rounded-lg border bg-muted p-4">
 					<p className="text-sm text-muted-foreground">
 						No feeds found for this URL. The website may not have RSS feeds or they may be hidden.
@@ -123,7 +155,7 @@ export function FeedDiscovery({ onSelectFeed }: FeedDiscoveryProps) {
 			)}
 
 			{/* Empty State */}
-			{!debouncedQuery && !isLoading && (
+			{!searchQuery && !isSearching && (
 				<div className="rounded-lg border bg-muted p-6 text-center">
 					<GlobeIcon className="mx-auto mb-2 h-12 w-12 text-muted-foreground" />
 					<p className="text-sm text-muted-foreground">
