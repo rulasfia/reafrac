@@ -12,6 +12,7 @@ import {
 	DialogTitle,
 	DialogTrigger
 } from '../ui/dialog';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs';
 import { z } from 'zod/mini';
 import { startTransition, useState } from 'react';
 import { useServerFn } from '@tanstack/react-start';
@@ -21,6 +22,7 @@ import { Spinner } from '../ui/spinner';
 import { Input } from '../ui/input';
 import { toastManager } from '../ui/toast';
 import { NewFeedPreview } from './new-feed-preview';
+import { FeedDiscovery } from './feed-discovery';
 import type { ParsedFeed } from '@reafrac/feed-utils';
 import { userFeedQueryOptions } from '@/lib/queries/feed-query';
 import { useQuery } from '@tanstack/react-query';
@@ -43,6 +45,21 @@ export function AddFeedDialog() {
 	const [errors, setErrors] = useState<Errors>({});
 
 	const { data: feeds, refetch: invalidateFeeds } = useQuery(userFeedQueryOptions(user.id));
+
+	const handleSelectFeedFromDiscovery = async (feedUrl: string) => {
+		try {
+			setFeed(null);
+			setErrors({});
+			setIsSearching(true);
+			const res = await previewFeed({ data: { feedUrl } });
+			setFeed({ ...res, feedUrl });
+		} catch (error) {
+			console.error(error);
+			setErrors({ feedUrl: 'Feed not found!' });
+		} finally {
+			setIsSearching(false);
+		}
+	};
 
 	const submitHandler = async (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
@@ -115,41 +132,59 @@ export function AddFeedDialog() {
 						Follow RSS feed, Reddit, Youtube Channel, Newsletters, Podcasts, and more.
 					</DialogDescription>
 				</DialogHeader>
-				<Form id="feedForm" onSubmit={submitHandler} errors={errors}>
-					<Field name="feedUrl">
-						<FieldLabel>Feed URL</FieldLabel>
-						<div className="flex w-full flex-col items-end gap-2 sm:flex-row sm:items-center">
-							<Input
-								className="w-full"
-								name="feedUrl"
-								placeholder="https://example.com/feed.xml"
-								type="text"
-								disabled={isSearching}
-							/>
 
-							{isSearching ? (
-								<Button
-									className="w-full sm:w-fit"
-									variant="outline"
-									type="submit"
-									disabled={isSearching}
-								>
-									<Spinner /> Searching...
-								</Button>
-							) : (
-								<Button
-									className="w-full sm:w-fit"
-									variant="outline"
-									type="submit"
-									disabled={isSearching}
-								>
-									<SearchIcon /> Search Feed
-								</Button>
-							)}
-						</div>
-						<FieldError />
-					</Field>
-				</Form>
+				<Tabs defaultValue="manual">
+					<TabsList className="w-full">
+						<TabsTrigger value="manual" className="flex-1">
+							Enter URL
+						</TabsTrigger>
+						<TabsTrigger value="discover" className="flex-1">
+							Discover Feed
+						</TabsTrigger>
+					</TabsList>
+
+					<TabsContent value="manual" className="mt-4">
+						<Form id="feedForm" onSubmit={submitHandler} errors={errors}>
+							<Field name="feedUrl">
+								<FieldLabel>Feed URL</FieldLabel>
+								<div className="flex w-full flex-col items-end gap-2 sm:flex-row sm:items-center">
+									<Input
+										className="w-full"
+										name="feedUrl"
+										placeholder="https://example.com/feed.xml"
+										type="text"
+										disabled={isSearching}
+									/>
+
+									{isSearching ? (
+										<Button
+											className="w-full sm:w-fit"
+											variant="outline"
+											type="submit"
+											disabled={isSearching}
+										>
+											<Spinner /> Loading...
+										</Button>
+									) : (
+										<Button
+											className="w-full sm:w-fit"
+											variant="outline"
+											type="submit"
+											disabled={isSearching}
+										>
+											<SearchIcon /> Preview Feed
+										</Button>
+									)}
+								</div>
+								<FieldError />
+							</Field>
+						</Form>
+					</TabsContent>
+
+					<TabsContent value="discover" className="mt-4">
+						<FeedDiscovery onSelectFeed={handleSelectFeedFromDiscovery} />
+					</TabsContent>
+				</Tabs>
 
 				<NewFeedPreview feeds={feeds ?? []} feed={feed} />
 
