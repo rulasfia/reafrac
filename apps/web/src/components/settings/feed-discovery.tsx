@@ -63,7 +63,7 @@ export function FeedDiscovery({ onSelectFeed }: FeedDiscoveryProps) {
 					<div className="flex w-full flex-col items-end gap-2 sm:flex-row sm:items-center">
 						<Input
 							className="w-full"
-							placeholder="theverge.com"
+							placeholder="domain.com"
 							type="text"
 							value={query}
 							onChange={(e) => setQuery(e.target.value)}
@@ -137,7 +137,7 @@ export function FeedDiscovery({ onSelectFeed }: FeedDiscoveryProps) {
 							<p className="text-xs text-muted-foreground">Showing top {MAX_FEEDS}</p>
 						)}
 					</div>
-					<div className="max-h-[400px] space-y-2 overflow-y-auto pr-1">
+					<div className="max-h-80 space-y-2 overflow-y-auto pr-1">
 						{displayedFeeds.map((feed) => (
 							<FeedDiscoveryCard key={feed.feedUrl} feed={feed} onSelect={onSelectFeed} />
 						))}

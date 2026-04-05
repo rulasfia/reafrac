@@ -48,6 +48,7 @@ export function AddFeedDialog() {
 
 	const handleSelectFeedFromDiscovery = async (feedUrl: string) => {
 		try {
+			setFeed(null);
 			setErrors({});
 			setIsSearching(true);
 			const res = await previewFeed({ data: { feedUrl } });
