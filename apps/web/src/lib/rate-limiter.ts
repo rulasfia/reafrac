@@ -10,8 +10,10 @@ interface RateLimitEntry {
 export class RateLimiter {
 	private requests: Map<string, RateLimitEntry> = new Map();
 	private cleanupInterval: NodeJS.Timeout | null = null;
+	private maxEntries: number;
 
-	constructor(cleanupIntervalMs: number = 5 * 60 * 1000) {
+	constructor(cleanupIntervalMs: number = 5 * 60 * 1000, maxEntries: number = 10000) {
+		this.maxEntries = maxEntries;
 		this.startCleanup(cleanupIntervalMs);
 	}
 
@@ -27,6 +29,10 @@ export class RateLimiter {
 		const entry = this.requests.get(key);
 
 		if (!entry) {
+			// Enforce max entries limit to prevent memory leak
+			if (this.requests.size >= this.maxEntries) {
+				this.evictOldestEntry();
+			}
 			this.requests.set(key, { timestamps: [now] });
 			return true;
 		}
@@ -44,6 +50,28 @@ export class RateLimiter {
 		validTimestamps.push(now);
 		entry.timestamps = validTimestamps;
 		return true;
+	}
+
+	/**
+	 * Evict the oldest entry when max entries limit is reached
+	 */
+	private evictOldestEntry(): void {
+		let oldestKey: string | null = null;
+		let oldestTimestamp = Infinity;
+
+		for (const [key, entry] of this.requests.entries()) {
+			if (entry.timestamps.length > 0) {
+				const minTimestamp = Math.min(...entry.timestamps);
+				if (minTimestamp < oldestTimestamp) {
+					oldestTimestamp = minTimestamp;
+					oldestKey = key;
+				}
+			}
+		}
+
+		if (oldestKey) {
+			this.requests.delete(oldestKey);
+		}
 	}
 
 	/**

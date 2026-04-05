@@ -25,7 +25,7 @@ export interface DiscoveredFeed {
 
 // Feedsearch.dev API response format
 interface FeedsearchResponse {
-	url: string;
+	url: string; // Always present in valid responses
 	title?: string;
 	description?: string;
 	site_url?: string;
@@ -38,16 +38,20 @@ interface FeedsearchResponse {
 }
 
 /**
- * Normalize URL - ensure it has a scheme
+ * Normalize URL - ensure it has a scheme and sanitize input
  */
 function normalizeUrl(query: string): string {
+	// Trim whitespace and remove potentially dangerous characters
+	const trimmed = query.trim();
+	const sanitized = trimmed.replace(/[\r\n\t]/g, '');
+
 	// If already has scheme, return as is
-	if (query.startsWith('http://') || query.startsWith('https://')) {
-		return query;
+	if (sanitized.startsWith('http://') || sanitized.startsWith('https://')) {
+		return sanitized;
 	}
 
 	// Add https:// prefix
-	return `https://${query}`;
+	return `https://${sanitized}`;
 }
 
 /**
@@ -86,6 +90,8 @@ export const discoverFeedsServerFn = createServerFn({ method: 'GET' })
 				name: 'discoverFeeds'
 			},
 			async (span) => {
+				let normalizedQuery = '';
+
 				try {
 					span.setAttribute('user_id', context.user.id);
 					span.setAttribute('query', data.query);
@@ -110,8 +116,15 @@ export const discoverFeedsServerFn = createServerFn({ method: 'GET' })
 					}
 
 					// 2. Normalize query (ensure URL format)
-					const normalizedQuery = normalizeUrl(data.query);
+					normalizedQuery = normalizeUrl(data.query);
 					span.setAttribute('normalized_url', normalizedQuery);
+
+					// Validate URL format
+					try {
+						z.parse(z.url(), normalizedQuery);
+					} catch {
+						throw new Error('Invalid URL format. Please enter a valid website URL.');
+					}
 
 					// 3. Check cache
 					const cacheKey = `feed-discovery:${normalizedQuery}`;
@@ -155,20 +168,44 @@ export const discoverFeedsServerFn = createServerFn({ method: 'GET' })
 				} catch (error) {
 					span.setAttribute('status', 'error');
 
+					// Handle different error types with generic messages for users
+					let userMessage = 'Failed to discover feeds. Please check the URL and try again.';
+					let shouldCaptureToSentry = true;
+
 					// Don't capture rate limit errors to Sentry (expected behavior)
-					if (error instanceof Error && !error.message.includes('Rate limit')) {
+					if (error instanceof Error && error.message.includes('Rate limit')) {
+						shouldCaptureToSentry = false;
+						userMessage = error.message; // Preserve rate limit message with seconds
+					}
+					// Handle timeout errors
+					else if (error instanceof Error && error.message.includes('timeout')) {
+						userMessage = 'Request timed out. Please try again.';
+					}
+					// Handle network errors
+					else if (error instanceof Error && error.message.includes('network')) {
+						userMessage = 'Network error. Please check your connection and try again.';
+					}
+					// Handle invalid URL errors
+					else if (error instanceof Error && error.message.includes('Invalid URL')) {
+						userMessage = error.message; // Preserve user-friendly URL error
+					}
+
+					// Capture to Sentry if needed
+					if (shouldCaptureToSentry && error instanceof Error) {
 						Sentry.captureException(error, {
 							tags: { function: 'discoverFeeds' },
 							extra: {
 								userId: context.user.id,
 								query: data.query,
+								normalizedQuery,
 								errorMessage: error.message,
 								errorStack: error.stack
 							}
 						});
 					}
 
-					throw error;
+					// Throw error with user-friendly message
+					throw new Error(userMessage);
 				}
 			}
 		);

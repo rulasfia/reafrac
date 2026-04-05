@@ -182,7 +182,7 @@ function FeedDiscoveryCard({ feed, onSelect }: FeedDiscoveryCardProps) {
 				{/* Favicon */}
 				<div className="shrink-0">
 					{feed.favicon ? (
-						<img src={feed.favicon} alt="" className="h-6 w-6 rounded" />
+						<img src={feed.favicon} alt={`${feed.title} favicon`} className="h-6 w-6 rounded" />
 					) : (
 						<div className="flex h-6 w-6 items-center justify-center rounded bg-muted">
 							<GlobeIcon className="h-4 w-4 text-muted-foreground" />
